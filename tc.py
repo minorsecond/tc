@@ -8,6 +8,10 @@ import sys
 import csv
 import os.path
 
+wr = csv.writer(open("times.csv", "wb"))
+if os.path.isfile("times.csv"):
+    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Time Out" "Time In", "Project End", "Day End", "ID"]
+    wr.writerow(columns)
 
 def timer():
     seconds = 0
@@ -22,23 +26,20 @@ def timer():
 			if seconds >= 60:
 				minutes += 1
 				seconds = 0
-                wr.writerow
+
 			if minutes >= 60:
 				hours += 1
 				minutes = 0
 		except KeyboardInterrupt, e:
 			break
 
-wr = csv.writer(open("times.csv", "wb"))
-if os.path.isfile("times.csv"):
-    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Time Out" "Time In", "Project End", "Day End", "ID"]
-    wr.writerow(columns)
-
 sumtime = 0
 
-"""Hello there. I will log your project time and create a .csv file with the results."""
+print "\n"
+print "Hello there. I will log your project time and create a .csv file with the results."
 print "Your current logged time for this week is: ", sumtime
 print "\n"
+print "-----------------------------------------------------------"
 raw_input("Please press <ENTER> to log current time and begin your day")
 print "\n"
 Daybegin = datetime.datetime.now()
