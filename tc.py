@@ -6,25 +6,7 @@ import time
 import datetime
 import sys
 import csv
-
-with open('times.csv', 'rb') as csvfile:
-    spamreader = csv.reader(csvfile, delimiter='    ', quotechar='|')
-
-sumtime = 0
-
-"""Hello there. I will log your project time and create a .csv file with the results."""
-print "Your current logged time for this week is: ", sumtime
-print "\n"
-raw_input("Please press <ENTER> to log current time and begin your day")
-print "\n"
-
-Daybegin = datetime.datetime.now()
-time_start = time.time()
-seconds = 0
-minutes = 0
-hours = 0
-
-print "The day's start time is ", Daybegin
+import os.path
 
 def timer():
     while True:
@@ -41,3 +23,24 @@ def timer():
 				minutes = 0
 		except KeyboardInterrupt, e:
 			break
+
+wr = csv.writer(open("times.csv", "wb"))
+if os.path.isfile("times.csv"):
+    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Time Out" "Time In", "Project End", "Day End"]
+    wr.writerow(columns)
+
+sumtime = 0
+
+"""Hello there. I will log your project time and create a .csv file with the results."""
+print "Your current logged time for this week is: ", sumtime
+print "\n"
+raw_input("Please press <ENTER> to log current time and begin your day")
+print "\n"
+
+Daybegin = datetime.datetime.now()
+time_start = time.time()
+seconds = 0
+minutes = 0
+hours = 0
+
+print "The day's start time is ", Daybegin
