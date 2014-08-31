@@ -7,6 +7,9 @@ import datetime
 import sys
 import csv
 import os.path
+import select
+
+os.system('cls' if os.name == 'nt' else 'clear')
 
 wr = csv.writer(open("times.csv", "wb"))
 if os.path.isfile("times.csv"):
@@ -18,7 +21,7 @@ def timer():
     minutes = 0
     hours = 0
     while True:
-		try:
+
 			sys.stdout.write("\r {hours} Hours {minutes} Minutes {seconds} Seconds".format(hours=hours, minutes=minutes, seconds=seconds))
 			sys.stdout.flush()
 			time.sleep(1)
@@ -30,8 +33,22 @@ def timer():
 			if minutes >= 60:
 				hours += 1
 				minutes = 0
-		except KeyboardInterrupt, e:
-			break
+
+			if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+				raw_input()
+				print '\n','What are you doing? (lunch, home)'
+				answer = raw_input()
+				choices(answer)
+
+def choices(answer):
+	if answer == 'lunch':
+		print 'Bon appetit'
+		quit()
+	elif answer == 'home':
+		print 'Take care!'
+		quit()
+	else:
+		quit()
 
 sumtime = 0
 
@@ -50,7 +67,7 @@ time_start = time.time()
 
 print "----------------------------------------------"
 print "The day's start time is ", Daybegin
-print "\n"
+print "\n", 'Press enter to exit timer', '\n'
 
 print "The project elapsed time is: "
 timer()
