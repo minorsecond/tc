@@ -8,10 +8,14 @@ import sys
 import csv
 import os.path
 
+
 def timer():
+    seconds = 0
+    minutes = 0
+    hours = 0
     while True:
 		try:
-			sys.stdout.write("\r{hours} Hours {minutes} Minutes {seconds} Seconds".format(minutes=minutes, seconds=seconds))
+			sys.stdout.write("\r {hours} Hours {minutes} Minutes {seconds} Seconds".format(hours=hours, minutes=minutes, seconds=seconds))
 			sys.stdout.flush()
 			time.sleep(1)
 			seconds = int(time.time() - time_start) - minutes * 60
@@ -39,8 +43,12 @@ print "\n"
 
 Daybegin = datetime.datetime.now()
 time_start = time.time()
-seconds = 0
-minutes = 0
-hours = 0
 
+
+print "----------------------------------------------"
 print "The day's start time is ", Daybegin
+print "\n"
+
+print "The project elapsed time is: "
+timer()
+print "----------------------------------------------"
