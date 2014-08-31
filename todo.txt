@@ -1,0 +1,1 @@
+Program needs to write date to "Date" column upon the initial <ENTER> press.

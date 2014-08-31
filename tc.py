@@ -22,6 +22,7 @@ def timer():
 			if seconds >= 60:
 				minutes += 1
 				seconds = 0
+                wr.writerow
 			if minutes >= 60:
 				hours += 1
 				minutes = 0
@@ -30,7 +31,7 @@ def timer():
 
 wr = csv.writer(open("times.csv", "wb"))
 if os.path.isfile("times.csv"):
-    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Time Out" "Time In", "Project End", "Day End"]
+    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Time Out" "Time In", "Project End", "Day End", "ID"]
     wr.writerow(columns)
 
 sumtime = 0
@@ -40,8 +41,9 @@ print "Your current logged time for this week is: ", sumtime
 print "\n"
 raw_input("Please press <ENTER> to log current time and begin your day")
 print "\n"
-
 Daybegin = datetime.datetime.now()
+
+print
 time_start = time.time()
 
 
@@ -51,4 +53,3 @@ print "\n"
 
 print "The project elapsed time is: "
 timer()
-print "----------------------------------------------"
