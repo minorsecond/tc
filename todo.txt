@@ -1,1 +1,2 @@
-Program needs to write date to "Date" column upon the initial <ENTER> press.
+Need to add code to add abbrev codes to csv.
+Need code to log break times, etc.

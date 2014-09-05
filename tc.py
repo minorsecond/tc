@@ -13,7 +13,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 wr = csv.writer(open("times.csv", "wb"))
 if os.path.isfile("times.csv"):
-    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Time Out" "Time In", "Project End", "Day End", "ID"]
+    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Project End", "Time Out" "Time In", "Day End", "ID"]
     wr.writerow(columns)
 
 def timer():
@@ -36,16 +36,22 @@ def timer():
 
 			if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
 				raw_input()
-				print '\n','What are you doing? (lunch, home)'
+				print '\n','What are you doing? (lunch, home, break)'
 				answer = raw_input()
 				choices(answer)
+				
 
 def choices(answer):
 	if answer == 'lunch':
 		print 'Bon appetit'
+		ltimeout = time.time()
 		quit()
 	elif answer == 'home':
 		print 'Take care!'
+		hometime = time.time()
+		quit()
+	elif answer == 'break':
+		breaktime = time.time()
 		quit()
 	else:
 		quit()
@@ -60,6 +66,9 @@ print "-----------------------------------------------------------"
 raw_input("Please press <ENTER> to log current time and begin your day")
 print "\n"
 Daybegin = datetime.datetime.now()
+
+raw_input("What are you working on? (ABBREV)")
+ABBREV = raw_input
 
 print
 time_start = time.time()
