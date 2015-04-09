@@ -19,7 +19,7 @@ timer        =   0
 os.system('cls' if os.name == 'nt' else 'clear')
 
 #initialize dictionary
-times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
+times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0,'Project Time' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
 
 def round_to_nearest(num, base=6):
     companyMinutes = num + (base>>1)
@@ -44,10 +44,11 @@ def timer():
 				hours += 1
 				minutes = 0
 			if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-				raw_input()	
+				raw_input()
                                 print '\n','What are you doing? (lunch, home, break, switch task)'
 				answer = raw_input()
                                 timer = round_to_nearest(minuteCount)
+                                times['Project Time'] = timer
                                 print "The timesheet time elapsed is: %s" %timer
                                 choices(answer)
 
