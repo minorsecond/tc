@@ -1,25 +1,13 @@
-INFO :: 2015-04-09 17:22:33,820 :: in tc | times.csv opened as a csv.writer
-INFO :: 2015-04-09 17:23:00,391 :: in tc | times.csv opened as a csv.writer
-INFO :: 2015-04-09 17:37:35,000 :: in tc | times.csv opened as a csv.writer
-INFO :: 2015-04-09 17:37:39,377 :: in tc | seconds set to 1
-INFO :: 2015-04-09 17:37:39,378 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 1
-INFO :: 2015-04-09 17:37:40,379 :: in tc | seconds set to 2
-INFO :: 2015-04-09 17:37:40,379 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 2
-INFO :: 2015-04-09 17:37:41,380 :: in tc | seconds set to 3
-INFO :: 2015-04-09 17:37:41,380 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 3
-INFO :: 2015-04-09 17:37:42,381 :: in tc | seconds set to 4
-INFO :: 2015-04-09 17:37:42,381 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 4
-INFO :: 2015-04-09 17:37:43,382 :: in tc | seconds set to 5
-INFO :: 2015-04-09 17:37:43,382 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 5
-INFO :: 2015-04-09 17:38:03,951 :: in tc | times.csv opened as a csv.writer
-INFO :: 2015-04-09 17:38:07,449 :: in tc | seconds set to 1
-INFO :: 2015-04-09 17:38:07,449 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 1
-INFO :: 2015-04-09 17:38:08,451 :: in tc | seconds set to 2
-INFO :: 2015-04-09 17:38:08,451 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 2
-INFO :: 2015-04-09 17:41:27,498 :: in tc | <_csv.writer object at 0x7f9a28904578> created and opened as a csv.writer
-INFO :: 2015-04-09 17:41:32,915 :: in tc | seconds set to 1
-INFO :: 2015-04-09 17:41:32,916 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 1
-INFO :: 2015-04-09 17:41:33,917 :: in tc | seconds set to 2
-INFO :: 2015-04-09 17:41:33,917 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 2
-INFO :: 2015-04-09 17:41:34,918 :: in tc | seconds set to 3
-INFO :: 2015-04-09 17:41:34,919 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 3
+INFO :: 2015-04-09 17:54:22,115 :: in tc | <_csv.writer object at 0x7fbbcdb11578> created and opened as a csv.writer
+INFO :: 2015-04-09 17:54:26,575 :: in tc | seconds set to 1
+INFO :: 2015-04-09 17:54:26,575 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 1
+INFO :: 2015-04-09 17:54:27,576 :: in tc | seconds set to 2
+INFO :: 2015-04-09 17:54:27,577 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 2
+INFO :: 2015-04-09 17:54:28,578 :: in tc | seconds set to 3
+INFO :: 2015-04-09 17:54:28,578 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 3
+INFO :: 2015-04-09 17:54:29,579 :: in tc | seconds set to 4
+INFO :: 2015-04-09 17:54:29,580 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 4
+INFO :: 2015-04-09 17:54:30,581 :: in tc | seconds set to 5
+INFO :: 2015-04-09 17:54:30,581 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 5
+INFO :: 2015-04-09 17:54:31,582 :: in tc | seconds set to 6
+INFO :: 2015-04-09 17:54:31,583 :: in tc | TIME SET! Hours: 0, Minutes: 0, Seconds: 6
