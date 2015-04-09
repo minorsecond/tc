@@ -29,6 +29,7 @@ def round_to_nearest(num, base=6):
     companyMinutes = num + (base>>1)
     return companyMinutes - (companyMintues % base)
 
+# Think hours needs to be initialized before being referenced here. Getting errors.
 def timer():
     # TODO: Docstring
     logging.debug("timer called")
