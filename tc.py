@@ -13,7 +13,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 wr = csv.writer(open("times.csv", "wb"))
 if os.path.isfile("times.csv"):
-    columns = ["Date", "Day Start", "Project Abbrev", "Project Start", "Project End", "Time Out" "Time In", "Day End", "ID"]
+    columns = ["Date", "Day Start", "Project Abbrev", "Project Name", "Project Start", "Project End", "Time Out", "Time In", "Day End", "ID"]
     wr.writerow(columns)
 
 def timer():
