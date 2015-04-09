@@ -11,8 +11,10 @@ import select
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
-wr = csv.writer(open("times.csv", "wb"))
 if os.path.isfile("times.csv"):
+    wr = csv.writer(open("times.csv", "a"))
+else:
+    wr = csv.writer(open("times.csv", "w"))
     columns = ["Date", "Day Start", "Project Abbrev", "Project Name", "Project Start", "Project End", "Time Out", "Time In", "Day End", "ID"]
     wr.writerow(columns)
 
@@ -35,11 +37,12 @@ def timer():
 				minutes = 0
 
 			if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-				raw_input()
-				print '\n','What are you doing? (lunch, home, break, switch task)'
+				raw_input()	
+                                print '\n','What are you doing? (lunch, home, break, switch task)'
 				answer = raw_input()
-				choices(answer)
-				
+				timesOut = ["holder", Daybegin, ABBREV, pName, time_start, "placeholder", "placeholder", "placeholder","placeholder"," placeholder"]
+                                wr.writerow(timesOut)
+                                choices(answer)
 
 def choices(answer):
 	if answer == 'lunch':
@@ -70,6 +73,8 @@ Daybegin = datetime.datetime.now()
 
 raw_input("What are you working on? (ABBREV) ")
 ABBREV = raw_input
+raw_input("What is the name of this project? ")
+pName = raw_input
 
 print
 time_start = time.time()
@@ -81,3 +86,4 @@ print "\n", 'Press enter to exit timer', '\n'
 
 print "The project elapsed time is: "
 timer()
+print "THe current project is %s" %pName
