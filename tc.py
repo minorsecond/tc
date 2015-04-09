@@ -13,6 +13,7 @@ ABBREV      =   []
 pName       =   []
 sumtime     =   0
 projTime    =   0
+minuteCount     =   0
 companyMinutes = 0
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -41,7 +42,7 @@ def timer():
                         if seconds >= 60:
 				minutes += 1
 				seconds = 0
-
+                                minuteCount += 1
 			if minutes >= 60:
 				hours += 1
 				minutes = 0
@@ -55,13 +56,13 @@ def timer():
 
 #Trying to figure out how to round minutes to nearest 6 minutes. 
 def companyTimer():
-    if minutes % 6 > .5:
-        companyMinutes = minutes + 1
-    elif minutes % 6 < 5:
-        companyMinutes = minutes - 1
+    if minuteCount % 6 > .5:
+        companyMinutes = minuteCount + 1
+    elif minuteCount % 6 < 5:
+        companyMinutes = minuteCount - 1
     else:
-        companyMinutes = minutes
-    print companyMinutes
+        companyMinutes = minuteCount / 6
+    return companyMinutes
 
 def choices(answer):
 	if answer == 'lunch':
@@ -108,6 +109,5 @@ print "\n", 'Press enter to exit timer', '\n'
 
 print "The project elapsed time is: "
 timer()
-
 print "The timesheet time elapsed is: "
 companyTimer()
