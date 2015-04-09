@@ -9,6 +9,11 @@ import csv
 import os.path
 import select
 
+ABBREV      =   []
+pName       =   []
+sumtime     =   0
+projTime    =   0
+
 os.system('cls' if os.name == 'nt' else 'clear')
 
 if os.path.isfile("times.csv"):
@@ -59,9 +64,6 @@ def choices(answer):
 	else:
 		quit()
 
-sumtime = 0
-projTime = 0
-
 print "\n"
 print "Hello there. I will log your project time and create a .csv file with the results."
 print "Your current logged time for this week is: ", sumtime
@@ -72,9 +74,9 @@ print "\n"
 Daybegin = datetime.datetime.now()
 
 raw_input("What are you working on? (ABBREV) ")
-ABBREV = raw_input
+ABBREV = str(raw_input)
 raw_input("What is the name of this project? ")
-pName = raw_input
+pName = str(raw_input)
 
 print
 time_start = time.time()
@@ -86,4 +88,3 @@ print "\n", 'Press enter to exit timer', '\n'
 
 print "The project elapsed time is: "
 timer()
-print "THe current project is %s" %pName
