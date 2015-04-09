@@ -14,7 +14,7 @@ pName       =   []
 sumtime     =   0
 projTime    =   0
 minuteCount =   0
-companyMinutes = 0
+timer        =   0
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -47,8 +47,8 @@ def timer():
 				raw_input()	
                                 print '\n','What are you doing? (lunch, home, break, switch task)'
 				answer = raw_input()
-                                print "The timesheet time elapsed is: "
-                                round_to_nearest(minuteCount)
+                                timer = round_to_nearest(minuteCount)
+                                print "The timesheet time elapsed is: %s" %timer
                                 choices(answer)
 
 def choices(answer):
