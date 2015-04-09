@@ -1,2 +1,6 @@
-Need to add code to add abbrev codes to csv.
+Need to add code to add information to csv.
+Need code that pulls elapsed hours for each abbrev and displays them - a
+report function.
 Need code to log break times, etc.
+Write abbrev format check
+Write code to request project name and match to abbrev code

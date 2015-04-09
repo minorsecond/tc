@@ -36,7 +36,7 @@ def timer():
 
 			if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
 				raw_input()
-				print '\n','What are you doing? (lunch, home, break)'
+				print '\n','What are you doing? (lunch, home, break, switch task)'
 				answer = raw_input()
 				choices(answer)
 				
@@ -57,6 +57,7 @@ def choices(answer):
 		quit()
 
 sumtime = 0
+projTime = 0
 
 print "\n"
 print "Hello there. I will log your project time and create a .csv file with the results."
@@ -67,7 +68,7 @@ raw_input("Please press <ENTER> to log current time and begin your day")
 print "\n"
 Daybegin = datetime.datetime.now()
 
-raw_input("What are you working on? (ABBREV)")
+raw_input("What are you working on? (ABBREV) ")
 ABBREV = raw_input
 
 print
