@@ -31,7 +31,10 @@ def round_to_nearest(num, base=6):
 
 # Think hours needs to be initialized before being referenced here. Getting errors.
 def timer():
-    # TODO: Docstring
+    """
+    Timer that ends upon user interaction. Uses round_to_nearest script to round to nearest
+    six-minute interval, to comply with work requirements.
+    """
     logging.debug("timer called")
     
     seconds =   0
@@ -72,7 +75,11 @@ def timer():
 
 
 def choices(answer):
-    # TODO: Docstring
+    """
+    Prompts user to specify reason for break. No real reason for this other than
+    just general bookkeeping. Not a requirement. Would be nice to be able to pause
+    the timer for breaks, rather than having to start the script all over again.
+    """
     logging.debug("Called choices with answer: {}".format(answer))
     if answer == 'lunch':
         print 'Bon appetit'
@@ -101,8 +108,7 @@ def init_csv(filename="times.csv"):
     columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
                "Project Start", "Project End", "Time Out", "Time In",
                "Day End", "ID"]
-    # isn't this used when writing each time in/out, too? Possibly factor
-    # into a global
+    # TODO: columns as a global
 
     logging.debug("Called init_csv")
     if os.path.isfile(filename):
