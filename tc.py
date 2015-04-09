@@ -26,7 +26,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0,'Project Time' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
 
 def round_to_nearest(num, base=6):
-    companyMinutes = num + (base>>1)
+    companyMinutes = num + (base//1)
     return companyMinutes - (companyMinutes % base)
 
 # Think hours needs to be initialized before being referenced here. Getting errors.
