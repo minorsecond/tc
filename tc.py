@@ -13,7 +13,7 @@ ABBREV      =   []
 pName       =   []
 sumtime     =   0
 projTime    =   0
-minuteCount     =   0
+minuteCount =   0
 companyMinutes = 0
 
 os.system('cls' if os.name == 'nt' else 'clear')
@@ -21,18 +21,15 @@ os.system('cls' if os.name == 'nt' else 'clear')
 #initialize dictionary
 times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
 
-#load csv writer for csv output in future)
-if os.path.isfile("times.csv"):
-    wr = csv.writer(open("times.csv", "a"))
-else:
-    wr = csv.writer(open("times.csv", "w"))
-    columns = ["Date", "Day Start", "Project Abbrev", "Project Name", "Project Start", "Project End", "Time Out", "Time In", "Day End", "ID"]
-    wr.writerow(columns)
+def round_to_nearest(num, base=6):
+    companyMinutes = num + (base>>1)
+    return companyMinutes - (companyMinutes % base)
 
 def timer(): 
     seconds = 0
     minutes = 0
     hours = 0
+    minuteCount = 0
     while True:
 
 			sys.stdout.write("\r {hours} Hours {minutes} Minutes {seconds} Seconds".format(hours=hours, minutes=minutes, seconds=seconds))
@@ -50,19 +47,9 @@ def timer():
 				raw_input()	
                                 print '\n','What are you doing? (lunch, home, break, switch task)'
 				answer = raw_input()
-				timesOut = ["holder", Daybegin, ABBREV, pName, time_start, "placeholder", "placeholder", "placeholder","placeholder"," placeholder"]
-                                wr.writerow(timesOut)
+                                print "The timesheet time elapsed is: "
+                                round_to_nearest(minuteCount)
                                 choices(answer)
-
-#Trying to figure out how to round minutes to nearest 6 minutes. 
-def companyTimer():
-    if minuteCount % 6 > .5:
-        companyMinutes = minuteCount + 1
-    elif minuteCount % 6 < 5:
-        companyMinutes = minuteCount - 1
-    else:
-        companyMinutes = minuteCount / 6
-    return companyMinutes
 
 def choices(answer):
 	if answer == 'lunch':
@@ -109,5 +96,3 @@ print "\n", 'Press enter to exit timer', '\n'
 
 print "The project elapsed time is: "
 timer()
-print "The timesheet time elapsed is: "
-companyTimer()
