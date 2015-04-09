@@ -27,11 +27,15 @@ times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 
 
 def round_to_nearest(num, base=6):
     companyMinutes = num + (base>>1)
-    return companyMinutes - (companyMintues % base)
+    return companyMinutes - (companyMinutes % base)
 
 def timer():
     # TODO: Docstring
     logging.debug("timer called")
+    
+    seconds =   0
+    minutes =   0
+    hours   =   0    
     while True:
 
         sys.stdout.write(
