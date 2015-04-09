@@ -22,6 +22,13 @@ project_time = 0
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
+#initialize dictionary
+times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0,'Project Time' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
+
+def round_to_nearest(num, base=6):
+    companyMinutes = num + (base>>1)
+    return companyMinutes - (companyMintues % base)
+
 def timer():
     # TODO: Docstring
     logging.debug("timer called")
@@ -49,6 +56,9 @@ def timer():
             raw_input()
             print '\n', 'What are you doing? (lunch, home, break, switch task)'
             answer = raw_input()
+            timer = round_to_nearest(minutes)
+            times['Project Time'] = timer
+            print"The timesheet time elapsed is: %s" %timer
             times_out = ["holder", day_start, abbrev, project_name, time_start,
                          "placeholder", "placeholder", "placeholder",
                          "placeholder", " placeholder"]
@@ -117,8 +127,9 @@ print "\n"
 day_start = datetime.datetime.now()
 
 abbrev = raw_input("What are you working on? (ABBREV) ")
+times['Project Abbrev'] = abbrev
 project_name = raw_input("What is the name of this project? ")
-
+times['Project Name'] = project_name
 print
 time_start = time.time()
 
