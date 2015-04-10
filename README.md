@@ -1,4 +1,4 @@
-#Timeclock
+#PYPER (Python Project Time Tracker)
 =========
 
 Python script to log project time for work. This will create a CSV file containing daily worked hours (total and project).
