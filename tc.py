@@ -2,7 +2,7 @@
 # Robert Ross Wardrup
 # 08/31/2014
 
-import time # why are we using both time and datetime?
+import time # time.sleep requires this, but I'm sure there is an alternative to the sleep.
 import datetime
 import sys
 import csv
@@ -19,17 +19,20 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 sumtime = 0
 project_time = 0
-
-os.system('cls' if os.name == 'nt' else 'clear')
-
+#CSV columns
+columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
+               "Project Start", "Project End", "Time Out", "Time In",
+               "Day End", "ID"]
 #initialize dictionary
 times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0,'Project Time' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
+
+
+os.system('cls' if os.name == 'nt' else 'clear')
 
 def round_to_nearest(num, base=6):
     companyMinutes = num + (base//1)
     return companyMinutes - (companyMinutes % base)
 
-# Think hours needs to be initialized before being referenced here. Getting errors.
 def timer():
     """
     Timer that ends upon user interaction. Uses round_to_nearest script to round to nearest
@@ -48,7 +51,7 @@ def timer():
         sys.stdout.flush()
         # why not just print? Is there some cross-platform reason I'm missing?
         now = datetime.datetime.now()
-        seconds = (now - time_start).total_seconds
+        seconds = (now - time_start).total_seconds()
         logging.info("seconds set to {}".format(seconds))
         hours = seconds // 60 // 60
         minutes = seconds // 60
@@ -58,7 +61,7 @@ def timer():
 
         # TODO: more comments here please! No idea what this does
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-            # TODO: throws error in windows since sys.stdin is not a file
+            # TODO: throws error in windows since sys.stdin is not a file.
             raw_input()
             print '\n', 'What are you doing? (lunch, home, break, switch task)'
             answer = raw_input()
@@ -70,7 +73,7 @@ def timer():
                          "placeholder", " placeholder"]
             wr.writerow(times_out)
             choices(answer)
-	time.sleep(1)
+    time.sleep(1)
 
 
 def choices(answer):
@@ -99,15 +102,9 @@ def choices(answer):
 
 def init_csv(filename="times.csv"):
     """Initializes the csv.writer based on its filename
-
     init_csv('file.csv') -> csv.writer(open('file.csv', 'a'))
     creates file if it doesn't exist, and writes some default columns as a
     header"""
-
-    columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
-               "Project Start", "Project End", "Time Out", "Time In",
-               "Day End", "ID"]
-    # TODO: columns as a global
 
     logging.debug("Called init_csv")
     if os.path.isfile(filename):
@@ -149,4 +146,3 @@ print "\n", 'Press enter to exit timer', '\n'
 
 print "The project elapsed time is: "
 timer()
-
