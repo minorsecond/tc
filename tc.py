@@ -1,3 +1,4 @@
+# PYPER (Python Project Time Tracker)
 # A timeclock program for project-based jobs
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
@@ -35,22 +36,25 @@ def round_to_nearest(num, base=6):
 
 
 def timer():
+
     """
     Timer that ends upon user interaction. Uses round_to_nearest script to round to nearest
     six-minute interval, to comply with work requirements.
     """
+
     logging.debug("timer called")
 
     seconds = 0
     minutes = 0
     hours = 0
+
     while True:
 
         sys.stdout.write(
             "\r {hours} Hours {minutes} Minutes {seconds} Seconds".format(
                 hours=hours, minutes=minutes, seconds=seconds))
         sys.stdout.flush()
-        # why not just print? Is there some cross-platform reason I'm missing?
+        # TODO: Try print instead of stdout.
         now = datetime.datetime.now()
         seconds = (now - time_start).total_seconds()
         logging.info("seconds set to {}".format(seconds))
@@ -60,7 +64,12 @@ def timer():
         logging.info("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
             hours, minutes, seconds))
 
-        # TODO: more comments here please! No idea what this does
+        """
+        The sys.stdin line prevents the timer from halting immediately when
+        run. Without it, the key input that starts the timer is passed into
+        raw_input in this if statement, causing the timer to never start.
+        """
+
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
             # TODO: throws error in windows since sys.stdin is not a file.
             raw_input()
