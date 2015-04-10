@@ -30,7 +30,7 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def round_to_nearest(num, base=6):
-    company_minutes = num + (base // 1)
+    company_minutes = num + (base >> 1)
     return company_minutes - (company_minutes % base)
 
 
