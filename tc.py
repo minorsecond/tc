@@ -89,7 +89,7 @@ def timer(time_start, abbrev, project_name, pid):
         # TODO: Try print instead of stdout.
         date = datetime.datetime.now().date()
         now = datetime.datetime.now()
-        seconds = (now - time_start).total_seconds()
+        seconds = 1 + (now - time_start).total_seconds()
         logging.info("seconds set to {}".format(seconds))
         hours = seconds // 60 // 60
         minutes = seconds // 60
@@ -118,8 +118,9 @@ def timer(time_start, abbrev, project_name, pid):
                          "placeholder", "time_in_placeholder", pid]
             wr_timesheet.writerow(times_out)
             choices(answer, abbrev, project_name, time_start)
-    time.sleep(1)
-
+        if seconds > 1:
+            time.sleep(1)
+            
 
 def choices(answer, abbrev, project_name, time_start):
     """
