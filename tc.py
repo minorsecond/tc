@@ -22,9 +22,24 @@ project_time = 0
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
+#initialize dictionary
+times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0,'Project Time' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
+
+def round_to_nearest(num, base=6):
+    companyMinutes = num + (base>>1)
+    return companyMinutes - (companyMinutes % base)
+
+# Think hours needs to be initialized before being referenced here. Getting errors.
 def timer():
-    # TODO: Docstring
+    """
+    Timer that ends upon user interaction. Uses round_to_nearest script to round to nearest
+    six-minute interval, to comply with work requirements.
+    """
     logging.debug("timer called")
+    
+    seconds =   0
+    minutes =   0
+    hours   =   0    
     while True:
 
         sys.stdout.write(
@@ -47,6 +62,9 @@ def timer():
             raw_input()
             print '\n', 'What are you doing? (lunch, home, break, switch task)'
             answer = raw_input()
+            timer = round_to_nearest(minutes)
+            times['Project Time'] = timer
+            print"The timesheet time elapsed is: %s" %timer
             times_out = ["holder", day_start, abbrev, project_name, time_start,
                          "placeholder", "placeholder", "placeholder",
                          "placeholder", " placeholder"]
@@ -56,7 +74,11 @@ def timer():
 
 
 def choices(answer):
-    # TODO: Docstring
+    """
+    Prompts user to specify reason for break. No real reason for this other than
+    just general bookkeeping. Not a requirement. Would be nice to be able to pause
+    the timer for breaks, rather than having to start the script all over again.
+    """
     logging.debug("Called choices with answer: {}".format(answer))
     if answer == 'lunch':
         print 'Bon appetit'
@@ -85,8 +107,7 @@ def init_csv(filename="times.csv"):
     columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
                "Project Start", "Project End", "Time Out", "Time In",
                "Day End", "ID"]
-    # isn't this used when writing each time in/out, too? Possibly factor
-    # into a global
+    # TODO: columns as a global
 
     logging.debug("Called init_csv")
     if os.path.isfile(filename):
@@ -116,8 +137,9 @@ print "\n"
 day_start = datetime.datetime.now()
 
 abbrev = raw_input("What are you working on? (ABBREV) ")
+times['Project Abbrev'] = abbrev
 project_name = raw_input("What is the name of this project? ")
-
+times['Project Name'] = project_name
 print
 time_start = datetime.datetime.now()
 
