@@ -3,7 +3,10 @@
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
-import time  # time.sleep requires this, but I'm sure there is an alternative to the sleep.
+# time.sleep requires this, but I'm sure there is
+# an alternative to the sleep.
+import time
+
 import datetime
 import sys
 import csv
@@ -26,13 +29,21 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Day End", "ID"]
 
 # initialize dictionary
-times = {'Date': 0, 'Day Start': 0, 'Project Abbrev': 0, 'Project Name': 0, 'Project Start': 0,
-         'Project End': 0, 'Project Time': 0, 'Time Out': 0, 'Time In': 0, 'Day End': 0, 'pid': 0}
+times = {'Date': 0, 'Day Start': 0, 'Project Abbrev': 0, 'Project Name': 0,
+         'Project Start': 0, 'Project End': 0, 'Project Time': 0,
+         'Time Out': 0, 'Time In': 0, 'Day End': 0, 'pid': 0}
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def query():
+    """Prompts user for a yes/no answer
+
+    if user responds with 'yes', 'ye', or 'y', return True
+    if user responds with 'no' or 'n', return False
+    else: return None
+    """
+
     # raw_input returns the empty string for "enter"
     yes = {'yes', 'y', 'ye', ''}
     no = {'no', 'n'}
@@ -47,13 +58,19 @@ def query():
 
 
 def project_start():
+    global times
+
+    logging.debug("project_start called")
     abbrev = raw_input("What are you working on? (ABBREV) ")
-    times['Project Abbrev'] = abbrev
     project_name = raw_input("What is the name of this project? ")
-    times['Project Name'] = project_name
     pid = uuid.uuid4()
+    logging.debug("UUID is {}".format(pid))
+    logging.debug("abbrev is {}".format(abbrev))
+    logging.debug("project_name is {}".format(project_name))
+    print "Entry UUID: {}".format(pid)
+    times['Project Abbrev'] = abbrev
+    times['Project Name'] = project_name
     times['pid'] = pid
-    print "Entry UUID: %s" % pid
     time_start = datetime.datetime.now()
     print "----------------------------------------------"
     print "\n", 'Press enter to exit timer', '\n'
@@ -63,22 +80,22 @@ def project_start():
 
 
 def round_to_nearest(num, base=6):
-    company_minutes = num + (base >> 1)
+    """Rounds num to the nearest base
+
+    round_to_nearest(7, 5) -> 5
+    """
+
+    company_minutes = num + (base // 2)
     return company_minutes - (company_minutes % base)
 
 
 def timer(time_start, abbrev, project_name, pid):
-    """
-    Timer that ends upon user interaction. Uses round_to_nearest script to round to nearest
-    six-minute interval, to comply with work requirements. Timedelta might be a better way
-    of doing this. Something to look in to.
+    """Timer that ends upon user interaction. Uses round_to_nearest script
+    to round to nearest six-minute interval,
+    to comply with work requirements.
     """
 
     logging.debug("timer called")
-
-    seconds = 0
-    minutes = 0
-    hours = 0
 
     while True:
 
@@ -94,7 +111,7 @@ def timer(time_start, abbrev, project_name, pid):
         hours = seconds // 60 // 60
         minutes = seconds // 60
         seconds %= 60
-        logging.info("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
+        logging.debug("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
             hours, minutes, seconds))
 
         """
@@ -120,14 +137,16 @@ def timer(time_start, abbrev, project_name, pid):
             choices(answer, abbrev, project_name, time_start)
         if seconds > 1:
             time.sleep(1)
-            
+
 
 def choices(answer, abbrev, project_name, time_start):
+    """Prompts user to specify reason for break.
+
+    No real reason for this other than just general bookkeeping.
+    Not a requirement. Would be nice to be able to pause the timer for breaks,
+    rather than having to start the script all over again.
     """
-    Prompts user to specify reason for break. No real reason for this other than
-    just general bookkeeping. Not a requirement. Would be nice to be able to pause
-    the timer for breaks, rather than having to start the script all over again.
-    """
+
     logging.debug("Called choices with answer: {}".format(answer))
     if answer == 'lunch':
         print 'Bon appetit'
@@ -149,16 +168,18 @@ def choices(answer, abbrev, project_name, time_start):
             time_start = datetime.datetime.now()
             print "Resuming '{0}' at: '{1}' " % (project_name, time_start)
         else:
-            quit()  # don't want to quit the program - pause it.
+            quit()  # TODO: don't want to quit the program - pause it.
     else:
         quit()
 
 
 def init_csv(filename="times.csv"):
     """Initializes the csv.writer based on its filename
+
     init_csv('file.csv') -> csv.writer(open('file.csv', 'a'))
     creates file if it doesn't exist, and writes some default columns as a
-    header"""
+    header
+    """
 
     logging.debug("Called init_csv")
     if os.path.isfile(filename):
@@ -168,7 +189,8 @@ def init_csv(filename="times.csv"):
     else:
         logging.debug("{} does not exist -- creating".format(filename))
         wr_timesheet = csv.writer(open(filename, "w"))
-        logging.info("{} created and opened as a csv.writer".format(wr_timesheet))
+        logging.info("{} created and opened as a csv.writer".format(
+            wr_timesheet))
         wr_timesheet.writerow(columns)
         logging.debug("{} initialized with columns: {}".format(
             filename, columns))
@@ -188,8 +210,3 @@ print "\n"
 day_start = datetime.datetime.now()
 print "The day's start time is ", day_start
 project_start()
-
-
-
-
-
