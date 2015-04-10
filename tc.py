@@ -32,11 +32,9 @@ def timer():
                 hours=hours, minutes=minutes, seconds=seconds))
         sys.stdout.flush()
         # why not just print? Is there some cross-platform reason I'm missing?
-        time.sleep(1)
-        seconds = int(time.time() - time_start) - minutes * 60
+        now = datetime.datetime.now()
+        seconds = (now - time_start).total_seconds
         logging.info("seconds set to {}".format(seconds))
-        # suggest conversion to datetimes, and
-        #   seconds = datetime.now() - time_start).total_seconds()
         hours = seconds // 60 // 60
         minutes = seconds // 60
         seconds %= 60
@@ -54,6 +52,7 @@ def timer():
                          "placeholder", " placeholder"]
             wr.writerow(times_out)
             choices(answer)
+	time.sleep(1)
 
 
 def choices(answer):
@@ -61,16 +60,16 @@ def choices(answer):
     logging.debug("Called choices with answer: {}".format(answer))
     if answer == 'lunch':
         print 'Bon appetit'
-        ltimeout = time.time()
+        ltimeout = datetime.datetime.now()
         logging.debug("ltimeout set to {}".format(ltimeout))
         quit()
     elif answer == 'home':
         print 'Take care!'
-        hometime = time.time()
+        hometime = datetime.datetime.now()
         logging.debug("hometime set to {}".format(hometime))
         quit()
     elif answer == 'break':
-        breaktime = time.time()
+        breaktime = datetime.datetime.now()
         logging.debug("breaktime set to {}".format(breaktime))
         quit()
     else:
@@ -120,7 +119,7 @@ abbrev = raw_input("What are you working on? (ABBREV) ")
 project_name = raw_input("What is the name of this project? ")
 
 print
-time_start = time.time()
+time_start = datetime.datetime.now()
 
 print "----------------------------------------------"
 print "The day's start time is ", day_start
