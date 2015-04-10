@@ -32,11 +32,9 @@ def timer():
                 hours=hours, minutes=minutes, seconds=seconds))
         sys.stdout.flush()
         # why not just print? Is there some cross-platform reason I'm missing?
-        time.sleep(1)
-        seconds = (datetime.datetime.now() - time_start).total_seconds
+        now = datetime.datetime.now()
+        seconds = (now - time_start).total_seconds
         logging.info("seconds set to {}".format(seconds))
-        # suggest conversion to datetimes, and
-        #   seconds = datetime.now() - time_start).total_seconds()
         hours = seconds // 60 // 60
         minutes = seconds // 60
         seconds %= 60
@@ -54,6 +52,7 @@ def timer():
                          "placeholder", " placeholder"]
             wr.writerow(times_out)
             choices(answer)
+	time.sleep(1)
 
 
 def choices(answer):
