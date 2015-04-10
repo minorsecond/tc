@@ -2,7 +2,7 @@
 # Robert Ross Wardrup
 # 08/31/2014
 
-import time # time.sleep requires this, but I'm sure there is an alternative to the sleep.
+import time  # time.sleep requires this, but I'm sure there is an alternative to the sleep.
 import datetime
 import sys
 import csv
@@ -14,24 +14,25 @@ LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
 LOGLEVEL = logging.INFO
-
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 sumtime = 0
 project_time = 0
-#CSV columns
+# CSV columns
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
-               "Project Start", "Project End", "Time Out", "Time In",
-               "Day End", "ID"]
-#initialize dictionary
-times = {'Date' : 0, 'Day Start' : 0, 'Project Abbrev' : 0, 'Project Name' : 0, 'Project Start' : 0, 'Project End' : 0,'Project Time' : 0, 'Time Out': 0, 'Time In' : 0, 'Day End' : 0, 'ID' : 0}
-
+           "Project Start", "Project End", "Time Out", "Time In",
+           "Day End", "ID"]
+# initialize dictionary
+times = {'Date': 0, 'Day Start': 0, 'Project Abbrev': 0, 'Project Name': 0, 'Project Start': 0,
+         'Project End': 0, 'Project Time': 0, 'Time Out': 0, 'Time In': 0, 'Day End': 0, 'ID': 0}
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
+
 def round_to_nearest(num, base=6):
-    companyMinutes = num + (base//1)
-    return companyMinutes - (companyMinutes % base)
+    company_minutes = num + (base // 1)
+    return company_minutes - (company_minutes % base)
+
 
 def timer():
     """
@@ -39,10 +40,10 @@ def timer():
     six-minute interval, to comply with work requirements.
     """
     logging.debug("timer called")
-    
-    seconds =   0
-    minutes =   0
-    hours   =   0    
+
+    seconds = 0
+    minutes = 0
+    hours = 0
     while True:
 
         sys.stdout.write(
@@ -57,7 +58,7 @@ def timer():
         minutes = seconds // 60
         seconds %= 60
         logging.info("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
-                hours, minutes, seconds))
+            hours, minutes, seconds))
 
         # TODO: more comments here please! No idea what this does
         if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
@@ -65,13 +66,13 @@ def timer():
             raw_input()
             print '\n', 'What are you doing? (lunch, home, break, switch task)'
             answer = raw_input()
-            timer = round_to_nearest(minutes)
-            times['Project Time'] = timer
-            print"The timesheet time elapsed is: %s" %timer
+            round_minutes = round_to_nearest(minutes)
+            times['Project Time'] = round_minutes
+            print"The timesheet time elapsed is: %s" % round_minutes
             times_out = ["holder", day_start, abbrev, project_name, time_start,
                          "placeholder", "placeholder", "placeholder",
                          "placeholder", " placeholder"]
-            wr.writerow(times_out)
+            wr_timesheet.writerow(times_out)
             choices(answer)
     time.sleep(1)
 
@@ -100,6 +101,7 @@ def choices(answer):
     else:
         quit()
 
+
 def init_csv(filename="times.csv"):
     """Initializes the csv.writer based on its filename
     init_csv('file.csv') -> csv.writer(open('file.csv', 'a'))
@@ -109,18 +111,19 @@ def init_csv(filename="times.csv"):
     logging.debug("Called init_csv")
     if os.path.isfile(filename):
         logging.debug("{} already exists -- opening".format(filename))
-        wr = csv.writer(open(filename, "a"))
+        wr_timesheet = csv.writer(open(filename, "a"))
         logging.info("{} opened as a csv.writer".format(filename))
     else:
         logging.debug("{} does not exist -- creating".format(filename))
-        wr = csv.writer(open(filename, "w"))
-        logging.info("{} created and opened as a csv.writer".format(wr))
-        wr.writerow(columns)
+        wr_timesheet = csv.writer(open(filename, "w"))
+        logging.info("{} created and opened as a csv.writer".format(wr_timesheet))
+        wr_timesheet.writerow(columns)
         logging.debug("{} initialized with columns: {}".format(
             filename, columns))
-    return wr
+    return wr_timesheet
 
-wr = init_csv("times.csv")
+
+wr_timesheet = init_csv("times.csv")
 
 print "\n"
 print "Hello there. I will log your project time and create a" \
