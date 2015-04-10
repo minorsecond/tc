@@ -1,5 +1,5 @@
 # A timeclock program for project-based jobs
-# Robert Ross Wardrup
+# Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
 import time  # time.sleep requires this, but I'm sure there is an alternative to the sleep.
