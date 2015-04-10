@@ -10,6 +10,7 @@ import csv
 import os.path
 import select
 import logging
+import uuid
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
@@ -23,11 +24,42 @@ project_time = 0
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Project Start", "Project End", "Time Out", "Time In",
            "Day End", "ID"]
+
 # initialize dictionary
 times = {'Date': 0, 'Day Start': 0, 'Project Abbrev': 0, 'Project Name': 0, 'Project Start': 0,
-         'Project End': 0, 'Project Time': 0, 'Time Out': 0, 'Time In': 0, 'Day End': 0, 'ID': 0}
+         'Project End': 0, 'Project Time': 0, 'Time Out': 0, 'Time In': 0, 'Day End': 0, 'pid': 0}
 
 os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def query():
+    # raw_input returns the empty string for "enter"
+    yes = {'yes', 'y', 'ye', ''}
+    no = {'no', 'n'}
+
+    choice = raw_input().lower()
+    if choice in yes:
+        return True
+    elif choice in no:
+        return False
+    else:
+        sys.stdout.write("Please respond with 'yes' or 'no'")
+
+
+def project_start():
+    abbrev = raw_input("What are you working on? (ABBREV) ")
+    times['Project Abbrev'] = abbrev
+    project_name = raw_input("What is the name of this project? ")
+    times['Project Name'] = project_name
+    pid = uuid.uuid4()
+    times['pid'] = pid
+    print "Entry UUID: %s" % pid
+    time_start = datetime.datetime.now()
+    print "----------------------------------------------"
+    print "\n", 'Press enter to exit timer', '\n'
+
+    print "The project elapsed time is: "
+    timer(time_start, abbrev, project_name, pid)
 
 
 def round_to_nearest(num, base=6):
@@ -35,11 +67,11 @@ def round_to_nearest(num, base=6):
     return company_minutes - (company_minutes % base)
 
 
-def timer():
-
+def timer(time_start, abbrev, project_name, pid):
     """
     Timer that ends upon user interaction. Uses round_to_nearest script to round to nearest
-    six-minute interval, to comply with work requirements.
+    six-minute interval, to comply with work requirements. Timedelta might be a better way
+    of doing this. Something to look in to.
     """
 
     logging.debug("timer called")
@@ -55,6 +87,7 @@ def timer():
                 hours=hours, minutes=minutes, seconds=seconds))
         sys.stdout.flush()
         # TODO: Try print instead of stdout.
+        date = datetime.datetime.now().date()
         now = datetime.datetime.now()
         seconds = (now - time_start).total_seconds()
         logging.info("seconds set to {}".format(seconds))
@@ -78,15 +111,17 @@ def timer():
             round_minutes = round_to_nearest(minutes)
             times['Project Time'] = round_minutes
             print"The timesheet time elapsed is: %s" % round_minutes
-            times_out = ["holder", day_start, abbrev, project_name, time_start,
-                         "placeholder", "placeholder", "placeholder",
-                         "placeholder", " placeholder"]
+            # Make sure same ID is used for each abbrev code used. To help
+            # check consistency.
+            times_out = [date, day_start, abbrev, project_name, time_start,
+                         "timeend_placeholder", "time_out_placeholder",
+                         "placeholder", "time_in_placeholder", pid]
             wr_timesheet.writerow(times_out)
-            choices(answer)
+            choices(answer, abbrev, project_name, time_start)
     time.sleep(1)
 
 
-def choices(answer):
+def choices(answer, abbrev, project_name, time_start):
     """
     Prompts user to specify reason for break. No real reason for this other than
     just general bookkeeping. Not a requirement. Would be nice to be able to pause
@@ -106,7 +141,14 @@ def choices(answer):
     elif answer == 'break':
         breaktime = datetime.datetime.now()
         logging.debug("breaktime set to {}".format(breaktime))
-        quit()
+        raw_input("Press Enter to begin working again")
+        print "Are you still working on %s? (y/n)" % abbrev
+        query()
+        if True:
+            time_start = datetime.datetime.now()
+            print "Resuming '{0}' at: '{1}' " % (project_name, time_start)
+        else:
+            quit()  # don't want to quit the program - pause it.
     else:
         quit()
 
@@ -142,19 +184,11 @@ print "\n"
 print "-----------------------------------------------------------"
 raw_input("Please press <ENTER> to log current time and begin your day")
 print "\n"
-
 day_start = datetime.datetime.now()
-
-abbrev = raw_input("What are you working on? (ABBREV) ")
-times['Project Abbrev'] = abbrev
-project_name = raw_input("What is the name of this project? ")
-times['Project Name'] = project_name
-print
-time_start = datetime.datetime.now()
-
-print "----------------------------------------------"
 print "The day's start time is ", day_start
-print "\n", 'Press enter to exit timer', '\n'
+project_start()
 
-print "The project elapsed time is: "
-timer()
+
+
+
+
