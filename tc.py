@@ -212,9 +212,9 @@ def timer(t):
             # since we're waiting for user input, we really don't need this
 
 
-def begin(t):
+def begin():
     """
-    Asks user for proect abbrev and name, and kicks off the timer.
+    Asks user for project abbrev and name, and kicks off the timer.
     This is probably going to be reused several times so I thought
     it prudent to just make it a function.
     """
@@ -247,8 +247,7 @@ def choices(answer, t):
             print "Resuming '{0}' at: '{1}' ".format(t.project_name, now)
             t.unpause()
         else:
-            begin(t)
-
+            begin()
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
     elif answer.lower() in {'2', '2.', 'break'}:
         logging.info("Taking a break at {}".format(datetime.datetime.now()))
@@ -262,9 +261,7 @@ def choices(answer, t):
             t.unpause()
             logging.info("Back from break at {}".format(now))
         else:
-            # If they're back from break, but NO LONGER working on that job,
-            # I think we should prompt to change jobs somehow
-            project_start()
+            begin()
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
         print 'Take care!'
         logging.info("Clocked out at {}".format(datetime.datetime.now()))
@@ -309,4 +306,4 @@ if __name__ == "__main__":
     print "\n"
     day_start = datetime.datetime.now()
     print "The day's start time is ", day_start
-    begin(t)
+    begin()
