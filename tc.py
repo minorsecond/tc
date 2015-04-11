@@ -17,6 +17,7 @@ FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
+day_start = datetime.datetime.now()
 sumtime = 0
 project_time = 0
 
@@ -168,7 +169,6 @@ def timer(t):
         days=days, hours=hours, minutes=minutes, seconds=seconds)
 
     while True:
-
         date = t.start_time.date()  # day the timer started
         seconds = t.seconds
         logging.info("seconds set to {}".format(seconds))
@@ -178,6 +178,7 @@ def timer(t):
         logging.debug("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
             hours, minutes, seconds))
 
+        # TODO: Need to handle other input (enter causes errors)
         print "What are you doing?\n" \
               "1. Lunch\n" \
               "2. Break\n" \
@@ -293,9 +294,30 @@ def init_csv(filename="times.csv"):
     return wr_timesheet
 
 
+def main_menu():
+    print "PYPER Timesheet Utility\n" \
+          "What would you like to do?\n" \
+          "1. View This Weeks Hours\n" \
+          "2. Generate Timesheet Report\n" \
+          "3. Begin Tracking Time\n" \
+          "4. Time Formatter\n"
+    answer = raw_input(">>>")
+    # if answer.lower() in {'1', '1.'}:
+    # if answer.lower() in {'2', '2.'}:
+    if answer.lower() in {'3', '3.'}:
+        # day_start = datetime.datetime.now()
+        print "The day's start time is ", day_start
+        begin()
+    if answer.lower() in {'4', '4.', }:
+        quit()
+
+
+
 if __name__ == "__main__":
     wr_timesheet = init_csv("times.csv")
+    main_menu()
 
+    """
     print "\n"
     print "Hello there. I will log your project time and create a" \
           " .csv file with the results."
@@ -307,3 +329,4 @@ if __name__ == "__main__":
     day_start = datetime.datetime.now()
     print "The day's start time is ", day_start
     begin()
+    """
