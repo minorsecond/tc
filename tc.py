@@ -54,7 +54,7 @@ def query():
     elif choice in no:
         return False
     else:
-        sys.stdout.write("Please respond with 'yes' or 'no'")
+        print "Please respond with 'yes' or 'no'"
 
 
 def project_start():
@@ -94,6 +94,10 @@ def timer(time_start, abbrev, project_name, pid):
     to round to nearest six-minute interval,
     to comply with work requirements.
     """
+
+    seconds = 0
+    minutes = 0
+    hours = 0
 
     logging.debug("timer called")
 
@@ -173,17 +177,17 @@ def choices(answer, abbrev, project_name, time_start):
         quit()
 
 
-def init_csv(filename="times.csv"):
+def csv_write(filename="times.csv"):
     """Initializes the csv.writer based on its filename
 
-    init_csv('file.csv') -> csv.writer(open('file.csv', 'a'))
+    csv_write('file.csv') -> csv.writer(open('file.csv', 'a'))
     creates file if it doesn't exist, and writes some default columns as a
     header
     """
 
-    logging.debug("Called init_csv")
+    logging.debug("Called csv_write")
     if os.path.isfile(filename):
-        logging.debug("{} already exists -- opening".format(filename))
+        logging.debug("{} already exists -- opening for writing".format(filename))
         wr_timesheet = csv.writer(open(filename, "a"))
         logging.info("{} opened as a csv.writer".format(filename))
     else:
@@ -197,7 +201,18 @@ def init_csv(filename="times.csv"):
     return wr_timesheet
 
 
-wr_timesheet = init_csv("times.csv")
+def csv_read(filename="times.csv"):
+    if os.path.isfile(filename):
+        logging.debug("{} already exists -- opening for reading".format(filename))
+        r_timesheet = open(filename)
+        csv_r = csv.reader(r_timesheet)
+        logging.info("{} opened as a csv.reader".format(filename))
+    else:
+        logging.debug("{} does not exist".format(filename))
+    return r_timesheet
+
+
+wr_timesheet = csv_write("times.csv")
 
 print "\n"
 print "Hello there. I will log your project time and create a" \
