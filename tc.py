@@ -63,7 +63,7 @@ def project_start():
 
 
 def round_to_nearest(num, base=6):
-    company_minutes = num + (base >> 1)
+    company_minutes = num + (base // 2)
     return company_minutes - (company_minutes % base)
 
 
