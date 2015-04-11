@@ -212,6 +212,19 @@ def timer(t):
             # since we're waiting for user input, we really don't need this
 
 
+def begin(t):
+    """
+    Asks user for proect abbrev and name, and kicks off the timer.
+    This is probably going to be reused several times so I thought
+    it prudent to just make it a function.
+    """
+
+    project = project_start()
+    t = Timer(project['project_name'], project['abbrev'], project['pid'])
+    t.daemon = True
+    t.start()
+    timer(t)
+
 
 def choices(answer, t):
     """Prompts user to specify reason for break.
@@ -234,7 +247,7 @@ def choices(answer, t):
             print "Resuming '{0}' at: '{1}' ".format(t.project_name, now)
             t.unpause()
         else:
-            project_start()
+            begin(t)
 
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
     elif answer.lower() in {'2', '2.', 'break'}:
@@ -296,8 +309,4 @@ if __name__ == "__main__":
     print "\n"
     day_start = datetime.datetime.now()
     print "The day's start time is ", day_start
-    project = project_start()
-    t = Timer(project['project_name'], project['abbrev'], project['pid'])
-    t.daemon = True
-    t.start()
-    timer(t)
+    begin(t)
