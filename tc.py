@@ -330,17 +330,3 @@ def main_menu():
 if __name__ == "__main__":
     wr_timesheet = init_csv("times.csv")
     main_menu()
-
-    """
-    print "\n"
-    print "Hello there. I will log your project time and create a" \
-          " .csv file with the results."
-    print "Your current logged time for this week is: ", sumtime
-    print "\n"
-    print "-----------------------------------------------------------"
-    raw_input("Please press <ENTER> to log current time and begin your day")
-    print "\n"
-    day_start = datetime.datetime.now()
-    print "The day's start time is ", day_start
-    begin()
-    """
