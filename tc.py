@@ -249,10 +249,9 @@ def choices(answer, t):
             t.unpause()
             logging.info("Back from break at {}".format(now))
         else:
-            quit()  # TODO: don't want to quit the program - pause it.
             # If they're back from break, but NO LONGER working on that job,
             # I think we should prompt to change jobs somehow
-            # TODO: prompt to change jobs
+            project_start()
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
         print 'Take care!'
         logging.info("Clocked out at {}".format(datetime.datetime.now()))
