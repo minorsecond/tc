@@ -294,8 +294,24 @@ def init_csv(filename="times.csv"):
     return wr_timesheet
 
 
+def time_formatter():
+    time_input = raw_input("\nTime Formatter\n" \
+                           "Please enter hours and minutes worked today" \
+                           "in 00:00 format: ")
+    if len(time_input.split(':')) == 2:
+        split_hours = time_input.split(':')[0]
+        split_minutes = time_input.split(':')[1]
+        round_minutes = round_to_nearest(int(split_minutes))
+        print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
+        time_formatter()
+    else:
+        print "Please check input format and try again. (00:00)"
+        time_formatter()
+
+        # TODO: Handle invalid format
+
 def main_menu():
-    print "PYPER Timesheet Utility\n" \
+    print "PYPER Timesheet Utility\n\n" \
           "What would you like to do?\n" \
           "1. View This Weeks Hours\n" \
           "2. Generate Timesheet Report\n" \
@@ -306,12 +322,10 @@ def main_menu():
     # if answer.lower() in {'2', '2.'}:
     if answer.lower() in {'3', '3.'}:
         # day_start = datetime.datetime.now()
-        print "The day's start time is ", day_start
+        print "\nThe day's start time is ", day_start
         begin()
     if answer.lower() in {'4', '4.', }:
-        quit()
-
-
+        time_formatter()
 
 if __name__ == "__main__":
     wr_timesheet = init_csv("times.csv")
