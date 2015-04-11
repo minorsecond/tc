@@ -7,7 +7,6 @@ import datetime
 import sys
 import csv
 import os.path
-import select
 import logging
 import uuid
 import threading
@@ -20,6 +19,7 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 sumtime = 0
 project_time = 0
+
 
 class Timer(threading.Thread):
     """Timer thread to track job timing
@@ -55,7 +55,7 @@ class Timer(threading.Thread):
         if self.pause_times:
             return sum((pause.get('stop', datetime.datetime.now()) - \
                         pause['start']).total_seconds() for \
-                        pause in self.pause_times)
+                       pause in self.pause_times)
         else:
             return 0
 
@@ -122,7 +122,6 @@ def query():
 
 
 def project_start():
-
     logging.debug("project_start called")
     abbrev = raw_input("What are you working on? (ABBREV) ")
     project_name = raw_input("What is the name of this project? ")
@@ -144,6 +143,7 @@ def round_to_nearest(num, base=6):
     company_minutes = num + (base // 2)
     return company_minutes - (company_minutes % base)
 
+
 def calc_time(t):
     """Calculate days,hours,minutes,seconds from Timer"""
 
@@ -153,6 +153,7 @@ def calc_time(t):
     minutes = seconds // 60
     seconds %= 60
     return (days, hours, minutes, seconds)
+
 
 def timer(t):
     """Timer that ends upon user interaction. Uses round_to_nearest script
@@ -164,7 +165,7 @@ def timer(t):
 
     days, hours, minutes, seconds = calc_time(t)
     print "{days} Days {hours} Hours {minutes} Minutes {seconds} Seconds".format(
-            days=days, hours=hours, minutes=minutes, seconds=seconds)
+        days=days, hours=hours, minutes=minutes, seconds=seconds)
 
     while True:
 
@@ -188,8 +189,7 @@ def timer(t):
         # Recalculate so we have accurate end times
         days, hours, minutes, seconds = calc_time(t)
         print "{days} Days {hours} Hours {minutes} Minutes {seconds} Seconds".format(
-                days=days, hours=hours, minutes=minutes, seconds=seconds)
-
+            days=days, hours=hours, minutes=minutes, seconds=seconds)
 
         round_minutes = round_to_nearest(minutes, 6)
 
@@ -208,8 +208,9 @@ def timer(t):
         if response == "end of day":
             quit()
 
-        # time.sleep(1)
-        # since we're waiting for user input, we really don't need this
+            # time.sleep(1)
+            # since we're waiting for user input, we really don't need this
+
 
 
 def choices(answer, t):
@@ -230,7 +231,7 @@ def choices(answer, t):
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
     elif answer.lower() in {'2', '2.', 'break'}:
         logging.info("Taking a break at {}".format(datetime.datetime.now()))
-        t.pause()
+        t.pause("break")
         raw_input("Press Enter to begin working again")
         print "Are you still working on {}? (y/n)".format(t.abbrev)
         answer = query()
@@ -273,6 +274,7 @@ def init_csv(filename="times.csv"):
         logging.debug("{} initialized with columns: {}".format(
             filename, columns))
     return wr_timesheet
+
 
 if __name__ == "__main__":
     wr_timesheet = init_csv("times.csv")
