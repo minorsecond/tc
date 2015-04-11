@@ -227,7 +227,15 @@ def choices(answer, t):
         t.pause("lunch")
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
-        t.unpause()
+        print("Are you still working on  '{}' ? (y/n)").format(t.project_name)
+        answer = query()
+        if answer:
+            now = datetime.datetime.now()
+            print "Resuming '{0}' at: '{1}' ".format(t.project_name, now)
+            t.unpause()
+        else:
+            project_start()
+
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
     elif answer.lower() in {'2', '2.', 'break'}:
         logging.info("Taking a break at {}".format(datetime.datetime.now()))
