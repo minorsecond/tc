@@ -118,8 +118,7 @@ def timer(time_start, abbrev, project_name, pid):
                          "placeholder", "time_in_placeholder", pid]
             wr_timesheet.writerow(times_out)
             choices(answer, abbrev, project_name, time_start)
-        if seconds > 1:
-            time.sleep(1)
+        time.sleep(1)
             
 
 def choices(answer, abbrev, project_name, time_start):
