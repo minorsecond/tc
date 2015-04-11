@@ -177,8 +177,6 @@ def timer(t):
         seconds %= 60
         logging.debug("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
             hours, minutes, seconds))
-
-        # TODO: Need to handle other input (enter causes errors)
         print "What are you doing?\n" \
               "1. Lunch\n" \
               "2. Break\n" \
@@ -194,13 +192,13 @@ def timer(t):
 
         round_minutes = round_to_nearest(minutes, 6)
 
-        # times['Project Time'] = round_minutes  # TODO: factor out since I removed times dict
         print"The timesheet time elapsed is: {:.0f}m".format(round_minutes)
         # Make sure same ID is used for each abbrev code used. To help
         # check consistency.
 
         # let's refactor this into a clocktime object that knows how to write itself
         # especially since we REALLY only need to write to this when we clock out
+        # TODO: Refactor into clocktime object.
         times_out = [date, day_start, t.abbrev, t.project_name, t.start_time,
                      "timeend_placeholder", "time_out_placeholder",
                      "placeholder", "time_in_placeholder", t.pid]
@@ -308,7 +306,6 @@ def time_formatter():
         print "Please check input format and try again. (00:00)"
         time_formatter()
 
-        # TODO: Handle invalid format
 
 def main_menu():
     print "PYPER Timesheet Utility\n\n" \
