@@ -1,3 +1,14 @@
+#!/usr/bin/python
+# -*- coding: ascii -*-
+
+"""
+This script is a timesheet utility designed to assist
+in keeping track of projects in a project-based
+job using project codes and names. It has the ability
+to create CSV files, convert standard time to tenths
+of an hour, and to generate reports.
+"""
+
 # PYPER (Python Project Time Tracker)
 # A timeclock program for project-based jobs
 # Robert Ross Wardrup, NotTheEconomist, dschetel
@@ -123,6 +134,13 @@ def query():
 
 
 def project_start():
+    """
+    Prompts the user for project information, creates an id for
+    recalling data (will be used in the future) and returns
+    project name, project abbrev and id for use in other
+    functions.
+    """
+
     logging.debug("project_start called")
     abbrev = raw_input("What are you working on? (ABBREV) ")
     project_name = raw_input("What is the name of this project? ")
@@ -190,7 +208,7 @@ def timer(t):
         print "{days} Days {hours} Hours {minutes} Minutes {seconds} Seconds".format(
             days=days, hours=hours, minutes=minutes, seconds=seconds)
 
-        round_minutes = round_to_nearest(minutes, 6)
+        round_minutes = round_to_nearest(minutes)
 
         print"The timesheet time elapsed is: {:.0f}m".format(round_minutes)
         # Make sure same ID is used for each abbrev code used. To help
@@ -226,7 +244,12 @@ def begin():
 
 
 def choices(answer, t):
+
     """Prompts user to specify reason for break.
+
+    :param answer: takes user input from timer function
+    :param t: takes time from timer.
+    answer: takes input from timer function
 
     No real reason for this other than just general bookkeeping.
     Not a requirement. Would be nice to be able to pause the timer for breaks,
@@ -293,6 +316,11 @@ def init_csv(filename="times.csv"):
 
 
 def time_formatter():
+    """
+    Takes user input as 00:00, splits those using : as seperator,
+    and prints the time formatted for timesheet in tenths of an
+    hour
+    """
     time_input = raw_input("\nTime Formatter\n" \
                            "Please enter hours and minutes worked today" \
                            "in 00:00 format: ")
@@ -308,6 +336,11 @@ def time_formatter():
 
 
 def main_menu():
+    """
+    Main menu for program. Prompts user for function.
+    Currently, options one and two are unused but
+    can't be commented out.
+    """
     print "PYPER Timesheet Utility\n\n" \
           "What would you like to do?\n" \
           "1. View This Weeks Hours\n" \
@@ -324,6 +357,7 @@ def main_menu():
     if answer.lower() in {'4', '4.', }:
         time_formatter()
 
+
 if __name__ == "__main__":
-    wr_timesheet = init_csv("times.csv")
+    wr_timesheet = init_csv()
     main_menu()
