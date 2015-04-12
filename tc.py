@@ -31,8 +31,7 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
-sumtime = 0
-project_time = 0
+
 
 # Create data structures
 
@@ -48,7 +47,7 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 with conn:
     cur = conn.cursor()
     cur.execute('CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
-                , Stop_time DATE, Date DATE, Stop_type TEXT)')
+                , Stop_time DATE, Date DATE, Stop_type TEXT, Break_end DATE)')
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -81,7 +80,7 @@ def project_start():
     project name, project abbrev and id for use in other
     functions.
     """
-    # TODO: broken now that sqlite is being used. Essentially a typerror.
+
     logging.debug("project_start called")
     clock_in = datetime.datetime.now()
     abbrev = raw_input("What are you working on? (ABBREV): ")
@@ -96,13 +95,8 @@ def project_start():
         cur.execute(
             "INSERT INTO timesheet(ID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
             [pid, lead_name, project_name, abbrev, clock_in, date])
-    data_dict = {'project_name': project_name,
-                 'lead_name': lead_name,
-                 'date': date,
-                 'abbrev': abbrev,
-                 'pid': pid}
-    # return data_dict
-    main_menu(data_dict)
+    global pid
+    return pid
 
 
 def round_to_nearest(num, base=6):
@@ -126,15 +120,15 @@ def calc_time(t):
     return (days, hours, minutes, seconds)
 
 
-def break_submenu(data):
+def break_submenu():
     print "What are you doing?\n" \
           "1. Lunch\n" \
           "2. Break\n"
     answer = raw_input(">>>")
-    breaktime(answer, data)
+    breaktime(answer)
 
 
-def breaktime(answer, data):
+def breaktime(answer):
     """Prompts user to specify reason for break.
 
     :param answer: takes user input from timer function
@@ -146,18 +140,22 @@ def breaktime(answer, data):
     rather than having to start the script all over again.
     """
 
-    print "DEBUGGING: PID = {}".format(data['pid'])
-
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
 
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
-        data['clock_out'] = date
         with conn:
             cur.execute(
-                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_type, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [data['pid'], data['lead_name'], data['project_name'], data['abbrev'], data['clock_out'], data['date']])
+                "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date FROM timesheet WHERE ID = ?", (pid,))
+            sel = cur.fetchall()
+            for row in sel:
+                print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
+            print "SQL DEBUG::: {}".format(sel)
+
+            cur.execute(
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
+                [pid, ])
         print 'Bon appetit'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
@@ -166,6 +164,9 @@ def breaktime(answer, data):
         if answer:
             now = datetime.datetime.now()
             print "Resuming '{0}' at: '{1}\n' ".format(data['project_name'], now)
+            cur.execute(
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?, ?)",
+                [pid, ])
             main_menu(data)
         else:
             main_menu(data)
@@ -231,7 +232,7 @@ def time_formatter():
         time_formatter()
 
 
-def main_menu(data):
+def main_menu():
     """
     Main menu for program. Prompts user for function.
     Currently, options one and two are unused but
@@ -247,8 +248,9 @@ def main_menu(data):
     answer = raw_input(">>>")
     if answer.lower() in {'1', '1.'}:
         project_start()
+        main_menu()
     if answer.lower() in {'2', '2.'}:
-        break_submenu(data)
+        break_submenu()
     # if answer.lower() in {'3', '3.'}:
     if answer.lower() in {'5', '5.'}:
         time_formatter()
@@ -256,4 +258,4 @@ def main_menu(data):
 
 if __name__ == "__main__":
     wr_timesheet = init_csv()
-    main_menu(data=data_dict)
+    main_menu()
