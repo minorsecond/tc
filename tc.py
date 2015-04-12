@@ -104,6 +104,7 @@ def project_start():
     # return data_dict
     main_menu(data_dict)
 
+
 def round_to_nearest(num, base=6):
     """Rounds num to the nearest base
 
@@ -125,14 +126,6 @@ def calc_time(t):
     return (days, hours, minutes, seconds)
 
 
-def begin():
-    """
-    Asks user for project abbrev and name, and kicks off the timer.
-    This is probably going to be reused several times so I thought
-    it prudent to just make it a function.
-    """
-
-
 def break_submenu(data):
     print "What are you doing?\n" \
           "1. Lunch\n" \
@@ -145,7 +138,7 @@ def breaktime(answer, data):
     """Prompts user to specify reason for break.
 
     :param answer: takes user input from timer function
-    :param t: takes time from timer.
+    :param data: data dictionary for job variables.
     answer: takes input from timer function
 
     No real reason for this other than just general bookkeeping.
@@ -157,8 +150,6 @@ def breaktime(answer, data):
 
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
-
-    # TODO: going to need to find a better way use variables. Can you use a dictionary as an argument?
 
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
@@ -177,21 +168,19 @@ def breaktime(answer, data):
             print "Resuming '{0}' at: '{1}\n' ".format(data['project_name'], now)
             main_menu(data)
         else:
-            begin()
+            main_menu(data)
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
     elif answer.lower() in {'2', '2.', 'break'}:
         logging.info("Taking a break at {}".format(datetime.datetime.now()))
-        t.pause("break")
         raw_input("Press Enter to begin working again")
         print "Are you still working on {}? (y/n)".format(data['abbrev'])
         answer = query()
         if answer:
             now = datetime.datetime.now()
             print "Resuming '{0}' at: '{1}' " % (data['project_name'], now)
-            t.unpause()
             logging.info("Back from break at {}".format(now))
         else:
-            begin()
+            main_menu(data)
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
         print 'Take care!'
         logging.info("Clocked out at {}".format(datetime.datetime.now()))
@@ -260,10 +249,7 @@ def main_menu(data):
         project_start()
     if answer.lower() in {'2', '2.'}:
         break_submenu(data)
-    if answer.lower() in {'3', '3.'}:
-        # day_start = datetime.datetime.now()
-        print "\nThe day's start time is ", day_start
-        begin()
+    # if answer.lower() in {'3', '3.'}:
     if answer.lower() in {'5', '5.'}:
         time_formatter()
 
