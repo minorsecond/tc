@@ -36,8 +36,7 @@ day_start = datetime.datetime.now()
 # Create data structures
 
 # Dictionary
-data_dict = {'pid': 0, 'lead_name': 0, 'job_name': 0, 'job_abbrev': 0, 'start_time': 0, 'stop_time': 0, 'date': 0,
-             'stop_type': 0}
+
 # CSV columns
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Project Start", "Project End", "Time Out", "Time In",
@@ -129,7 +128,12 @@ def break_submenu():
 
 
 def from_sqlite_Row_to_dict(list_with_rows):
-    ''' Turn a list with sqlite3.Row objects into a dictionary'''
+    """
+
+    :param list_with_rows: give list from sqlite db
+    :param keys: names of sqlite db columns. This MUST be provided in the same order as your SELECT query.
+    :return: a dictionary containing the keys and values from sqlite db
+    """
     d = {}  # the dictionary to be filled with the row data and to be returned
 
     for i, row in enumerate(list_with_rows):  # iterate throw the sqlite3.Row objects
@@ -157,13 +161,19 @@ def breaktime(answer):
 
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
+        now = datetime.datetime.now()
         with conn:
             cur.execute(
                 "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date FROM timesheet WHERE ID = ?", (pid,))
             sel = cur.fetchall()
-            from_sqlite_Row_to_dict(sel)
+            d = from_sqlite_Row_to_dict(sel)
             for row in sel:
                 print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
+                job_name = row[1]
+                job_abbrev = row[2]
+                stop_type = row[3]
+                stop_time = row[4]
+                date = row[5]
 
             # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
             # keep everything in order as far as time calculations. It should be as simple as subtracting break
@@ -171,7 +181,7 @@ def breaktime(answer):
 
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [pid, ])
+                [pid, job_name, job_abbrev, stop_type, now, date])
         print 'Bon appetit'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
@@ -182,7 +192,7 @@ def breaktime(answer):
             print "Resuming '{0}' at: '{1}\n' ".format(data['project_name'], now)
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [pid, ])
+                [pid, job_name, job_abbrev, stop_type, now, date])
             main_menu(data)
         else:
             main_menu(data)
