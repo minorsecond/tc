@@ -128,6 +128,17 @@ def break_submenu():
     breaktime(answer)
 
 
+def from_sqlite_Row_to_dict(list_with_rows):
+    ''' Turn a list with sqlite3.Row objects into a dictionary'''
+    d = {}  # the dictionary to be filled with the row data and to be returned
+
+    for i, row in enumerate(list_with_rows):  # iterate throw the sqlite3.Row objects
+        l = []  # for each Row use a separate list
+        for col in range(0, len(row)):  # copy over the row date (ie. column data) to a list
+            l.append(row[col])
+        d[i] = l  # add the list to the dictionary
+    return d
+
 def breaktime(answer):
     """Prompts user to specify reason for break.
 
@@ -140,6 +151,7 @@ def breaktime(answer):
     rather than having to start the script all over again.
     """
 
+
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
 
@@ -149,6 +161,7 @@ def breaktime(answer):
             cur.execute(
                 "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date FROM timesheet WHERE ID = ?", (pid,))
             sel = cur.fetchall()
+            from_sqlite_Row_to_dict(sel)
             for row in sel:
                 print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
 
