@@ -1,3 +1,14 @@
+#!/usr/bin/python
+# -*- coding: ascii -*-
+
+"""
+This script is a timesheet utility designed to assist
+in keeping track of projects in a project-based
+job using project codes and names. It has the ability
+to create CSV files, convert standard time to tenths
+of an hour, and to generate reports.
+"""
+
 # PYPER (Python Project Time Tracker)
 # A timeclock program for project-based jobs
 # Robert Ross Wardrup, NotTheEconomist, dschetel
@@ -17,6 +28,7 @@ FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
+day_start = datetime.datetime.now()
 sumtime = 0
 project_time = 0
 
@@ -122,6 +134,13 @@ def query():
 
 
 def project_start():
+    """
+    Prompts the user for project information, creates an id for
+    recalling data (will be used in the future) and returns
+    project name, project abbrev and id for use in other
+    functions.
+    """
+
     logging.debug("project_start called")
     abbrev = raw_input("What are you working on? (ABBREV) ")
     project_name = raw_input("What is the name of this project? ")
@@ -168,7 +187,6 @@ def timer(t):
         days=days, hours=hours, minutes=minutes, seconds=seconds)
 
     while True:
-
         date = t.start_time.date()  # day the timer started
         seconds = t.seconds
         logging.info("seconds set to {}".format(seconds))
@@ -177,7 +195,6 @@ def timer(t):
         seconds %= 60
         logging.debug("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
             hours, minutes, seconds))
-
         print "What are you doing?\n" \
               "1. Lunch\n" \
               "2. Break\n" \
@@ -191,15 +208,15 @@ def timer(t):
         print "{days} Days {hours} Hours {minutes} Minutes {seconds} Seconds".format(
             days=days, hours=hours, minutes=minutes, seconds=seconds)
 
-        round_minutes = round_to_nearest(minutes, 6)
+        round_minutes = round_to_nearest(minutes)
 
-        # times['Project Time'] = round_minutes  # TODO: factor out since I removed times dict
         print"The timesheet time elapsed is: {:.0f}m".format(round_minutes)
         # Make sure same ID is used for each abbrev code used. To help
         # check consistency.
 
         # let's refactor this into a clocktime object that knows how to write itself
         # especially since we REALLY only need to write to this when we clock out
+        # TODO: Refactor into clocktime object.
         times_out = [date, day_start, t.abbrev, t.project_name, t.start_time,
                      "timeend_placeholder", "time_out_placeholder",
                      "placeholder", "time_in_placeholder", t.pid]
@@ -227,7 +244,12 @@ def begin():
 
 
 def choices(answer, t):
+
     """Prompts user to specify reason for break.
+
+    :param answer: takes user input from timer function
+    :param t: takes time from timer.
+    answer: takes input from timer function
 
     No real reason for this other than just general bookkeeping.
     Not a requirement. Would be nice to be able to pause the timer for breaks,
@@ -293,17 +315,49 @@ def init_csv(filename="times.csv"):
     return wr_timesheet
 
 
-if __name__ == "__main__":
-    wr_timesheet = init_csv("times.csv")
+def time_formatter():
+    """
+    Takes user input as 00:00, splits those using : as seperator,
+    and prints the time formatted for timesheet in tenths of an
+    hour
+    """
+    time_input = raw_input("\nTime Formatter\n" \
+                           "Please enter hours and minutes worked today" \
+                           "in 00:00 format: ")
+    if len(time_input.split(':')) == 2:
+        split_hours = time_input.split(':')[0]
+        split_minutes = time_input.split(':')[1]
+        round_minutes = round_to_nearest(int(split_minutes))
+        print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
+        time_formatter()
+    else:
+        print "Please check input format and try again. (00:00)"
+        time_formatter()
 
-    print "\n"
-    print "Hello there. I will log your project time and create a" \
-          " .csv file with the results."
-    print "Your current logged time for this week is: ", sumtime
-    print "\n"
-    print "-----------------------------------------------------------"
-    raw_input("Please press <ENTER> to log current time and begin your day")
-    print "\n"
-    day_start = datetime.datetime.now()
-    print "The day's start time is ", day_start
-    begin()
+
+def main_menu():
+    """
+    Main menu for program. Prompts user for function.
+    Currently, options one and two are unused but
+    can't be commented out.
+    """
+    print "PYPER Timesheet Utility\n\n" \
+          "What would you like to do?\n" \
+          "1. View This Weeks Hours\n" \
+          "2. Generate Timesheet Report\n" \
+          "3. Begin Tracking Time\n" \
+          "4. Time Formatter\n"
+    answer = raw_input(">>>")
+    # if answer.lower() in {'1', '1.'}:
+    # if answer.lower() in {'2', '2.'}:
+    if answer.lower() in {'3', '3.'}:
+        # day_start = datetime.datetime.now()
+        print "\nThe day's start time is ", day_start
+        begin()
+    if answer.lower() in {'4', '4.', }:
+        time_formatter()
+
+
+if __name__ == "__main__":
+    wr_timesheet = init_csv()
+    main_menu()
