@@ -20,11 +20,12 @@ import csv
 import os.path
 import logging
 import uuid
-import threading
+import sqlite3
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
+conn = sqlite3.connect('Database/timesheet.db')
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
@@ -33,81 +34,16 @@ sumtime = 0
 project_time = 0
 
 
-class Timer(threading.Thread):
-    """Timer thread to track job timing
-
-    initialized with `project_name` and `abbr` fields, the timer will keep running
-    until you you call `the_timer.stop()`
-
-    Timer.seconds -> int
-        how many seconds have passed since timer start
-        this respects time paused!
-    Timer.time_paused -> int
-        how much time has been spend paused, in seconds
-    Timer.pause(reason) -> None
-        pauses the timer
-    Timer.unpause -> None
-        unpauses the timer
-    """
-
-    def __init__(self, project_name, abbrev, pid, *args, **kwargs):
-        super(Timer, self).__init__(*args, **kwargs)
-        self._running = True
-        self.start_time = datetime.datetime.now()
-        self.pause_times = []
-        self.project_name = project_name
-        self.abbrev = abbrev
-        self.pid = pid
-        self.paused = False
-        # TODO: should probably make a clockline object that can store some
-        # of this information rather than keeping it all in Timer.
-
-    @property
-    def time_paused(self):
-        if self.pause_times:
-            return sum((pause.get('stop', datetime.datetime.now()) - \
-                        pause['start']).total_seconds() for \
-                       pause in self.pause_times)
-        else:
-            return 0
-
-    @property
-    def seconds(self):
-        now = datetime.datetime.now()
-        return (now - self.start_time).total_seconds() - self.time_paused
-
-    def pause(self, reason):
-        if self.paused:
-            msg = "Can't pause {!r} since it's already paused!".format(self)
-            logging.error(msg)
-            raise ValueError(msg)
-        p = {'start': datetime.datetime.now(),
-             'reason': reason}
-        self.pause_times.append(p)
-        self.paused = True
-
-    def unpause(self):
-        if not self.paused:
-            msg = "Can't unpause {!r} since it's not paused!".format(self)
-            logging.error(msg)
-            raise ValueError(msg)
-        p = self.pause_times[-1]
-        p['stop'] = datetime.datetime.now()
-        self.paused = False
-
-    def stop(self):
-        logging.info("{!r} stopped".format(self))
-        self._running = False
-
-    def run(self):
-        while self._running:
-            pass
-        return self.seconds
-
 # CSV columns
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Project Start", "Project End", "Time Out", "Time In",
            "Day End", "ID"]
+
+# Create SQL database.
+with conn:
+    cur = conn.cursor()
+    cur.execute("CREATE TABLE timesheet(ID INT, Lead_name TEXT, Job_name TEXT, Job_abbrev INT, Start_time TEXT, "
+                "Stop_time TEXT, Date TEXT, Stop_type TEXT")
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -236,12 +172,6 @@ def begin():
     it prudent to just make it a function.
     """
 
-    project = project_start()
-    t = Timer(project['project_name'], project['abbrev'], project['pid'])
-    t.daemon = True
-    t.start()
-    timer(t)
-
 
 def choices(answer, t):
 
@@ -343,10 +273,11 @@ def main_menu():
     """
     print "PYPER Timesheet Utility\n\n" \
           "What would you like to do?\n" \
-          "1. View This Weeks Hours\n" \
-          "2. Generate Timesheet Report\n" \
-          "3. Begin Tracking Time\n" \
-          "4. Time Formatter\n"
+          "1. Clock In\n" \
+          "2. Break Time\n" \
+          "3. Clock Out\n" \
+          "4. Set up obs/break types\n" \
+          "5. Timesheet Minute Formatter\n"
     answer = raw_input(">>>")
     # if answer.lower() in {'1', '1.'}:
     # if answer.lower() in {'2', '2.'}:
@@ -354,7 +285,7 @@ def main_menu():
         # day_start = datetime.datetime.now()
         print "\nThe day's start time is ", day_start
         begin()
-    if answer.lower() in {'4', '4.', }:
+    if answer.lower() in {'5', '5.'}:
         time_formatter()
 
 
