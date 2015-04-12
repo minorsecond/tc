@@ -47,8 +47,8 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 # SQL database.
 with conn:
     cur = conn.cursor()
-    cur.execute("CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
-                , Stop_time DATE, Date DATE, Stop_type TEXT)")
+    cur.execute('CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
+                , Stop_time DATE, Date DATE, Stop_type TEXT)')
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -97,6 +97,8 @@ def project_start():
             "INSERT INTO timesheet(ID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
             [pid, lead_name, project_name, abbrev, clock_in, date])
     data_dict = {'project_name': project_name,
+                 'lead_name': lead_name,
+                 'date': date,
                  'abbrev': abbrev,
                  'pid': pid}
     # return data_dict
@@ -151,7 +153,7 @@ def breaktime(answer, data):
     rather than having to start the script all over again.
     """
 
-    print "DEBUGGING: PID = {}".format(data_dict['pid'])
+    print "DEBUGGING: PID = {}".format(data['pid'])
 
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
@@ -160,18 +162,20 @@ def breaktime(answer, data):
 
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
+        data['clock_out'] = date
         with conn:
             cur.execute(
-                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_type Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [data['pid'], lead_name, project_name, abbrev, clock_out, date])
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_type, Date) VALUES(?, ?, ?, ?, ?, ?)",
+                [data['pid'], data['lead_name'], data['project_name'], data['abbrev'], data['clock_out'], data['date']])
         print 'Bon appetit'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
-        print("Are you still working on  '{}' ? (y/n)").format(project_name)
+        print("Are you still working on  '{}' ? (y/n)").format(data['project_name'])
         answer = query()
         if answer:
             now = datetime.datetime.now()
-            print "Resuming '{0}' at: '{1}' ".format(t.project_name, now)
+            print "Resuming '{0}' at: '{1}\n' ".format(data['project_name'], now)
+            main_menu(data)
         else:
             begin()
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
@@ -179,11 +183,11 @@ def breaktime(answer, data):
         logging.info("Taking a break at {}".format(datetime.datetime.now()))
         t.pause("break")
         raw_input("Press Enter to begin working again")
-        print "Are you still working on {}? (y/n)".format(t.abbrev)
+        print "Are you still working on {}? (y/n)".format(data['abbrev'])
         answer = query()
         if answer:
             now = datetime.datetime.now()
-            print "Resuming '{0}' at: '{1}' " % (t.project_name, now)
+            print "Resuming '{0}' at: '{1}' " % (data['project_name'], now)
             t.unpause()
             logging.info("Back from break at {}".format(now))
         else:
