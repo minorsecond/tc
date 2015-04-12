@@ -34,13 +34,14 @@ day_start = datetime.datetime.now()
 sumtime = 0
 project_time = 0
 
+# Create data structures
 
 # CSV columns
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Project Start", "Project End", "Time Out", "Time In",
            "Day End", "ID"]
 
-# Create SQL database.
+# SQL database.
 with conn:
     cur = conn.cursor()
     cur.execute("CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
@@ -91,11 +92,10 @@ def project_start():
         cur.execute(
             "INSERT INTO timesheet(ID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
             [pid, lead_name, project_name, abbrev, clock_in, date])
+    for i in (pid, lead_name, project_name, abbrev, clock_in, date):
+        dict[i] = locals()[i]
     main_menu()
-    return {'project_name': project_name,
-            'abbrev': abbrev,
-            'pid': pid,
-            'start_time': clock_in}
+    return dict
 
 
 def round_to_nearest(num, base=6):
@@ -156,7 +156,7 @@ def breaktime(answer):
         with conn:
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_type Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [pid, lead_name, project_name, abbrev, clock_out, date])
+                [dict['pid'], lead_name, project_name, abbrev, clock_out, date])
         print 'Bon appetit'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
@@ -165,7 +165,6 @@ def breaktime(answer):
         if answer:
             now = datetime.datetime.now()
             print "Resuming '{0}' at: '{1}' ".format(t.project_name, now)
-            t.unpause()
         else:
             begin()
         logging.info("Back from lunch at {}".format(datetime.datetime.now()))
@@ -185,7 +184,6 @@ def breaktime(answer):
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
         print 'Take care!'
         logging.info("Clocked out at {}".format(datetime.datetime.now()))
-        t.stop()
         return "end of day"
 
 
