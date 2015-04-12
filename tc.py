@@ -151,7 +151,10 @@ def breaktime(answer):
             sel = cur.fetchall()
             for row in sel:
                 print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
-            print "SQL DEBUG::: {}".format(sel)
+
+            # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
+            # keep everything in order as far as time calculations. It should be as simple as subtracting break
+            # time from total logged hours for each PID.
 
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
