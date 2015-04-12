@@ -29,6 +29,7 @@ conn = sqlite3.connect('timesheet.db')
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
+date = str(datetime.date.today())
 day_start = datetime.datetime.now()
 sumtime = 0
 project_time = 0
@@ -42,8 +43,8 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 # Create SQL database.
 with conn:
     cur = conn.cursor()
-    cur.execute("CREATE TABLE if not exists timesheet(ID INT, Lead_name TEXT, Job_name TEXT, Job_abbrev INT, Start_time TEXT\
-                , Stop_time TEXT, Date TEXT, Stop_type TEXT)")
+    cur.execute("CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
+                , Stop_time DATE, Date DATE, Stop_type TEXT)")
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -76,17 +77,25 @@ def project_start():
     project name, project abbrev and id for use in other
     functions.
     """
-    # TODO: broken now that sqlite is being used.
+    # TODO: broken now that sqlite is being used. Essentially a typerror.
     logging.debug("project_start called")
-    abbrev = raw_input("What are you working on? (ABBREV) ")
-    project_name = raw_input("What is the name of this project? ")
-    pid = uuid.uuid4()
+    clock_in = datetime.datetime.now()
+    abbrev = raw_input("What are you working on? (ABBREV): ")
+    project_name = raw_input("What is the name of this project?: ")
+    lead_name = raw_input("For whom are you working?: ")
+    pid = str(uuid.uuid4())
     logging.debug("UUID is {}".format(pid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
+    with conn:
+        cur.execute(
+            "INSERT INTO timesheet(ID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
+            [pid, lead_name, project_name, abbrev, clock_in, date])
+    main_menu()
     return {'project_name': project_name,
             'abbrev': abbrev,
-            'pid': pid}
+            'pid': pid,
+            'start_time': clock_in}
 
 
 def round_to_nearest(num, base=6):
@@ -110,61 +119,6 @@ def calc_time(t):
     return (days, hours, minutes, seconds)
 
 
-def timer(t):
-    """Timer that ends upon user interaction. Uses round_to_nearest script
-    to round to nearest six-minute interval,
-    to comply with work requirements.
-    """
-
-    logging.debug("timer called")
-
-    days, hours, minutes, seconds = calc_time(t)
-    print "{days} Days {hours} Hours {minutes} Minutes {seconds} Seconds".format(
-        days=days, hours=hours, minutes=minutes, seconds=seconds)
-
-    while True:
-        date = t.start_time.date()  # day the timer started
-        seconds = t.seconds
-        logging.info("seconds set to {}".format(seconds))
-        hours = seconds // 60 // 60
-        minutes = seconds // 60
-        seconds %= 60
-        logging.debug("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
-            hours, minutes, seconds))
-        print "What are you doing?\n" \
-              "1. Lunch\n" \
-              "2. Break\n" \
-              "3. Heading home\n" \
-              "4. Switching tasks\n"
-        answer = raw_input(">>>")
-        response = choices(answer, t)
-
-        # Recalculate so we have accurate end times
-        days, hours, minutes, seconds = calc_time(t)
-        print "{days} Days {hours} Hours {minutes} Minutes {seconds} Seconds".format(
-            days=days, hours=hours, minutes=minutes, seconds=seconds)
-
-        round_minutes = round_to_nearest(minutes)
-
-        print"The timesheet time elapsed is: {:.0f}m".format(round_minutes)
-        # Make sure same ID is used for each abbrev code used. To help
-        # check consistency.
-
-        # let's refactor this into a clocktime object that knows how to write itself
-        # especially since we REALLY only need to write to this when we clock out
-        # TODO: Refactor into clocktime object.
-        times_out = [date, day_start, t.abbrev, t.project_name, t.start_time,
-                     "timeend_placeholder", "time_out_placeholder",
-                     "placeholder", "time_in_placeholder", t.pid]
-        wr_timesheet.writerow(times_out)
-
-        if response == "end of day":
-            quit()
-
-            # time.sleep(1)
-            # since we're waiting for user input, we really don't need this
-
-
 def begin():
     """
     Asks user for project abbrev and name, and kicks off the timer.
@@ -174,7 +128,6 @@ def begin():
 
 
 def choices(answer, t):
-
     """Prompts user to specify reason for break.
 
     :param answer: takes user input from timer function
@@ -279,7 +232,8 @@ def main_menu():
           "4. Set up obs/break types\n" \
           "5. Timesheet Minute Formatter\n"
     answer = raw_input(">>>")
-    # if answer.lower() in {'1', '1.'}:
+    if answer.lower() in {'1', '1.'}:
+        project_start()
     # if answer.lower() in {'2', '2.'}:
     if answer.lower() in {'3', '3.'}:
         # day_start = datetime.datetime.now()
