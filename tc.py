@@ -36,6 +36,9 @@ project_time = 0
 
 # Create data structures
 
+# Dictionary
+data_dict = {'pid': 0, 'lead_name': 0, 'job_name': 0, 'job_abbrev': 0, 'start_time': 0, 'stop_time': 0, 'date': 0,
+             'stop_type': 0}
 # CSV columns
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Project Start", "Project End", "Time Out", "Time In",
@@ -88,15 +91,16 @@ def project_start():
     logging.debug("UUID is {}".format(pid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
+    print "DEBUGGING: PID = {}".format(pid)
     with conn:
         cur.execute(
             "INSERT INTO timesheet(ID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
             [pid, lead_name, project_name, abbrev, clock_in, date])
-    for i in (pid, lead_name, project_name, abbrev, clock_in, date):
-        dict[i] = locals()[i]
-    main_menu()
-    return dict
-
+    data_dict = {'project_name': project_name,
+                 'abbrev': abbrev,
+                 'pid': pid}
+    # return data_dict
+    main_menu(data_dict)
 
 def round_to_nearest(num, base=6):
     """Rounds num to the nearest base
@@ -127,15 +131,15 @@ def begin():
     """
 
 
-def break_submenu():
+def break_submenu(data):
     print "What are you doing?\n" \
           "1. Lunch\n" \
           "2. Break\n"
     answer = raw_input(">>>")
-    breaktime(answer)
+    breaktime(answer, data)
 
 
-def breaktime(answer):
+def breaktime(answer, data):
     """Prompts user to specify reason for break.
 
     :param answer: takes user input from timer function
@@ -146,6 +150,9 @@ def breaktime(answer):
     Not a requirement. Would be nice to be able to pause the timer for breaks,
     rather than having to start the script all over again.
     """
+
+    print "DEBUGGING: PID = {}".format(data_dict['pid'])
+
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
 
@@ -156,7 +163,7 @@ def breaktime(answer):
         with conn:
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_type Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [dict['pid'], lead_name, project_name, abbrev, clock_out, date])
+                [data['pid'], lead_name, project_name, abbrev, clock_out, date])
         print 'Bon appetit'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
@@ -231,7 +238,7 @@ def time_formatter():
         time_formatter()
 
 
-def main_menu():
+def main_menu(data):
     """
     Main menu for program. Prompts user for function.
     Currently, options one and two are unused but
@@ -248,7 +255,7 @@ def main_menu():
     if answer.lower() in {'1', '1.'}:
         project_start()
     if answer.lower() in {'2', '2.'}:
-        break_submenu()
+        break_submenu(data)
     if answer.lower() in {'3', '3.'}:
         # day_start = datetime.datetime.now()
         print "\nThe day's start time is ", day_start
@@ -259,4 +266,4 @@ def main_menu():
 
 if __name__ == "__main__":
     wr_timesheet = init_csv()
-    main_menu()
+    main_menu(data=data_dict)
