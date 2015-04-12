@@ -25,7 +25,7 @@ import sqlite3
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-conn = sqlite3.connect('Database/timesheet.db')
+conn = sqlite3.connect('timesheet.db')
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
@@ -42,8 +42,8 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 # Create SQL database.
 with conn:
     cur = conn.cursor()
-    cur.execute("CREATE TABLE timesheet(ID INT, Lead_name TEXT, Job_name TEXT, Job_abbrev INT, Start_time TEXT, "
-                "Stop_time TEXT, Date TEXT, Stop_type TEXT")
+    cur.execute("CREATE TABLE if not exists timesheet(ID INT, Lead_name TEXT, Job_name TEXT, Job_abbrev INT, Start_time TEXT\
+                , Stop_time TEXT, Date TEXT, Stop_type TEXT)")
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -76,7 +76,7 @@ def project_start():
     project name, project abbrev and id for use in other
     functions.
     """
-
+    # TODO: broken now that sqlite is being used.
     logging.debug("project_start called")
     abbrev = raw_input("What are you working on? (ABBREV) ")
     project_name = raw_input("What is the name of this project? ")
