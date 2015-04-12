@@ -127,7 +127,15 @@ def begin():
     """
 
 
-def choices(answer, t):
+def break_submenu():
+    print "What are you doing?\n" \
+          "1. Lunch\n" \
+          "2. Break\n"
+    answer = raw_input(">>>")
+    breaktime(answer)
+
+
+def breaktime(answer):
     """Prompts user to specify reason for break.
 
     :param answer: takes user input from timer function
@@ -138,14 +146,21 @@ def choices(answer, t):
     Not a requirement. Would be nice to be able to pause the timer for breaks,
     rather than having to start the script all over again.
     """
+    # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
+    # an error is raised because some values are undefined.
 
-    logging.debug("Called choices with answer: {} on Timer {!r}".format(answer, t))
+    # TODO: going to need to find a better way use variables. Can you use a dictionary as an argument?
+
+    logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
+        with conn:
+            cur.execute(
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_type Date) VALUES(?, ?, ?, ?, ?, ?)",
+                [pid, lead_name, project_name, abbrev, clock_out, date])
         print 'Bon appetit'
-        t.pause("lunch")
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
-        print("Are you still working on  '{}' ? (y/n)").format(t.project_name)
+        print("Are you still working on  '{}' ? (y/n)").format(project_name)
         answer = query()
         if answer:
             now = datetime.datetime.now()
@@ -234,7 +249,8 @@ def main_menu():
     answer = raw_input(">>>")
     if answer.lower() in {'1', '1.'}:
         project_start()
-    # if answer.lower() in {'2', '2.'}:
+    if answer.lower() in {'2', '2.'}:
+        break_submenu()
     if answer.lower() in {'3', '3.'}:
         # day_start = datetime.datetime.now()
         print "\nThe day's start time is ", day_start
