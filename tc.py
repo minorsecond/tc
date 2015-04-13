@@ -170,15 +170,15 @@ def breaktime(answer):
             main_menu()
         else:
             main_menu()
-        logging.info("Back from lunch at {}".format(now()))
+        logging.info("Back from lunch at {}".format(now))
     elif answer.lower() in {'2', '2.', 'break'}:
         now = update_now()
-        logging.info("Taking a break at {}".format(now()))
+        logging.info("Taking a break at {}".format(now))
         raw_input("Press Enter to begin working again")
-        print "Are you still working on {}? (y/n)".format(job_name)
+        print ("Are you still working on {}? (y/n)").format(job_name)
         answer = query()
         if answer:
-            print "Resuming '{0}' at: '{1}' " % (job_name, now())
+            print "Resuming '{0}' at: '{1}' ".format(job_name, now)
             logging.info("Back from break at {}".format(now))
         else:
             main_menu()
@@ -225,7 +225,7 @@ def time_formatter():
     if len(time_input.split(':')) == 2:
         split_hours = time_input.split(':')[0]
         split_minutes = time_input.split(':')[1]
-        round_minutes = round_to_nearest(int(split_minutes))
+        round_minutes = round_to_nearest(int(split_minutes), 6)
         print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
         main_menu()
     else:
@@ -242,7 +242,7 @@ def total_time():
     t_out = get_time(raw_input("Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print("Your time sheet entry for {0} is {1}").format(delta, delta_minutes)
+    print "Your time sheet entry for {0} is {1}".format(delta, delta_minutes)
 
 
 def main_menu():
