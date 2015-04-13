@@ -98,14 +98,14 @@ def project_start():
     return pid
 
 
-def round_to_nearest(num, base=6):
+def round_to_nearest(num, b):
     """Rounds num to the nearest base
 
     round_to_nearest(7, 5) -> 5
     """
 
-    company_minutes = num + (base // 2)
-    return company_minutes - (company_minutes % base)
+    company_minutes = num + (b // 2)
+    return company_minutes - (company_minutes % b)
 
 
 def calc_time(t):
@@ -264,12 +264,11 @@ def get_time(time):
 
 
 def total_time():
-    t_in = get_time(raw_input("Please enter your start time in 00:00 format: "))
-    t_out = get_time(raw_input("Please enter your end time in 00:00 format: "))
+    t_in = get_time(raw_input("Please enter your start time in 00:00 AM/PM format: "))
+    t_out = get_time(raw_input("Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
-    HOUR = 60 * 60
-    delta_tenths = float(delta.seconds // (HOUR / 10)) / 10
-    print("Your time sheet entry for {0} is {1}6").format(delta, delta_tenths)
+    delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
+    print("Your time sheet entry for {0} is {1}").format(delta, delta_minutes)
 
 
 def main_menu():
@@ -286,7 +285,7 @@ def main_menu():
           "4. Set up obs/break types\n" \
           "5. Timesheet Minute Formatter\n" \
           "6. Calculate Total Time Worked\n"
-    answer = raw_input(">>>")
+    answer = raw_input(">>> ")
     if answer.lower() in {'1', '1.'}:
         project_start()
         main_menu()
