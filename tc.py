@@ -142,6 +142,17 @@ def breaktime(answer):
     rather than having to start the script all over again.
     """
 
+    with conn:
+        cur.execute(
+            "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date FROM timesheet WHERE ID = ?", (pid,))
+        sel = cur.fetchall()
+
+        for row in sel:
+            job_name = row[1]
+            job_abbrev = row[2]
+            stop_type = row[3]
+            stop_time = row[4]
+            date = row[5]
 
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
@@ -149,18 +160,8 @@ def breaktime(answer):
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
         now = datetime.datetime.now()
-        with conn:
-            cur.execute(
-                "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date FROM timesheet WHERE ID = ?", (pid,))
-            sel = cur.fetchall()
-            d = from_sqlite_Row_to_dict(sel)
-            for row in sel:
-                print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
-                job_name = row[1]
-                job_abbrev = row[2]
-                stop_type = row[3]
-                stop_time = row[4]
-                date = row[5]
+        for row in sel:
+            print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
 
             # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
             # keep everything in order as far as time calculations. It should be as simple as subtracting break
@@ -172,11 +173,11 @@ def breaktime(answer):
         print 'Bon appetit'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
-        print("Are you still working on  '{}' ? (y/n)").format(data['project_name'])
+        print("Are you still working on  '{}' ? (y/n)").format(job_name)
         answer = query()
         if answer:
             now = datetime.datetime.now()
-            print "Resuming '{0}' at: '{1}\n' ".format(data['project_name'], now)
+            print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?, ?)",
                 [pid, job_name, job_abbrev, stop_type, now, date])
@@ -187,14 +188,14 @@ def breaktime(answer):
     elif answer.lower() in {'2', '2.', 'break'}:
         logging.info("Taking a break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
-        print "Are you still working on {}? (y/n)".format(data['abbrev'])
+        print "Are you still working on {}? (y/n)".format(job_name)
         answer = query()
         if answer:
             now = datetime.datetime.now()
-            print "Resuming '{0}' at: '{1}' " % (data['project_name'], now)
+            print "Resuming '{0}' at: '{1}' " % (job_name, now)
             logging.info("Back from break at {}".format(now))
         else:
-            main_menu(data)
+            main_menu()
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
         print 'Take care!'
         logging.info("Clocked out at {}".format(datetime.datetime.now()))
