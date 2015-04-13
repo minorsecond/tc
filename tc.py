@@ -43,10 +43,16 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 # SQL database.
 with conn:
     cur = conn.cursor()
+    # cur.executescript('DROP TABLE IF EXISTS timesheet') Only used for development
     cur.execute('CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
                 , Stop_time DATE, Date DATE, Stop_type TEXT, Break_end DATE)')
 
 os.system('cls' if os.name == 'nt' else 'clear')
+
+
+def update_now():
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    return now
 
 
 def query():
@@ -79,7 +85,7 @@ def project_start():
     """
     global pid
     logging.debug("project_start called")
-    clock_in = datetime.datetime.now()
+    clock_in = update_now()
     abbrev = raw_input("What are you working on? (ABBREV): ")
     project_name = raw_input("What is the name of this project?: ")
     lead_name = raw_input("For whom are you working?: ")
@@ -113,29 +119,10 @@ def break_submenu():
     breaktime(answer)
 
 
-def from_sqlite_Row_to_dict(list_with_rows):
-    """
-
-    :param list_with_rows: give list from sqlite db
-    :param keys: names of sqlite db columns. This MUST be provided in the same order as your SELECT query.
-    :return: a dictionary containing the keys and values from sqlite db
-    """
-    d = {}  # the dictionary to be filled with the row data and to be returned
-
-    for i, row in enumerate(list_with_rows):  # iterate throw the sqlite3.Row objects
-        l = []  # for each Row use a separate list
-        for col in range(0, len(row)):  # copy over the row date (ie. column data) to a list
-            l.append(row[col])
-        d[i] = l  # add the list to the dictionary
-    return d
-
-
 def breaktime(answer):
     """Prompts user to specify reason for break.
 
     :param answer: takes user input from timer function
-    :param data: data dictionary for job variables.
-    answer: takes input from timer function
 
     No real reason for this other than just general bookkeeping.
     Not a requirement. Would be nice to be able to pause the timer for breaks,
@@ -151,7 +138,6 @@ def breaktime(answer):
             job_name = row[1]
             job_abbrev = row[2]
             stop_type = row[3]
-            stop_time = row[4]
             date = row[5]
 
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
@@ -159,9 +145,9 @@ def breaktime(answer):
 
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
-        now = datetime.datetime.now()
+        now = update_now()
         for row in sel:
-            print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
+            print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
 
             # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
             # keep everything in order as far as time calculations. It should be as simple as subtracting break
@@ -176,29 +162,30 @@ def breaktime(answer):
         print("Are you still working on  '{}' ? (y/n)").format(job_name)
         answer = query()
         if answer:
-            now = datetime.datetime.now()
+            now = update_now()
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?, ?)",
                 [pid, job_name, job_abbrev, stop_type, now, date])
-            main_menu(data)
+            main_menu()
         else:
-            main_menu(data)
-        logging.info("Back from lunch at {}".format(datetime.datetime.now()))
+            main_menu()
+        logging.info("Back from lunch at {}".format(now()))
     elif answer.lower() in {'2', '2.', 'break'}:
-        logging.info("Taking a break at {}".format(datetime.datetime.now()))
+        now = update_now()
+        logging.info("Taking a break at {}".format(now()))
         raw_input("Press Enter to begin working again")
         print "Are you still working on {}? (y/n)".format(job_name)
         answer = query()
         if answer:
-            now = datetime.datetime.now()
-            print "Resuming '{0}' at: '{1}' " % (job_name, now)
+            print "Resuming '{0}' at: '{1}' " % (job_name, now())
             logging.info("Back from break at {}".format(now))
         else:
             main_menu()
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
         print 'Take care!'
-        logging.info("Clocked out at {}".format(datetime.datetime.now()))
+        now = update_now()
+        logging.info("Clocked out at {}".format(now))
         return "end of day"
 
 
