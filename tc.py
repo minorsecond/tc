@@ -98,14 +98,14 @@ def project_start():
     return pid
 
 
-def round_to_nearest(num, base=6):
+def round_to_nearest(num, b):
     """Rounds num to the nearest base
 
     round_to_nearest(7, 5) -> 5
     """
 
-    company_minutes = num + (base // 2)
-    return company_minutes - (company_minutes % base)
+    company_minutes = num + (b // 2)
+    return company_minutes - (company_minutes % b)
 
 
 def calc_time(t):
@@ -142,6 +142,7 @@ def from_sqlite_Row_to_dict(list_with_rows):
             l.append(row[col])
         d[i] = l  # add the list to the dictionary
     return d
+
 
 def breaktime(answer):
     """Prompts user to specify reason for break.
@@ -252,10 +253,22 @@ def time_formatter():
         split_minutes = time_input.split(':')[1]
         round_minutes = round_to_nearest(int(split_minutes))
         print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
-        time_formatter()
+        main_menu()
     else:
         print "Please check input format and try again. (00:00)"
         time_formatter()
+
+
+def get_time(time):
+    return datetime.datetime.strptime(time, '%I:%M %p')
+
+
+def total_time():
+    t_in = get_time(raw_input("Please enter your start time in 00:00 AM/PM format: "))
+    t_out = get_time(raw_input("Please enter your end time in 00:00 AM/PM format: "))
+    delta = t_out - t_in
+    delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
+    print("Your time sheet entry for {0} is {1}").format(delta, delta_minutes)
 
 
 def main_menu():
@@ -270,8 +283,9 @@ def main_menu():
           "2. Break Time\n" \
           "3. Clock Out\n" \
           "4. Set up obs/break types\n" \
-          "5. Timesheet Minute Formatter\n"
-    answer = raw_input(">>>")
+          "5. Timesheet Minute Formatter\n" \
+          "6. Calculate Total Time Worked\n"
+    answer = raw_input(">>> ")
     if answer.lower() in {'1', '1.'}:
         project_start()
         main_menu()
@@ -280,6 +294,8 @@ def main_menu():
     # if answer.lower() in {'3', '3.'}:
     if answer.lower() in {'5', '5.'}:
         time_formatter()
+    if answer.lower() in {'6', '6.'}:
+        total_time()
 
 
 if __name__ == "__main__":
