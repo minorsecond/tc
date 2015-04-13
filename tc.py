@@ -35,8 +35,6 @@ day_start = datetime.datetime.now()
 
 # Create data structures
 
-# Dictionary
-
 # CSV columns
 columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
            "Project Start", "Project End", "Time Out", "Time In",
@@ -79,7 +77,7 @@ def project_start():
     project name, project abbrev and id for use in other
     functions.
     """
-
+    global pid
     logging.debug("project_start called")
     clock_in = datetime.datetime.now()
     abbrev = raw_input("What are you working on? (ABBREV): ")
@@ -94,7 +92,6 @@ def project_start():
         cur.execute(
             "INSERT INTO timesheet(ID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
             [pid, lead_name, project_name, abbrev, clock_in, date])
-    global pid
     return pid
 
 
@@ -106,17 +103,6 @@ def round_to_nearest(num, b):
 
     company_minutes = num + (b // 2)
     return company_minutes - (company_minutes % b)
-
-
-def calc_time(t):
-    """Calculate days,hours,minutes,seconds from Timer"""
-
-    seconds = t.seconds
-    days = seconds // 60 // 60 // 24
-    hours = seconds // 60 // 60
-    minutes = seconds // 60
-    seconds %= 60
-    return (days, hours, minutes, seconds)
 
 
 def break_submenu():
