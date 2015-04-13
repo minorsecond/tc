@@ -143,6 +143,7 @@ def from_sqlite_Row_to_dict(list_with_rows):
         d[i] = l  # add the list to the dictionary
     return d
 
+
 def breaktime(answer):
     """Prompts user to specify reason for break.
 
@@ -252,10 +253,24 @@ def time_formatter():
         split_minutes = time_input.split(':')[1]
         round_minutes = round_to_nearest(int(split_minutes))
         print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
-        time_formatter()
+        main_menu()
     else:
         print "Please check input format and try again. (00:00)"
         time_formatter()
+
+
+def total_time():
+    begin_time = raw_input("Please enter your start time in 00:00 format: ")
+    t_in = datetime.datetime.strptime(begin_time, '%H:%M')
+    end_time = raw_input("Please enter your end time in 00:00 format: ")
+    t_out = datetime.datetime.strptime(end_time, '%H:%M')
+    delta = str((t_out - t_in).total_seconds() / 3600)
+    split_hours = delta.split('.')[0]
+    split_minutes_d = delta.split('.')[1]
+    split_minutes = int(split_minutes_d * 60)
+    print(split_minutes)
+    minutes = round_to_nearest(split_minutes)
+    print("You've worked {0} hours and {1} minutes today").format(split_hours, minutes)
 
 
 def main_menu():
@@ -270,7 +285,8 @@ def main_menu():
           "2. Break Time\n" \
           "3. Clock Out\n" \
           "4. Set up obs/break types\n" \
-          "5. Timesheet Minute Formatter\n"
+          "5. Timesheet Minute Formatter\n" \
+          "6. Calculate Total Time Worked\n"
     answer = raw_input(">>>")
     if answer.lower() in {'1', '1.'}:
         project_start()
@@ -280,6 +296,8 @@ def main_menu():
     # if answer.lower() in {'3', '3.'}:
     if answer.lower() in {'5', '5.'}:
         time_formatter()
+    if answer.lower() in {'6', '6.'}:
+        total_time()
 
 
 if __name__ == "__main__":
