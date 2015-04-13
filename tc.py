@@ -254,6 +254,20 @@ def total_time():
     print "Your time sheet entry for {0} is {1}".format(delta, delta_minutes)
 
 
+def switch_task():
+    now = update_now()
+    sel = sel_current_row()
+    stop_type = "switch task"
+    for row in sel:
+        job_name = row[1]
+        job_abbrev = row[2]
+        stop_type = row[3]
+    with conn:
+        cur.execute(
+            "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
+            [pid, job_name, job_abbrev, stop_type, now])
+
+
 def main_menu():
     """
     Main menu for program. Prompts user for function.
@@ -273,12 +287,7 @@ def main_menu():
         project_start()
         main_menu()
     if answer.lower() in {'2', '2.'}:
-        stop_type = "switch task"
-        pid = sel_current_row()
-        with conn:
-            cur.execute(
-                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [pid, job_name, job_abbrev, stop_type, now, date])
+        switch_task()
         project_start()
     if answer.lower() in {'3', '3.'}:
         break_submenu()
