@@ -170,7 +170,7 @@ def breaktime(answer):
         print 'Enjoy!'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
-        print("Are you still working on  '{}' ? (y/n)").format(job_name)
+        print("Are you still working on '{}' ? (y/n)").format(job_name)
         answer = query()
         if answer:
             now = update_now()
@@ -226,12 +226,12 @@ def init_csv(filename="times.csv"):
 
 def time_formatter():
     """
-    Takes user input as 00:00, splits those using : as seperator,
+    Takes user input as 00:00, splits those using : as separator,
     and prints the time formatted for timesheet in tenths of an
     hour
     """
     time_input = raw_input("\nTime Formatter\n" \
-                           "Please enter hours and minutes worked today" \
+                           "Enter hours and minutes worked today" \
                            "in 00:00 format: ")
     if len(time_input.split(':')) == 2:
         split_hours = time_input.split(':')[0]
@@ -240,7 +240,7 @@ def time_formatter():
         print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
         main_menu()
     else:
-        print "Please check input format and try again. (00:00)"
+        print "Check input format and try again. (00:00)"
         time_formatter()
 
 
@@ -272,6 +272,20 @@ def switch_task():
     main_menu()
 
 
+def report():
+    with conn:
+        cur.execute(
+            "SELECT * FROM timesheet WHERE Date = ?", (date,))
+        while True:
+            sel = cur.fetchone()
+            if sel == None:
+                print("The database is empty.")
+                main_menu()
+            for i in sel:
+                print(sel)
+    return sel
+
+
 def main_menu():
     """
     Main menu for program. Prompts user for function.
@@ -285,7 +299,8 @@ def main_menu():
           "3. Break Time\Quit\n" \
           "4. Set up jobs/break types\n" \
           "5. Timesheet Minute Formatter\n" \
-          "6. Calculate Total Time Worked\n"
+          "6. Calculate Total Time Worked\n" \
+          "7. Generate Today's Timesheet\n"
     answer = raw_input(">>> ")
     if answer.lower() in {'1', '1.'}:
         project_start()
@@ -300,6 +315,10 @@ def main_menu():
         time_formatter()
     if answer.lower() in {'6', '6.'}:
         total_time()
+    if answer.lower() in {'7', '7.'}:
+        sel = report()
+        print(sel)
+
 
 
 if __name__ == "__main__":
