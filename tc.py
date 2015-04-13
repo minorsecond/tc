@@ -25,6 +25,8 @@ import sqlite3
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
+
+jobdb = sqlite3.connect('jobs.db')
 conn = sqlite3.connect('timesheet.db')
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
@@ -43,9 +45,15 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 # SQL database.
 with conn:
     cur = conn.cursor()
-    # cur.executescript('DROP TABLE IF EXISTS timesheet') Only used for development
+    # Disable the next line unless debugging.
+    cur.executescript('DROP TABLE IF EXISTS timesheet')
     cur.execute('CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
                 , Stop_time DATE, Date DATE, Stop_type TEXT, Break_end DATE)')
+
+# This db is used for storing total time worked for each job.
+with jobdb:
+    cur.executescript('DROP TABLE IF EXISTS jobs')
+    cur.execute('CREATE TABLE if no exists jobdb(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Time TEXT')
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -275,14 +283,15 @@ def switch_task():
 def report():
     with conn:
         cur.execute(
-            "SELECT * FROM timesheet WHERE Date = ?", (date,))
+            "SELECT Job_name, Job_abbrev, Time_worked FROM timesheet WHERE Date = ?", (date,))
         while True:
             sel = cur.fetchone()
             if sel == None:
                 print("The database is empty.")
                 main_menu()
-            for i in sel:
-                print(sel)
+            print(sel)
+            # for i in sel:
+            #   print(sel)
     return sel
 
 
