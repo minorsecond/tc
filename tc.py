@@ -130,6 +130,7 @@ def sel_current_row():
         sel = cur.fetchall()
         return sel
 
+
 def breaktime(answer):
     """Prompts user to specify reason for break.
 
@@ -140,6 +141,7 @@ def breaktime(answer):
     rather than having to start the script all over again.
     """
     global job_name
+    global job_abbrev
     sel = sel_current_row()
 
     for row in sel:
@@ -163,9 +165,9 @@ def breaktime(answer):
         stop_type = "lunch"
         with conn:
             cur.execute(
-                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [pid, job_name, job_abbrev, stop_type, now, date])
-        print 'Bon appetit'
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
+                [pid, job_name, job_abbrev, stop_type, now])
+        print 'Enjoy!'
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
         print("Are you still working on  '{}' ? (y/n)").format(job_name)
@@ -174,8 +176,8 @@ def breaktime(answer):
             now = update_now()
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             cur.execute(
-                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [pid, job_name, job_abbrev, stop_type, now, date])
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?)",
+                [pid, job_name, job_abbrev, stop_type, now])
             main_menu()
         else:
             main_menu()
@@ -266,6 +268,8 @@ def switch_task():
         cur.execute(
             "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
             [pid, job_name, job_abbrev, stop_type, now])
+    project_start()
+    main_menu()
 
 
 def main_menu():
@@ -288,7 +292,6 @@ def main_menu():
         main_menu()
     if answer.lower() in {'2', '2.'}:
         switch_task()
-        project_start()
     if answer.lower() in {'3', '3.'}:
         break_submenu()
     # if answer.lower() in {'4', '4.'}:
