@@ -259,18 +259,17 @@ def time_formatter():
         time_formatter()
 
 
+def get_time(time):
+    return datetime.datetime.strptime(time, '%I:%M %p')
+
+
 def total_time():
-    begin_time = raw_input("Please enter your start time in 00:00 format: ")
-    t_in = datetime.datetime.strptime(begin_time, '%H:%M')
-    end_time = raw_input("Please enter your end time in 00:00 format: ")
-    t_out = datetime.datetime.strptime(end_time, '%H:%M')
-    delta = str((t_out - t_in).total_seconds() / 3600)
-    split_hours = delta.split('.')[0]
-    split_minutes_d = delta.split('.')[1]
-    split_minutes = int(split_minutes_d * 60)
-    print(split_minutes)
-    minutes = round_to_nearest(split_minutes)
-    print("You've worked {0} hours and {1} minutes today").format(split_hours, minutes)
+    t_in = get_time(raw_input("Please enter your start time in 00:00 format: "))
+    t_out = get_time(raw_input("Please enter your end time in 00:00 format: "))
+    delta = t_out - t_in
+    HOUR = 60 * 60
+    delta_tenths = float(delta.seconds // (HOUR / 10)) / 10
+    print("Your time sheet entry for {0} is {1}6").format(delta, delta_tenths)
 
 
 def main_menu():
