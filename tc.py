@@ -48,15 +48,16 @@ with conn:
     cur = conn.cursor()
     # Disable the next line unless debugging.
     cur.executescript('DROP TABLE IF EXISTS timesheet')
-    cur.execute('CREATE TABLE if not exists timesheet(Id INTEGER PRIMARY KEY, UUID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
-                , Stop_time DATE, Date DATE, Stop_type TEXT, Break_end DATE)')
+    cur.execute('CREATE TABLE if not exists timesheet(Id INTEGER PRIMARY KEY, UUID TEXT, Lead_name TEXT, Job_name TEXT\
+                , Job_abbrev TEXT, Start_time DATE, Stop_time DATE, Date DATE, Stop_type TEXT)')
 
 # This db is used for storing total time worked for each job.
 with jobdb:
     # Disable the next line unless debugging.
     cur.executescript('DROP TABLE IF EXISTS jobdb')
     cur.execute(
-        'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Time_worked TEXT)')
+        'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
+         , Job_abbrev TEXT, Time_worked TEXT)')
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -162,6 +163,7 @@ def breaktime(answer):
     global lead_name
     global stop_type
     global start_time
+    global diff
     sel = sel_current_row()
 
     for row in sel:
@@ -177,6 +179,13 @@ def breaktime(answer):
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
         now = update_now()
+        sel = sel_current_row()
+        for row in sel:
+            job_name = row[1]
+            job_abbrev = row[2]
+            stop_type = row[3]
+            lead_name = row[6]
+            start_time = row[7]
         for row in sel:
             print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
 
@@ -191,6 +200,7 @@ def breaktime(answer):
         # Get time passed since beginning of task.
         # TODO: Check hours calculation!!!
         curr_time = datetime.datetime.now().strftime('%I:%M %p')
+        print(start_time)
         diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time, '%I:%M %p')
         time = float(round_to_nearest(diff.seconds, 360)) / 3600
         with jobdb:
@@ -204,10 +214,10 @@ def breaktime(answer):
         print("Are you still working on '{}' ? (y/n)").format(job_name)
         answer = query()
         if answer:
-            now = update_now()
+            now = datetime.datetime.now().strftime('%I:%M %p')
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             cur.execute(
-                "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Break_end) VALUES(?, ?, ?, ?, ?)",
+                "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
                 [p_uuid, job_name, job_abbrev, stop_type, now])
             main_menu()
         else:
@@ -338,7 +348,7 @@ def report():
                 main_menu()
             print(sel)
             # for i in sel:
-            #   print(sel)
+            # print(sel)
 
 
 def main_menu():
