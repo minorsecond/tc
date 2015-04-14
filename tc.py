@@ -269,7 +269,19 @@ def time_formatter():
 
 
 def get_time(time):
-    return datetime.datetime.strptime(time, '%I:%M %p')
+    split_hour = time.split(':')[0]
+    split_minute = time.split(':')[1]
+    split_minute2 = split_minute.split(' ')[0]
+    split_ap = time.split(' ')[1]
+    if split_ap in {'a', 'A', 'p', 'P'}:
+        while split_ap in {'a', 'A'}:
+            split_ap = 'AM'
+        while split_ap in {'p', 'P'}:
+            split_ap = 'PM'
+        time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+    else:
+        time_conc = time
+    return datetime.datetime.strptime(time_conc, '%I:%M %p')
 
 
 def total_time():
@@ -278,6 +290,7 @@ def total_time():
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
     print "Your time sheet entry for {0} is {1}".format(delta, delta_minutes)
+    main_menu()
 
 
 def switch_task():
@@ -308,7 +321,6 @@ def report():
             print(sel)
             # for i in sel:
             #   print(sel)
-    return sel
 
 
 def main_menu():
