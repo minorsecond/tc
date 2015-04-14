@@ -293,7 +293,6 @@ def time_formatter():
 
 
 def get_time(time):
-    print(len(time))
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
@@ -305,16 +304,14 @@ def get_time(time):
             while split_ap in {'p', 'P'}:
                 split_ap = 'PM'
             time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+            time = datetime.datetime.strptime(time_conc, '%I:%M %p')
+            return time
         else:
-            time_conc = time
+            time = datetime.datetime.strptime(time, '%I:%M %p')
+            return time
     except:
         print("Check time entry format and try again.")
         total_time()
-        try:
-            return datetime.datetime.strptime(time_conc, '%I:%M %p')
-        except IndexError:
-            print("Check time entry format and try again.")
-            total_time()
 
 
 def total_time():
@@ -323,6 +320,7 @@ def total_time():
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
     print "Your time sheet entry for {0} is {1}".format(delta, delta_minutes)
+    raw_input("\npress enter to return to main menu.")
     main_menu()
 
 
