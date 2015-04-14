@@ -26,7 +26,7 @@ LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
 
-jobdb = sqlite3.connect('jobs.db')
+jobdb = sqlite3.connect('jobdb.db')
 conn = sqlite3.connect('timesheet.db')
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
@@ -52,8 +52,9 @@ with conn:
 
 # This db is used for storing total time worked for each job.
 with jobdb:
-    cur.executescript('DROP TABLE IF EXISTS jobs')
-    cur.execute('CREATE TABLE if no exists jobdb(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Time TEXT')
+    cur.executescript('DROP TABLE IF EXISTS jobdb')
+    cur.execute(
+        'CREATE TABLE if not exists jobdb(ID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Time_worked TEXT)')
 
 os.system('cls' if os.name == 'nt' else 'clear')
 
@@ -93,7 +94,7 @@ def project_start():
     """
     global pid
     logging.debug("project_start called")
-    clock_in = update_now()
+    clock_in = datetime.datetime.now().strftime('%I:%M %p')
     abbrev = raw_input("What are you working on? (ABBREV): ")
     project_name = raw_input("What is the name of this project?: ")
     lead_name = raw_input("For whom are you working?: ")
@@ -134,7 +135,8 @@ def sel_current_row():
     """
     with conn:
         cur.execute(
-            "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date FROM timesheet WHERE ID = ?", (pid,))
+            "SELECT ID, Job_name, Job_abbrev, Stop_type, Stop_time, Date, Lead_name, Start_time FROM timesheet WHERE ID = ?",
+            (pid,))
         sel = cur.fetchall()
         return sel
 
@@ -150,13 +152,17 @@ def breaktime(answer):
     """
     global job_name
     global job_abbrev
+    global lead_name
+    global stop_type
+    global start_time
     sel = sel_current_row()
 
     for row in sel:
         job_name = row[1]
         job_abbrev = row[2]
         stop_type = row[3]
-        date = row[5]
+        Lead_name = row[6]
+        start_time = row[7]
 
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
     # an error is raised because some values are undefined.
@@ -175,7 +181,17 @@ def breaktime(answer):
             cur.execute(
                 "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
                 [pid, job_name, job_abbrev, stop_type, now])
-        print 'Enjoy!'
+        # Get time passed since beginning of task.
+        # TODO: Check hours calculation!!!
+        curr_time = datetime.datetime.now().strftime('%I:%M %p')
+        diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time, '%I:%M %p')
+        time = float(round_to_nearest(diff.seconds, 360)) / 3600
+        with jobdb:
+            cur.execute(
+                "INSERT INTO jobdb(ID Lead_name, Job_name, Job_abbrev, Time) VALUES(?, ?, ?, ?)",
+                [pid, lead_name, job_name, job_abbrev, time]
+            )
+        print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
         raw_input("Press Enter to begin working again")
         print("Are you still working on '{}' ? (y/n)").format(job_name)
@@ -281,9 +297,9 @@ def switch_task():
 
 
 def report():
-    with conn:
+    with jobdb:
         cur.execute(
-            "SELECT Job_name, Job_abbrev, Time_worked FROM timesheet WHERE Date = ?", (date,))
+            "SELECT Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Date = ?", (date,))
         while True:
             sel = cur.fetchone()
             if sel == None:
