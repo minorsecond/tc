@@ -63,6 +63,11 @@ os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def update_now():
+    """
+    Updates the "now" variable, which is a datetime object with
+    Year, month, day, hour, minute. e.g. 2015-2-5 13:00
+    :return: datetime object with above parameters
+    """
     now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
     return now
 
@@ -205,8 +210,8 @@ def breaktime(answer):
         time = float(round_to_nearest(diff.seconds, 360)) / 3600
         with jobdb:
             cur.execute(
-                "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked) VALUES(?, ?, ?, ?, ?)",
-                [p_uuid, lead_name, job_name, job_abbrev, time]
+                "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, Date) VALUES(?, ?, ?, ?, ?, ?)",
+                [p_uuid, lead_name, job_name, job_abbrev, time, date]
             )
         print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
         logging.info("Lunch break at {}".format(datetime.datetime.now()))
@@ -322,6 +327,8 @@ def total_time():
 
 
 def switch_task():
+    global job_name
+    global job_abbrev
     now = update_now()
     sel = sel_current_row()
     stop_type = "switch task"
@@ -338,17 +345,18 @@ def switch_task():
 
 
 def report():
+    print("Generating report for {0}").format(date)
     with jobdb:
         cur.execute(
-            "SELECT Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Date = ?", (date,))
+            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name FROM jobdb WHERE Date = ?", (date, ))
         while True:
             sel = cur.fetchone()
-            if sel == None:
+            # The below is wrong.
+            if sel is None:
                 print("The database is empty.")
                 main_menu()
-            print(sel)
-            # for i in sel:
-            # print(sel)
+            else:
+                print(sel)
 
 
 def main_menu():
