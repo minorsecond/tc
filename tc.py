@@ -319,8 +319,8 @@ def total_time():
     t_out = get_time(raw_input("Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print "Your time sheet entry for {0} is {1}".format(delta, delta_minutes)
-    raw_input("\npress enter to return to main menu.")
+    print "Your time sheet entry for {0} is {1} hours.".format(delta, delta_minutes)
+    raw_input("\nPress enter to return to main menu.")
     main_menu()
 
 
