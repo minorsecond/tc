@@ -278,9 +278,7 @@ def time_formatter():
     and prints the time formatted for timesheet in tenths of an
     hour
     """
-    time_input = raw_input("\nTime Formatter\n" \
-                           "Enter hours and minutes worked today" \
-                           "in 00:00 format: ")
+    time_input = raw_input("\nTime Formatter\n Enter hours and minutes worked today in 00:00 format: ")
     if len(time_input.split(':')) == 2:
         split_hours = time_input.split(':')[0]
         split_minutes = time_input.split(':')[1]
@@ -351,9 +349,11 @@ def report():
             sel = cur.fetchone()
             # The below is wrong.
             if sel is None:
-                print("The database is empty.")
+                print("*** The database is empty ***")
+                raw_input("Press enter to return to main menu.")
                 main_menu()
             else:
+                # TODO: Table formatting
                 print(sel)
 
 
@@ -388,8 +388,7 @@ def main_menu():
     if answer.lower() in {'6', '6.'}:
         total_time()
     if answer.lower() in {'7', '7.'}:
-        sel = report()
-        print(sel)
+        print(report())
 
 
 if __name__ == "__main__":
