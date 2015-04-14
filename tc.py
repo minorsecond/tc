@@ -16,6 +16,7 @@ of an hour, and to generate reports.
 
 import datetime
 import sys
+import os
 import csv
 import os.path
 import logging
@@ -46,13 +47,14 @@ columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
 with conn:
     cur = conn.cursor()
     # Disable the next line unless debugging.
-    cur.executescript('DROP TABLE IF EXISTS timesheet')
+    # cur.executescript('DROP TABLE IF EXISTS timesheet')
     cur.execute('CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
                 , Stop_time DATE, Date DATE, Stop_type TEXT, Break_end DATE)')
 
 # This db is used for storing total time worked for each job.
 with jobdb:
-    cur.executescript('DROP TABLE IF EXISTS jobdb')
+    # Disable the next line unless debugging.
+    # cur.executescript('DROP TABLE IF EXISTS jobdb')
     cur.execute(
         'CREATE TABLE if not exists jobdb(ID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Time_worked TEXT)')
 
@@ -161,7 +163,7 @@ def breaktime(answer):
         job_name = row[1]
         job_abbrev = row[2]
         stop_type = row[3]
-        Lead_name = row[6]
+        lead_name = row[6]
         start_time = row[7]
 
     # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
@@ -188,7 +190,7 @@ def breaktime(answer):
         time = float(round_to_nearest(diff.seconds, 360)) / 3600
         with jobdb:
             cur.execute(
-                "INSERT INTO jobdb(ID Lead_name, Job_name, Job_abbrev, Time) VALUES(?, ?, ?, ?)",
+                "INSERT INTO jobdb(ID, Lead_name, Job_name, Job_abbrev, Time_worked) VALUES(?, ?, ?, ?, ?)",
                 [pid, lead_name, job_name, job_abbrev, time]
             )
         print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
@@ -200,7 +202,7 @@ def breaktime(answer):
             now = update_now()
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             cur.execute(
-                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end, Date) VALUES(?, ?, ?, ?, ?)",
+                "INSERT INTO timesheet(ID, Job_name, Job_abbrev, Stop_type, Break_end) VALUES(?, ?, ?, ?, ?)",
                 [pid, job_name, job_abbrev, stop_type, now])
             main_menu()
         else:
@@ -213,8 +215,10 @@ def breaktime(answer):
         print ("Are you still working on {}? (y/n)").format(job_name)
         answer = query()
         if answer:
+            # TODO: Make this actually do something
             print "Resuming '{0}' at: '{1}' ".format(job_name, now)
             logging.info("Back from break at {}".format(now))
+            main_menu()
         else:
             main_menu()
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
@@ -338,6 +342,7 @@ def main_menu():
     Currently, options one and two are unused but
     can't be commented out.
     """
+    os.system('cls' if os.name == 'nt' else 'clear')
     print "PYPER Timesheet Utility\n\n" \
           "What would you like to do?\n" \
           "1. Clock In\New Job\n" \
@@ -364,7 +369,6 @@ def main_menu():
     if answer.lower() in {'7', '7.'}:
         sel = report()
         print(sel)
-
 
 
 if __name__ == "__main__":
