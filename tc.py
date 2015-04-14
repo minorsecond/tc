@@ -269,19 +269,28 @@ def time_formatter():
 
 
 def get_time(time):
-    split_hour = time.split(':')[0]
-    split_minute = time.split(':')[1]
-    split_minute2 = split_minute.split(' ')[0]
-    split_ap = time.split(' ')[1]
-    if split_ap in {'a', 'A', 'p', 'P'}:
-        while split_ap in {'a', 'A'}:
-            split_ap = 'AM'
-        while split_ap in {'p', 'P'}:
-            split_ap = 'PM'
-        time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-    else:
-        time_conc = time
-    return datetime.datetime.strptime(time_conc, '%I:%M %p')
+    print(len(time))
+    try:
+        split_hour = time.split(':')[0]
+        split_minute = time.split(':')[1]
+        split_minute2 = split_minute.split(' ')[0]
+        split_ap = time.split(' ')[1]
+        if split_ap in {'a', 'A', 'p', 'P'}:
+            while split_ap in {'a', 'A'}:
+                split_ap = 'AM'
+            while split_ap in {'p', 'P'}:
+                split_ap = 'PM'
+            time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+        else:
+            time_conc = time
+    except:
+        print("Check time entry format and try again.")
+        total_time()
+        try:
+            return datetime.datetime.strptime(time_conc, '%I:%M %p')
+        except IndexError:
+            print("Check time entry format and try again.")
+            total_time()
 
 
 def total_time():
