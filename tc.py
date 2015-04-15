@@ -107,6 +107,10 @@ def project_start():
     functions.
     """
     global p_uuid
+    global project_name
+    global clock_in
+    global status
+
     logging.debug("project_start called")
     clock_in = datetime.datetime.now().strftime('%I:%M %p')
     abbrev = raw_input("What are you working on? (ABBREV): ")
@@ -119,12 +123,11 @@ def project_start():
 
     if debug == 1:
         print "DEBUGGING: PID = {}".format(p_uuid)
-
-
     with conn:
         cur.execute(
             "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
             [p_uuid, lead_name, project_name, abbrev, clock_in, date])
+    status = 1
     return p_uuid
 
 
@@ -419,6 +422,8 @@ def main_menu():
           "5. Timesheet Minute Formatter\n" \
           "6. Calculate Total Time Worked\n" \
           "7. Generate Today's Timesheet\n"
+    if status == 1:
+        print("\nCurrent Job: {0}, started at {1}.").format(project_name, clock_in)
     answer = raw_input(">>> ")
     if answer.lower() in {'1', '1.'}:
         project_start()
