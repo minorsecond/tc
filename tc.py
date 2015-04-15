@@ -35,6 +35,9 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
 
+# Status variable - 0 = not in task. 1 = in task
+status = 0
+
 # Enable this flag (1) if debugging. Else leave at 0.
 debug = 1
 
@@ -113,7 +116,11 @@ def project_start():
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
-    print "DEBUGGING: PID = {}".format(p_uuid)
+
+    if debug == 1:
+        print "DEBUGGING: PID = {}".format(p_uuid)
+
+
     with conn:
         cur.execute(
             "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
@@ -157,7 +164,12 @@ def sel_timesheet_row():
         return sel
 
 
+## This function may not be necessary.
 def sel_jobdb_row():
+    """
+    Selects last row of jobdb, which should be the current job. This may not be used.
+    :return: Last row of jobdb.
+    """
     with jobdb:
         lid = cur.lastrowid
         cur.execute(
@@ -180,7 +192,10 @@ def breaktime(answer):
     global stop_type
     global start_time
     global diff
+    global status
+
     sel = sel_timesheet_row()
+    sel_job = sel_jobdb_row()
 
     for row in sel:
         job_name = row[1]
@@ -194,69 +209,94 @@ def breaktime(answer):
 
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
-        now = update_now()
-        sel = sel_timesheet_row()
-        for row in sel:
-            job_name = row[1]
-            job_abbrev = row[2]
-            stop_type = row[3]
-            lead_name = row[6]
-            start_time = row[7]
-        for row in sel:
-            print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
+        if status == 1:
+            now = update_now()
+            # Sel gets the last row printed, which should be the current job.
+            sel = sel_timesheet_row()
+            for row in sel:
+                job_name = row[1]
+                job_abbrev = row[2]
+                stop_type = row[3]
+                lead_name = row[6]
+                start_time = row[7]
+            for row in sel:
+                print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
 
-            # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
-            # keep everything in order as far as time calculations. It should be as simple as subtracting break
-            # time from total logged hours for each PID.
-        stop_type = "lunch"
-        with conn:
-            cur.execute(
-                "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
-                [p_uuid, job_name, job_abbrev, stop_type, now])
-        # Get time passed since beginning of task.
-        # TODO: Check hours calculation!!!
-        curr_time = datetime.datetime.now().strftime('%I:%M %p')
-        print(start_time)
-        diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time, '%I:%M %p')
-        time = float(round_to_nearest(diff.seconds, 360)) / 3600
-        with jobdb:
-            cur.execute(
-                "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                [p_uuid, lead_name, job_name, job_abbrev, time, date]
-            )
-        print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
-        logging.info("Lunch break at {}".format(datetime.datetime.now()))
-        raw_input("Press Enter to begin working again")
-        print("Are you still working on '{}' ? (y/n)").format(job_name)
-        answer = query()
-        if answer:
-            now = datetime.datetime.now().strftime('%I:%M %p')
-            print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
-            cur.execute(
-                "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
-                [p_uuid, job_name, job_abbrev, stop_type, now])
-            main_menu()
+                # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
+                # keep everything in order as far as time calculations. It should be as simple as subtracting break
+                # time from total logged hours for each PID.
+            stop_type = "lunch"
+            with conn:
+                cur.execute(
+                    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
+                    [p_uuid, job_name, job_abbrev, stop_type, now])
+
+            # Get time passed since beginning of task.
+            # TODO: Check hours calculation!!!
+            curr_time = datetime.datetime.now().strftime('%I:%M %p')
+            print(start_time)
+            diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time,
+                                                                                                   '%I:%M %p')
+            time = float(round_to_nearest(diff.seconds, 360)) / 3600
+            with jobdb:
+                if debug == 1:
+                    print("Connected to jobdb.")
+                cur.execute(
+                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, Date) VALUES(?, ?, ?, ?, ?, ?)",
+                    [p_uuid, lead_name, job_name, job_abbrev, time, date]
+                )
+
+            print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
+            logging.info("Lunch break at {}".format(datetime.datetime.now()))
+            status = 0
+            raw_input("Press Enter to begin working again")
+            print("Are you still working on '{}' ? (y/n)").format(job_name)
+            answer = query()
+            if answer:
+                now = datetime.datetime.now().strftime('%I:%M %p')
+                print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
+                status = 1
+                cur.execute(
+                    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
+                    [p_uuid, job_name, job_abbrev, stop_type, now])
+                main_menu()
+            else:
+                status = 0
+                main_menu()
+            logging.info("Back from lunch at {}".format(now))
         else:
+            raw_input("\nYou're not currently in job. Press enter to return to main menu.")
             main_menu()
-        logging.info("Back from lunch at {}".format(now))
     elif answer.lower() in {'2', '2.', 'break'}:
-        now = update_now()
-        logging.info("Taking a break at {}".format(now))
-        raw_input("Press Enter to begin working again")
-        print ("Are you still working on {}? (y/n)").format(job_name)
-        answer = query()
-        if answer:
-            # TODO: Make this actually do something
-            print "Resuming '{0}' at: '{1}' ".format(job_name, now)
-            logging.info("Back from break at {}".format(now))
-            main_menu()
+        if status == 1:
+            now = update_now()
+            status = 0
+            logging.info("Taking a break at {}".format(now))
+            raw_input("Press Enter to begin working again")
+            print ("Are you still working on {}? (y/n)").format(job_name)
+            answer = query()
+            if answer:
+                # TODO: Make this actually do something
+                print "Resuming '{0}' at: '{1}' ".format(job_name, now)
+                logging.info("Back from break at {}".format(now))
+                status = 1
+                main_menu()
+            else:
+                status = 0
+                main_menu()
         else:
+            raw_input("\nYou're not currently in job. Press enter to return to main menu.")
             main_menu()
     elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
-        print 'Take care!'
-        now = update_now()
-        logging.info("Clocked out at {}".format(now))
-        return "end of day"
+        if status == 1:
+            print 'Take care!'
+            status = 0
+            now = update_now()
+            logging.info("Clocked out at {}".format(now))
+            return "end of day"
+        else:
+            raw_input("\nYou're not currently in job. Press enter to return to main menu.")
+            main_menu()
 
 
 def init_csv(filename="times.csv"):
