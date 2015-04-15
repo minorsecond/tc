@@ -39,7 +39,7 @@ day_start = datetime.datetime.now()
 status = 0
 
 # Enable this flag (1) if debugging. Else leave at 0.
-debug = 1
+debug = 0
 
 
 # Create data structures
@@ -195,7 +195,6 @@ def breaktime(answer):
     global status
 
     sel = sel_timesheet_row()
-    sel_job = sel_jobdb_row()
 
     for row in sel:
         job_name = row[1]
