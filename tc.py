@@ -426,7 +426,8 @@ def main_menu():
           "4. Set up jobs/break types\n" \
           "5. Timesheet Minute Formatter\n" \
           "6. Calculate Total Time Worked\n" \
-          "7. Generate Today's Timesheet\n"
+          "7. Generate Today's Timesheet\n" \
+          "8. Quit\n"
     if status == 1:
         print("\nCurrent Job: {0}, started at {1}.").format(project_name, clock_in)
     answer = raw_input(">>> ")
@@ -445,6 +446,10 @@ def main_menu():
         total_time()
     if answer.lower() in {'7', '7.'}:
         print(report())
+    if answer.lower() in {'8', '8.'}:
+        SystemExit(0)
+    else:
+        main_menu()
 
 
 if __name__ == "__main__":
