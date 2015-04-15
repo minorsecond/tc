@@ -167,7 +167,7 @@ def sel_timesheet_row():
         return sel
 
 
-## This function may not be necessary.
+# This function may not be necessary.
 def sel_jobdb_row():
     """
     Selects last row of jobdb, which should be the current job. This may not be used.
@@ -179,6 +179,7 @@ def sel_jobdb_row():
             "SELECT Id, UUID, Date, Lead_name, Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Id = ?", (lid,))
         sel_jobdb = cur.fetchall()
         return sel_jobdb
+
 
 def breaktime(answer):
     """Prompts user to specify reason for break.
@@ -244,8 +245,8 @@ def breaktime(answer):
                 if debug == 1:
                     print("Connected to jobdb.")
                 cur.execute(
-                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, Date) VALUES(?, ?, ?, ?, ?, ?)",
-                    [p_uuid, lead_name, job_name, job_abbrev, time, date]
+                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
+                    "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
                 )
 
             print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
@@ -397,12 +398,16 @@ def report():
     print("Generating report for {0}").format(date)
     with jobdb:
         cur.execute(
-            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name FROM jobdb WHERE Date = ?", (date, ))
+            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
         while True:
-            sel = cur.fetchone()
+            sel = cur.fetchall()
             # TODO: Table formatting
-            print(sel)
-            raw_input("Press enter to return to main menu.")
+            print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
+            print("_______________________________________________________")
+            for row in sel:
+                print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
+                    .format(row[0], row[1], row[2], row[3], row[4])
+            raw_input("\nPress enter to return to main menu.")
             main_menu()
 
 
