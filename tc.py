@@ -279,7 +279,9 @@ def breaktime(answer):
             print ("Are you still working on {}? (y/n)").format(job_name)
             answer = query()
             if answer:
-                # TODO: Make this actually do something
+                cur.execute(
+                    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
+                    [p_uuid, job_name, job_abbrev, stop_type, now])
                 print "Resuming '{0}' at: '{1}' ".format(job_name, now)
                 logging.info("Back from break at {}".format(now))
                 status = 1
@@ -418,6 +420,7 @@ def main_menu():
     can't be commented out.
     """
     os.system('cls' if os.name == 'nt' else 'clear')
+    # TODO: Move 4-7 to submenu
     print "PYPER Timesheet Utility\n\n" \
           "What would you like to do?\n" \
           "1. Clock In\New Job\n" \
