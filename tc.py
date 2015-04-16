@@ -348,6 +348,9 @@ def time_formatter():
 
 
 def get_time(time):
+    if time.split(' ')[1] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
+        time_conc = time + ':' + '00' + time.split(' ')[2]
+        return time_conc
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
