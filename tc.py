@@ -348,9 +348,16 @@ def time_formatter():
 
 
 def get_time(time):
-    if time.split(' ')[1] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
-        time_conc = time + ':' + '00' + time.split(' ')[2]
-        return time_conc
+    """
+    Format user input time so that datetime can process it correctly.
+
+    """
+
+    global time_conc
+
+    if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
+        time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
+        print(time)
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
@@ -362,14 +369,13 @@ def get_time(time):
             while split_ap in {'p', 'P'}:
                 split_ap = 'PM'
             time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-            time = datetime.datetime.strptime(time_conc, '%I:%M %p')
-            return time
+            time_conc = datetime.datetime.strptime(time_conc, '%I:%M %p')
         else:
-            time = datetime.datetime.strptime(time, '%I:%M %p')
-            return time
-    except:
-        print("Check time entry format and try again.")
-        total_time()
+            time_conc = datetime.datetime.strptime(time, '%I:%M %p')
+    except SyntaxError:
+        print("Check format and try again.")
+
+    return time_conc
 
 
 def total_time():
