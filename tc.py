@@ -141,6 +141,7 @@ def round_to_nearest(num, b):
     return company_minutes - (company_minutes % b)
 
 
+# TODO: Make changes to do away with break/lunch specific code, as it essentially does the same thing.
 def break_submenu():
     print "What are you doing?\n" \
           "1. Lunch\n" \
@@ -403,7 +404,6 @@ def report():
             "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
         while True:
             sel = cur.fetchall()
-            # TODO: Table formatting
             print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
             print("=======================================================")
             for row in sel:
