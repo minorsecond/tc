@@ -395,7 +395,7 @@ def switch_task():
 
 
 def report():
-    print("Generating report for {0}").format(date)
+    print("\nGenerating report for {0}\n").format(date)
     with jobdb:
         cur.execute(
             "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
@@ -403,7 +403,7 @@ def report():
             sel = cur.fetchall()
             # TODO: Table formatting
             print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
-            print("_______________________________________________________")
+            print("=======================================================")
             for row in sel:
                 print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
                     .format(row[0], row[1], row[2], row[3], row[4])
