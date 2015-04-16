@@ -425,7 +425,7 @@ def main_menu():
           "What would you like to do?\n" \
           "1. Clock In\New Job\n" \
           "2. Switch Job\n" \
-          "3. Break Time\Quit\n" \
+          "3. Quit Working\n" \
           "4. Set up jobs/break types\n" \
           "5. Timesheet Minute Formatter\n" \
           "6. Calculate Total Time Worked\n" \
