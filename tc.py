@@ -122,7 +122,8 @@ def project_start():
     logging.debug("project_name is {}".format(project_name))
 
     if debug == 1:
-        print "DEBUGGING: PID = {}".format(p_uuid)
+        print "DEBUGGING. Press enter to continue: PID = {}".format(p_uuid)
+        raw_input()
     with conn:
         cur.execute(
             "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
@@ -244,7 +245,7 @@ def breaktime(answer):
             with jobdb:
                 if debug == 1:
                     print("DEBUGGING")
-                    print("Connected to jobdb.")
+                    print("Connected to jobdb. Data to be inserted into JOBDB Database:")
                     print ("Lead Name: {0}, Job Name: {1}, Job Abbrev: {2}, Time Worked: {3}, Date: {4}, UUID: {5}")\
                         .format(lead_name, job_name,job_abbrev, time, date, p_uuid)
                 cur.execute(
