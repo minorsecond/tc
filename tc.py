@@ -238,13 +238,15 @@ def breaktime(answer):
             # Get time passed since beginning of task.
             # TODO: Check hours calculation!!!
             curr_time = datetime.datetime.now().strftime('%I:%M %p')
-            print(start_time)
             diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time,
                                                                                                    '%I:%M %p')
             time = float(round_to_nearest(diff.seconds, 360)) / 3600
             with jobdb:
                 if debug == 1:
+                    print("DEBUGGING")
                     print("Connected to jobdb.")
+                    print ("Lead Name: {0}, Job Name: {1}, Job Abbrev: {2}, Time Worked: {3}, Date: {4}, UUID: {5}")\
+                        .format(lead_name, job_name,job_abbrev, time, date, p_uuid)
                 cur.execute(
                     "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
                     "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
@@ -407,10 +409,13 @@ def switch_task():
 
 
 def report():
+    """
+    Pulls data from jobsdb and prints.
+    """
     print("\nGenerating report for {0}\n").format(date)
     with jobdb:
         cur.execute(
-            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
+            "SELECT Job_name, Job_abbrev , Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
         while True:
             sel = cur.fetchall()
             print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
