@@ -21,20 +21,23 @@ import csv
 import os.path
 import logging
 import uuid
-import sqlite3
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+import models
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-
-# TODO: Add employee DB.
-jobdb = sqlite3.connect('jobdb.db')
-conn = sqlite3.connect('timesheet.db')
+# Do we need separate DB for each table?
+DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
+
+engine = create_engine('sqlite:///{}'.format(DB_NAME))
+DBSession = sessionmaker(bind=engine)
 
 # Status variable - 0 = not in task. 1 = in task
 status = 0
@@ -42,31 +45,21 @@ status = 0
 # Enable this flag (1) if debugging. Else leave at 0.
 debug = 1
 
-
-# Create data structures
-
-# CSV columns
-columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
-           "Project Start", "Project End", "Time Out", "Time In",
-           "Day End", "ID"]
-
-# SQL database.
-with conn:
-    cur = conn.cursor()
-    if debug == 1:
-        cur.executescript('DROP TABLE IF EXISTS timesheet')
-    cur.execute('CREATE TABLE if not exists timesheet(Id INTEGER PRIMARY KEY, UUID TEXT, Lead_name TEXT, Job_name TEXT\
-                , Job_abbrev TEXT, Start_time DATE, Stop_time DATE, Date DATE, Stop_type TEXT)')
+session = DBSession()
+#with conn:
+#    cur = conn.cursor()
+#    if debug == 1:
+#        cur.executescript('DROP TABLE IF EXISTS timesheet')
+#    cur.execute('CREATE TABLE if not exists timesheet(Id INTEGER PRIMARY KEY, UUID TEXT, Lead_name TEXT, Job_name TEXT\
+#                , Job_abbrev TEXT, Start_time DATE, Stop_time DATE, Date DATE, Stop_type TEXT)')
 
 # This db is used for storing total time worked for each job.
-with jobdb:
-    if debug == 1:
-        cur.executescript('DROP TABLE IF EXISTS jobdb')
-    cur.execute(
-        'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
-         , Job_abbrev TEXT, Time_worked TEXT)')
-
-os.system('cls' if os.name == 'nt' else 'clear')
+#with jobdb:
+#    if debug == 1:
+#        cur.executescript('DROP TABLE IF EXISTS jobdb')
+#    cur.execute(
+#        'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
+#         , Job_abbrev TEXT, Time_worked TEXT)')
 
 
 def update_now():
@@ -113,7 +106,7 @@ def project_start():
     global status
 
     logging.debug("project_start called")
-    clock_in = datetime.datetime.now().strftime('%I:%M %p')
+    clock_in = datetime.datetime.now()
     abbrev = raw_input("What are you working on? (ABBREV): ")
     project_name = raw_input("What is the name of this project?: ")
     lead_name = raw_input("For whom are you working?: ")
@@ -124,10 +117,10 @@ def project_start():
 
     if debug == 1:
         print "DEBUGGING: PID = {}".format(p_uuid)
-    with conn:
-        cur.execute(
-            "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
-            [p_uuid, lead_name, project_name, abbrev, clock_in, date])
+#    with conn:
+#        cur.execute(
+#            "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
+#            [p_uuid, lead_name, project_name, abbrev, clock_in, date])
     status = 1
     return p_uuid
 
@@ -223,6 +216,7 @@ def breaktime(answer):
             # Sel gets the last row printed, which should be the current job.
             sel = sel_timesheet_row()
             for row in sel:
+                print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
                 job_name = row[1]
                 job_abbrev = row[2]
                 stop_type = row[3]
@@ -312,52 +306,28 @@ def breaktime(answer):
             main_menu()
 
 
-def init_csv(filename="times.csv"):
-    """Initializes the csv.writer based on its filename
+def time_formatter(time_input):
+    """Prompts the user for hh:mm and returns a timedelta
 
-    init_csv('file.csv') -> csv.writer(open('file.csv', 'a'))
-    creates file if it doesn't exist, and writes some default columns as a
-    header
+    Takes user input as 00:00, splits those using : as seperator, and returns
+    the resulting timedelta object.
     """
-
-    logging.debug("Called init_csv")
-    if os.path.isfile(filename):
-        logging.debug("{} already exists -- opening".format(filename))
-        wr_timesheet = csv.writer(open(filename, "a"))
-        logging.info("{} opened as a csv.writer".format(filename))
-    else:
-        logging.debug("{} does not exist -- creating".format(filename))
-        wr_timesheet = csv.writer(open(filename, "w"))
-        logging.info("{} created and opened as a csv.writer".format(
-            wr_timesheet))
-        wr_timesheet.writerow(columns)
-        logging.debug("{} initialized with columns: {}".format(
-            filename, columns))
-    return wr_timesheet
-
-
-def time_formatter():
-    """
-    Takes user input as 00:00, splits those using : as separator,
-    and prints the time formatted for timesheet in tenths of an
-    hour
-    """
-    time_input = raw_input("\nTime Formatter\n Enter hours and minutes worked today in 00:00 format: ")
-    if len(time_input.split(':')) == 2:
-        split_hours = time_input.split(':')[0]
-        split_minutes = time_input.split(':')[1]
-        round_minutes = round_to_nearest(int(split_minutes), 6)
-        print "Your timesheet entry is {0}:{1}".format(split_hours, round_minutes)
-        main_menu()
-    else:
-        print "Check input format and try again. (00:00)"
-        time_formatter()
+    FAIL_MSG = "Please check input format and try again. (00:00)"
+    split = time_input.split(":")
+    if len(split) != 2:
+        raise ValueError(FAIL_MSG)
+    try:
+        hours, minutes = map(int, split)
+    except ValueError as e:
+        raise ValueError(FAIL_MSG)
+    minutes = round_to_nearest(minutes, 6)
+    d = datetime.timedelta(hours=hours, minutes=minutes)
+    return d
 
 
 def get_time(time):
     """
     Format user input time so that datetime can process it correctly.
-
     """
 
     global time_conc
@@ -387,8 +357,12 @@ def get_time(time):
 
 
 def total_time():
-    t_in = get_time(raw_input("Please enter your start time in 00:00 AM/PM format: "))
-    t_out = get_time(raw_input("Please enter your end time in 00:00 AM/PM format: "))
+    t_in = get_time(
+        raw_input(
+            "Please enter your start time in 00:00 AM/PM format: "))
+    t_out = get_time(
+        raw_input(
+            "Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
     print "Your time sheet entry for {0} is {1} hours.".format(delta, delta_minutes)
@@ -431,47 +405,44 @@ def report():
 
 
 def main_menu():
-    """
-    Main menu for program. Prompts user for function.
-    Currently, options one and two are unused but
-    can't be commented out.
-    """
-    os.system('cls' if os.name == 'nt' else 'clear')
-    # TODO: Move 4-7 to submenu
-    print "PYPER Timesheet Utility\n\n" \
-          "What would you like to do?\n" \
-          "1. Clock In\New Job\n" \
-          "2. Switch Job\n" \
-          "3. Quit Working\n" \
-          "4. Set up jobs/break types\n" \
-          "5. Timesheet Minute Formatter\n" \
-          "6. Calculate Total Time Worked\n" \
-          "7. Generate Today's Timesheet\n" \
-          "8. Quit\n"
-    if status == 1:
-        print("\nCurrent Job: {0}, started at {1}.").format(project_name, clock_in)
-    answer = raw_input(">>> ")
-    if answer.lower() in {'1', '1.'}:
-        project_start()
-        main_menu()
-    if answer.lower() in {'2', '2.'}:
-        switch_task()
-    if answer.lower() in {'3', '3.'}:
-        break_submenu()
-    # if answer.lower() in {'4', '4.'}:
-
-    if answer.lower() in {'5', '5.'}:
-        time_formatter()
-    if answer.lower() in {'6', '6.'}:
-        total_time()
-    if answer.lower() in {'7', '7.'}:
-        print(report())
-    if answer.lower() in {'8', '8.'}:
-        SystemExit(0)
-    else:
-        main_menu()
+    while True:
+        """Main menu for program. Prompts user for function."""
+        print "PYPER Timesheet Utility\n\n" \
+              "What would you like to do?\n" \
+              "1. Clock In\n" \
+              "2. Break Time\n" \
+              "3. Clock Out\n" \
+              "4. Set up obs/break types\n" \
+              "5. Timesheet Minute Formatter\n" \
+              "6. Calculate Total Time Worked\n" \
+              "9. Quit\n"
+        answer = raw_input(">>> ")
+        if answer.startswith('1'):
+            project_start()
+        if answer.startswith('2'):
+            break_submenu()
+        if answer.startswith('3'):
+            raise NotImplementedError()
+            # TODO: implement clock out
+        if answer.startswith('4'):
+            raise NotImplementedError()
+            # TODO: implement set up break types
+        if answer.startswith('5'):
+            time_input = raw_input("\nTime Formatter\n"
+                                   "Please enter hours and minutes worked today"
+                                   "in 00:00 format: ")
+            try:
+                d = time_formatter(time_input)
+                # TODO: what should we do with time_formatter? Time adustments??
+            except ValueError as e:
+                print(e)
+        if answer.startswith('6'):
+            total_time()
+        if answer.startswith('9'):
+            break
 
 
 if __name__ == "__main__":
+    os.system('cls' if os.name == 'nt' else 'clear')
     wr_timesheet = init_csv()
     main_menu()
