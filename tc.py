@@ -40,7 +40,7 @@ day_start = datetime.datetime.now()
 status = 0
 
 # Enable this flag (1) if debugging. Else leave at 0.
-debug = 0
+debug = 1
 
 
 # Create data structures
@@ -75,7 +75,7 @@ def update_now():
     Year, month, day, hour, minute. e.g. 2015-2-5 13:00
     :return: datetime object with above parameters
     """
-    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.datetime.now().strftime('%I:%M %p')
     return now
 
 
@@ -201,6 +201,10 @@ def breaktime(answer):
     global status
 
     sel = sel_timesheet_row()
+    if debug == 1:
+        print("\nDEBUGGING MODE\n")
+        print("Timesheet Rows:")
+        print(sel)
 
     for row in sel:
         job_name = row[1]
@@ -239,13 +243,15 @@ def breaktime(answer):
             # Get time passed since beginning of task.
             # TODO: Check hours calculation!!!
             curr_time = datetime.datetime.now().strftime('%I:%M %p')
-            print(start_time)
-            diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time,
-                                                                                                   '%I:%M %p')
+            # diff is returning incorrect time
+            diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
             time = float(round_to_nearest(diff.seconds, 360)) / 3600
+            if debug == 1:
+                print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}")\
+                    .format(start_time, curr_time, diff, time)
             with jobdb:
                 if debug == 1:
-                    print("Connected to jobdb.")
+                    print("Connected to DB: jobdb.\n")
                 cur.execute(
                     "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
                     "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
