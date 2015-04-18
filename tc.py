@@ -27,6 +27,7 @@ LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
 
+# TODO: Add employee DB.
 jobdb = sqlite3.connect('jobdb.db')
 conn = sqlite3.connect('timesheet.db')
 LOGLEVEL = logging.INFO
@@ -368,8 +369,9 @@ def get_time(time):
                 split_ap = 'AM'
             while split_ap in {'p', 'P'}:
                 split_ap = 'PM'
-            time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-            time_conc = datetime.datetime.strptime(time_conc, '%I:%M %p')
+            global _time_conc
+            _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+            time_conc = datetime.datetime.strptime(_time_conc, '%I:%M %p')
         else:
             time_conc = datetime.datetime.strptime(time, '%I:%M %p')
     except SyntaxError:
