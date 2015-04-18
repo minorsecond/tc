@@ -24,6 +24,8 @@ class Clocktime(Base):
     time_out = Column(DateTime)
     employee_id = Column(Integer,ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
+    # employee = many to one relationship with Employee
+    # job = many to one relationship with Job
 
     @property
     def timeworked(self):
