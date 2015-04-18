@@ -46,6 +46,7 @@ session won't be persisted into the database until you call
 session.commit(). If you're not happy about the changes, you can
 revert all of them back to the last commit by calling
 session.rollback()
+http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/
 """
 DBSession = sessionmaker(bind=engine)
 
@@ -56,20 +57,6 @@ status = 0
 debug = 1
 
 session = DBSession()
-#with conn:
-#    cur = conn.cursor()
-#    if debug == 1:
-#        cur.executescript('DROP TABLE IF EXISTS timesheet')
-#    cur.execute('CREATE TABLE if not exists timesheet(Id INTEGER PRIMARY KEY, UUID TEXT, Lead_name TEXT, Job_name TEXT\
-#                , Job_abbrev TEXT, Start_time DATE, Stop_time DATE, Date DATE, Stop_type TEXT)')
-
-# This db is used for storing total time worked for each job.
-#with jobdb:
-#    if debug == 1:
-#        cur.executescript('DROP TABLE IF EXISTS jobdb')
-#    cur.execute(
-#        'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
-#         , Job_abbrev TEXT, Time_worked TEXT)')
 
 
 def update_now():
@@ -127,10 +114,6 @@ def project_start():
 
     if debug == 1:
         print "DEBUGGING: PID = {}".format(p_uuid)
-#    with conn:
-#        cur.execute(
-#            "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
-#            [p_uuid, lead_name, project_name, abbrev, clock_in, date])
     status = 1
     return p_uuid
 
