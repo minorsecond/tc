@@ -37,6 +37,16 @@ date = str(datetime.date.today())
 day_start = datetime.datetime.now()
 
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
+
+"""
+A DBSession() instance establishes all conversations with the database
+and represents a "staging zone" for all the objects loaded into the
+database session object. Any change made against the objects in the
+session won't be persisted into the database until you call
+session.commit(). If you're not happy about the changes, you can
+revert all of them back to the last commit by calling
+session.rollback()
+"""
 DBSession = sessionmaker(bind=engine)
 
 # Status variable - 0 = not in task. 1 = in task
