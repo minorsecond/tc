@@ -17,13 +17,13 @@ of an hour, and to generate reports.
 import datetime
 import sys
 import os
-import csv
 import os.path
 import logging
 import uuid
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-import models
+
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
@@ -433,7 +433,7 @@ def main_menu():
                                    "in 00:00 format: ")
             try:
                 d = time_formatter(time_input)
-                # TODO: what should we do with time_formatter? Time adustments??
+                # TODO: what should we do with time_formatter? Time adustments?
             except ValueError as e:
                 print(e)
         if answer.startswith('6'):
