@@ -40,4 +40,5 @@ class Job(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(75))
     abbr = Column(String(16))
-
+    rate = Column(Numeric(precision=2))  # $/hr
+    
