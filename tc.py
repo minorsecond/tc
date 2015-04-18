@@ -59,9 +59,10 @@ with conn:
 
 # This db is used for storing total time worked for each job.
 with jobdb:
+    job_cur = jobdb.cursor()
     if debug == 1:
-        cur.executescript('DROP TABLE IF EXISTS jobdb')
-    cur.execute(
+        job_cur.executescript('DROP TABLE IF EXISTS jobdb')
+    job_cur.execute(
         'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
          , Job_abbrev TEXT, Time_worked TEXT)')
 
@@ -179,7 +180,7 @@ def sel_jobdb_row():
         lid = cur.lastrowid
         cur.execute(
             "SELECT Id, UUID, Date, Lead_name, Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Id = ?", (lid,))
-        sel_jobdb = cur.fetchall()
+        sel_jobdb = job_cur.fetchall()
         return sel_jobdb
 
 
@@ -248,10 +249,10 @@ def breaktime(answer):
                     print("Connected to jobdb. Data to be inserted into JOBDB Database:")
                     print ("Lead Name: {0}, Job Name: {1}, Job Abbrev: {2}, Time Worked: {3}, Date: {4}, UUID: {5}")\
                         .format(lead_name, job_name,job_abbrev, time, date, p_uuid)
-                cur.execute(
-                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
-                    "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
-                )
+                job_cur = jobdb.cursor()
+                job_cur.execute(
+                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, Date) \
+                    VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date])
 
             print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
             logging.info("Lunch break at {}".format(datetime.datetime.now()))
@@ -360,7 +361,6 @@ def get_time(time):
 
     if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
         time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
-        print(time)
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
@@ -415,10 +415,10 @@ def report():
     """
     print("\nGenerating report for {0}\n").format(date)
     with jobdb:
-        cur.execute(
+        job_cur.execute(
             "SELECT Job_name, Job_abbrev , Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
         while True:
-            sel = cur.fetchall()
+            sel = job_cur.fetchall()
             print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
             print("=======================================================")
             for row in sel:
