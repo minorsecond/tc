@@ -1,39 +1,75 @@
+#!/usr/bin/python
+# -*- coding: ascii -*-
+
+"""
+This script is a timesheet utility designed to assist
+in keeping track of projects in a project-based
+job using project codes and names. It has the ability
+to create CSV files, convert standard time to tenths
+of an hour, and to generate reports.
+"""
+
 # PYPER (Python Project Time Tracker)
 # A timeclock program for project-based jobs
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
-# time.sleep requires this, but I'm sure there is
-# an alternative to the sleep.
-import time
-
 import datetime
 import sys
-import csv
+import os
 import os.path
-import select
 import logging
 import uuid
+
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
+# TODO: Figure out what to do with jobdb. This DB kept the total daily time for each task.
+DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
-sumtime = 0
-project_time = 0
-# CSV columns
-columns = ["Date", "Day Start", "Project Abbrev", "Project Name",
-           "Project Start", "Project End", "Time Out", "Time In",
-           "Day End", "ID"]
+date = str(datetime.date.today())
+day_start = datetime.datetime.now()
 
-# initialize dictionary
-times = {'Date': 0, 'Day Start': 0, 'Project Abbrev': 0, 'Project Name': 0,
-         'Project Start': 0, 'Project End': 0, 'Project Time': 0,
-         'Time Out': 0, 'Time In': 0, 'Day End': 0, 'pid': 0}
+engine = create_engine('sqlite:///{}'.format(DB_NAME))
+DBSession = sessionmaker(bind=engine)
 
-os.system('cls' if os.name == 'nt' else 'clear')
+# Status variable - 0 = not in task. 1 = in task
+status = 0
+
+# Enable this flag (1) if debugging. Else leave at 0.
+debug = 1
+
+session = DBSession()
+#with conn:
+#    cur = conn.cursor()
+#    if debug == 1:
+#        cur.executescript('DROP TABLE IF EXISTS timesheet')
+#    cur.execute('CREATE TABLE if not exists timesheet(Id INTEGER PRIMARY KEY, UUID TEXT, Lead_name TEXT, Job_name TEXT\
+#                , Job_abbrev TEXT, Start_time DATE, Stop_time DATE, Date DATE, Stop_type TEXT)')
+
+# This db is used for storing total time worked for each job.
+#with jobdb:
+#    if debug == 1:
+#        cur.executescript('DROP TABLE IF EXISTS jobdb')
+#    cur.execute(
+#        'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
+#         , Job_abbrev TEXT, Time_worked TEXT)')
+
+
+def update_now():
+    """
+    Updates the "now" variable, which is a datetime object with
+    Year, month, day, hour, minute. e.g. 2015-2-5 13:00
+    :return: datetime object with above parameters
+    """
+    now = datetime.datetime.now().strftime('%I:%M %p')
+    return now
 
 
 def query():
@@ -54,174 +90,362 @@ def query():
     elif choice in no:
         return False
     else:
-        print "Please respond with 'yes' or 'no'"
+        sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
 def project_start():
-    global times
+    """
+    Prompts the user for project information, creates an id for
+    recalling data (will be used in the future) and returns
+    project name, project abbrev and id for use in other
+    functions.
+    """
+    global p_uuid
+    global project_name
+    global clock_in
+    global status
 
     logging.debug("project_start called")
-    abbrev = raw_input("What are you working on? (ABBREV) ")
-    project_name = raw_input("What is the name of this project? ")
-    pid = uuid.uuid4()
-    logging.debug("UUID is {}".format(pid))
+    clock_in = datetime.datetime.now()
+    abbrev = raw_input("What are you working on? (ABBREV): ")
+    project_name = raw_input("What is the name of this project?: ")
+    lead_name = raw_input("For whom are you working?: ")
+    p_uuid = str(uuid.uuid4())
+    logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
-    print "Entry UUID: {}".format(pid)
-    times['Project Abbrev'] = abbrev
-    times['Project Name'] = project_name
-    times['pid'] = pid
-    time_start = datetime.datetime.now()
-    print "----------------------------------------------"
-    print "\n", 'Press enter to exit timer', '\n'
 
-    print "The project elapsed time is: "
-    timer(time_start, abbrev, project_name, pid)
+    if debug == 1:
+        print "DEBUGGING: PID = {}".format(p_uuid)
+#    with conn:
+#        cur.execute(
+#            "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
+#            [p_uuid, lead_name, project_name, abbrev, clock_in, date])
+    status = 1
+    return p_uuid
 
 
-def round_to_nearest(num, base=6):
+def round_to_nearest(num, b):
     """Rounds num to the nearest base
 
     round_to_nearest(7, 5) -> 5
     """
 
-    company_minutes = num + (base // 2)
-    return company_minutes - (company_minutes % base)
+    company_minutes = num + (b // 2)
+    return company_minutes - (company_minutes % b)
 
 
-def timer(time_start, abbrev, project_name, pid):
-    """Timer that ends upon user interaction. Uses round_to_nearest script
-    to round to nearest six-minute interval,
-    to comply with work requirements.
+# TODO: Make changes to do away with break/lunch specific code, as it essentially does the same thing.
+def break_submenu():
+    print "What are you doing?\n" \
+          "1. Lunch\n" \
+          "2. Break\n"
+    answer = raw_input(">>>")
+    breaktime(answer)
+
+
+def sel_timesheet_row():
+    """
+    Returns the current job's row, using the PID generated by project_start.
+    :return: the current job's row.
     """
 
-    seconds = 0
-    minutes = 0
-    hours = 0
+    # Probably be better to use cur.lastrowid to select the last row, because currently it will fetch all activities
+    # per PID and update them.
 
-    logging.debug("timer called")
-
-    while True:
-
-        sys.stdout.write(
-            "\r {hours} Hours {minutes} Minutes {seconds} Seconds".format(
-                hours=hours, minutes=minutes, seconds=seconds))
-        sys.stdout.flush()
-        # TODO: Try print instead of stdout.
-        date = datetime.datetime.now().date()
-        now = datetime.datetime.now()
-        seconds = 1 + (now - time_start).total_seconds()
-        logging.info("seconds set to {}".format(seconds))
-        hours = seconds // 60 // 60
-        minutes = seconds // 60
-        seconds %= 60
-        logging.debug("TIME SET! Hours: {}, Minutes: {}, Seconds: {}".format(
-            hours, minutes, seconds))
-
-        """
-        The sys.stdin line prevents the timer from halting immediately when
-        run. Without it, the key input that starts the timer is passed into
-        raw_input in this if statement, causing the timer to never start.
-        """
-
-        if sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-            # TODO: throws error in windows since sys.stdin is not a file.
-            raw_input()
-            print '\n', 'What are you doing? (lunch, home, break, switch task)'
-            answer = raw_input()
-            round_minutes = round_to_nearest(minutes)
-            times['Project Time'] = round_minutes
-            print"The timesheet time elapsed is: %s" % round_minutes
-            # Make sure same ID is used for each abbrev code used. To help
-            # check consistency.
-            times_out = [date, day_start, abbrev, project_name, time_start,
-                         "timeend_placeholder", "time_out_placeholder",
-                         "placeholder", "time_in_placeholder", pid]
-            wr_timesheet.writerow(times_out)
-            choices(answer, abbrev, project_name, time_start)
-        if seconds > 1:
-            time.sleep(1)
+    with conn:
+        lid = cur.lastrowid
+        cur.execute(
+            "SELECT UUID, Job_name, Job_abbrev, Stop_type, Stop_time, Date, Lead_name, Start_time FROM timesheet WHERE Id = ?",
+            (lid,))
+        sel = cur.fetchall()
+        return sel
 
 
-def choices(answer, abbrev, project_name, time_start):
+# This function may not be necessary.
+def sel_jobdb_row():
+    """
+    Selects last row of jobdb, which should be the current job. This may not be used.
+    :return: Last row of jobdb.
+    """
+    with jobdb:
+        lid = cur.lastrowid
+        cur.execute(
+            "SELECT Id, UUID, Date, Lead_name, Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Id = ?", (lid,))
+        sel_jobdb = cur.fetchall()
+        return sel_jobdb
+
+
+def breaktime(answer):
     """Prompts user to specify reason for break.
+
+    :param answer: takes user input from timer function
 
     No real reason for this other than just general bookkeeping.
     Not a requirement. Would be nice to be able to pause the timer for breaks,
     rather than having to start the script all over again.
     """
+    global job_name
+    global job_abbrev
+    global lead_name
+    global stop_type
+    global start_time
+    global diff
+    global status
+
+    sel = sel_timesheet_row()
+    if debug == 1:
+        print("\nDEBUGGING MODE\n")
+        print("Timesheet Rows:")
+        print(sel)
+
+    for row in sel:
+        job_name = row[1]
+        job_abbrev = row[2]
+        stop_type = row[3]
+        lead_name = row[6]
+        start_time = row[7]
+
+    # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
+    # an error is raised because some values are undefined.
 
     logging.debug("Called choices with answer: {}".format(answer))
-    if answer == 'lunch':
-        print 'Bon appetit'
-        ltimeout = datetime.datetime.now()
-        logging.debug("ltimeout set to {}".format(ltimeout))
-        quit()
-    elif answer == 'home':
-        print 'Take care!'
-        hometime = datetime.datetime.now()
-        logging.debug("hometime set to {}".format(hometime))
-        quit()
-    elif answer == 'break':
-        breaktime = datetime.datetime.now()
-        logging.debug("breaktime set to {}".format(breaktime))
-        raw_input("Press Enter to begin working again")
-        print "Are you still working on %s? (y/n)" % abbrev
-        query()
-        if True:
-            time_start = datetime.datetime.now()
-            print "Resuming '{0}' at: '{1}' " % (project_name, time_start)
+    if answer.lower() in {'1', '1.', 'lunch'}:
+        if status == 1:
+            now = update_now()
+            # Sel gets the last row printed, which should be the current job.
+            sel = sel_timesheet_row()
+            for row in sel:
+                print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
+                job_name = row[1]
+                job_abbrev = row[2]
+                stop_type = row[3]
+                lead_name = row[6]
+                start_time = row[7]
+            for row in sel:
+                print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
+
+                # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
+                # keep everything in order as far as time calculations. It should be as simple as subtracting break
+                # time from total logged hours for each PID.
+            stop_type = "lunch"
+            with conn:
+                cur.execute(
+                    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
+                    [p_uuid, job_name, job_abbrev, stop_type, now])
+
+            # Get time passed since beginning of task.
+            # TODO: Check hours calculation!!!
+            curr_time = datetime.datetime.now().strftime('%I:%M %p')
+            # diff is returning incorrect time
+            diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
+            time = float(round_to_nearest(diff.seconds, 360)) / 3600
+            if debug == 1:
+                print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}")\
+                    .format(start_time, curr_time, diff, time)
+            with jobdb:
+                if debug == 1:
+                    print("Connected to DB: jobdb.\n")
+                cur.execute(
+                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
+                    "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
+                )
+
+            print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
+            logging.info("Lunch break at {}".format(datetime.datetime.now()))
+            status = 0
+            raw_input("Press Enter to begin working again")
+            print("Are you still working on '{}' ? (y/n)").format(job_name)
+            answer = query()
+            if answer:
+                now = datetime.datetime.now().strftime('%I:%M %p')
+                print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
+                status = 1
+                cur.execute(
+                    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
+                    [p_uuid, job_name, job_abbrev, stop_type, now])
+                main_menu()
+            else:
+                status = 0
+                main_menu()
+            logging.info("Back from lunch at {}".format(now))
         else:
-            quit()  # TODO: don't want to quit the program - pause it.
-    else:
-        quit()
+            raw_input("\nYou're not currently in job. Press enter to return to main menu.")
+            main_menu()
+    elif answer.lower() in {'2', '2.', 'break'}:
+        if status == 1:
+            now = update_now()
+            status = 0
+            logging.info("Taking a break at {}".format(now))
+            raw_input("Press Enter to begin working again")
+            print ("Are you still working on {}? (y/n)").format(job_name)
+            answer = query()
+            if answer:
+                cur.execute(
+                    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
+                    [p_uuid, job_name, job_abbrev, stop_type, now])
+                print "Resuming '{0}' at: '{1}' ".format(job_name, now)
+                logging.info("Back from break at {}".format(now))
+                status = 1
+                main_menu()
+            else:
+                status = 0
+                main_menu()
+        else:
+            raw_input("\nYou're not currently in job. Press enter to return to main menu.")
+            main_menu()
+    elif answer.lower() in {'3', '3.', 'heading home', 'home'}:
+        if status == 1:
+            print 'Take care!'
+            status = 0
+            now = update_now()
+            logging.info("Clocked out at {}".format(now))
+            return "end of day"
+        else:
+            raw_input("\nYou're not currently in job. Press enter to return to main menu.")
+            main_menu()
 
 
-def csv_write(filename="times.csv"):
-    """Initializes the csv.writer based on its filename
+def time_formatter(time_input):
+    """Prompts the user for hh:mm and returns a timedelta
 
-    csv_write('file.csv') -> csv.writer(open('file.csv', 'a'))
-    creates file if it doesn't exist, and writes some default columns as a
-    header
+    Takes user input as 00:00, splits those using : as seperator, and returns
+    the resulting timedelta object.
+    """
+    FAIL_MSG = "Please check input format and try again. (00:00)"
+    split = time_input.split(":")
+    if len(split) != 2:
+        raise ValueError(FAIL_MSG)
+    try:
+        hours, minutes = map(int, split)
+    except ValueError as e:
+        raise ValueError(FAIL_MSG)
+    minutes = round_to_nearest(minutes, 6)
+    d = datetime.timedelta(hours=hours, minutes=minutes)
+    return d
+
+
+def get_time(time):
+    """
+    Format user input time so that datetime can process it correctly.
     """
 
-    logging.debug("Called csv_write")
-    if os.path.isfile(filename):
-        logging.debug("{} already exists -- opening for writing".format(filename))
-        wr_timesheet = csv.writer(open(filename, "a"))
-        logging.info("{} opened as a csv.writer".format(filename))
-    else:
-        logging.debug("{} does not exist -- creating".format(filename))
-        wr_timesheet = csv.writer(open(filename, "w"))
-        logging.info("{} created and opened as a csv.writer".format(
-            wr_timesheet))
-        wr_timesheet.writerow(columns)
-        logging.debug("{} initialized with columns: {}".format(
-            filename, columns))
-    return wr_timesheet
+    global time_conc
+
+    if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
+        time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
+        print(time)
+    try:
+        split_hour = time.split(':')[0]
+        split_minute = time.split(':')[1]
+        split_minute2 = split_minute.split(' ')[0]
+        split_ap = time.split(' ')[1]
+        if split_ap in {'a', 'A', 'p', 'P'}:
+            while split_ap in {'a', 'A'}:
+                split_ap = 'AM'
+            while split_ap in {'p', 'P'}:
+                split_ap = 'PM'
+            global _time_conc
+            _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+            time_conc = datetime.datetime.strptime(_time_conc, '%I:%M %p')
+        else:
+            time_conc = datetime.datetime.strptime(time, '%I:%M %p')
+    except SyntaxError:
+        print("Check format and try again.")
+
+    return time_conc
 
 
-def csv_read(filename="times.csv"):
-    if os.path.isfile(filename):
-        logging.debug("{} already exists -- opening for reading".format(filename))
-        r_timesheet = open(filename)
-        csv_r = csv.reader(r_timesheet)
-        logging.info("{} opened as a csv.reader".format(filename))
-    else:
-        logging.debug("{} does not exist".format(filename))
-    return r_timesheet
+def total_time():
+    t_in = get_time(
+        raw_input(
+            "Please enter your start time in 00:00 AM/PM format: "))
+    t_out = get_time(
+        raw_input(
+            "Please enter your end time in 00:00 AM/PM format: "))
+    delta = t_out - t_in
+    delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
+    print "Your time sheet entry for {0} is {1} hours.".format(delta, delta_minutes)
+    raw_input("\nPress enter to return to main menu.")
+    main_menu()
 
 
-wr_timesheet = csv_write("times.csv")
+def switch_task():
+    global job_name
+    global job_abbrev
+    now = update_now()
+    sel = sel_timesheet_row()
+    stop_type = "switch task"
+    for row in sel:
+        job_name = row[1]
+        job_abbrev = row[2]
+        stop_type = row[3]
+    with conn:
+        cur.execute(
+            "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
+            [p_uuid, job_name, job_abbrev, stop_type, now])
+    project_start()
+    main_menu()
 
-print "\n"
-print "Hello there. I will log your project time and create a" \
-      " .csv file with the results."
-print "Your current logged time for this week is: ", sumtime
-print "\n"
-print "-----------------------------------------------------------"
-raw_input("Please press <ENTER> to log current time and begin your day")
-print "\n"
-day_start = datetime.datetime.now()
-print "The day's start time is ", day_start
-project_start()
+
+def report():
+    print("\nGenerating report for {0}\n").format(date)
+    with jobdb:
+        cur.execute(
+            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
+        while True:
+            sel = cur.fetchall()
+            print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
+            print("=======================================================")
+            for row in sel:
+                print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
+                    .format(row[0], row[1], row[2], row[3], row[4])
+            raw_input("\nPress enter to return to main menu.")
+            main_menu()
+
+
+# TODO: Add code from v0.1 that prints current task at bottom of main menu if status == 1.
+def main_menu():
+    while True:
+        """Main menu for program. Prompts user for function."""
+        print "PYPER Timesheet Utility\n\n" \
+              "What would you like to do?\n" \
+              "1. Clock In\n" \
+              "2. Break Time\n" \
+              "3. Clock Out\n" \
+              "4. Set up obs/break types\n" \
+              "5. Timesheet Minute Formatter\n" \
+              "6. Calculate Total Time Worked\n" \
+              "7. Generate Today's Timesheet\n" \
+              "9. Quit\n"
+        answer = raw_input(">>> ")
+        if answer.startswith('1'):
+            project_start()
+        if answer.startswith('2'):
+            break_submenu()
+        if answer.startswith('3'):
+            raise NotImplementedError()
+            # TODO: implement clock out
+        if answer.startswith('4'):
+            raise NotImplementedError()
+            # TODO: implement set up break types
+        if answer.startswith('5'):
+            time_input = raw_input("\nTime Formatter\n"
+                                   "Please enter hours and minutes worked today"
+                                   "in 00:00 format: ")
+            try:
+                d = time_formatter(time_input)
+                # TODO: what should we do with time_formatter? Time adustments?
+            except ValueError as e:
+                print(e)
+        if answer.startswith('6'):
+            total_time()
+        if answer.startswith('7'):
+            report()
+        if answer.startswith('9'):
+            break
+
+
+if __name__ == "__main__":
+    os.system('cls' if os.name == 'nt' else 'clear')
+    main_menu()
