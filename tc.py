@@ -163,7 +163,8 @@ def sel_timesheet_row():
     with conn:
         lid = cur.lastrowid
         cur.execute(
-            "SELECT UUID, Job_name, Job_abbrev, Stop_type, Stop_time, Date, Lead_name, Start_time FROM timesheet WHERE Id = ?",
+            "SELECT UUID, Job_name, Job_abbrev, Stop_type, Stop_time, Date, Lead_name, Start_time FROM timesheet\
+             WHERE Id = ?",
             (lid,))
         sel = cur.fetchall()
         return sel
@@ -241,10 +242,10 @@ def breaktime(answer):
                     [p_uuid, job_name, job_abbrev, stop_type, now])
 
             # Get time passed since beginning of task.
-            # TODO: Check hours calculation!!!
             curr_time = datetime.datetime.now().strftime('%I:%M %p')
             # diff is returning incorrect time
-            diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
+            diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time,
+                                                                                                  '%I:%M %p')
             time = float(round_to_nearest(diff.seconds, 360)) / 3600
             if debug == 1:
                 print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}")\
