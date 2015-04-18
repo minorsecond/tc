@@ -54,7 +54,6 @@ session = DBSession()
 #     cur.execute('CREATE TABLE if not exists timesheet(ID TEXT, Lead_name TEXT, Job_name TEXT, Job_abbrev TEXT, Start_time DATE\
 #                 , Stop_time DATE, Date DATE, Stop_type TEXT, Break_end DATE)')
 
-os.system('cls' if os.name == 'nt' else 'clear')
 
 
 def query():
@@ -278,5 +277,6 @@ def main_menu():
 
 
 if __name__ == "__main__":
+    os.system('cls' if os.name == 'nt' else 'clear')
     wr_timesheet = init_csv()
     main_menu()
