@@ -163,6 +163,7 @@ def project_start():
     project_name = raw_input("What is the name of this project?: ")
     # lead_name = raw_input("For whom are you working?: ")
     p_uuid = str(uuid.uuid4())
+    p_rate = raw_input("At what rate does this job pay? (Cents): ")
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
@@ -170,6 +171,9 @@ def project_start():
         print "DEBUGGING: PID = {}".format(p_uuid)
         raw_input()
     status = 1
+    new_task = Job(id=p_uuid, abbr=abbrev, clocktimes=time_in, name=project_name, rate=p_rate)
+    session.add(new_task)
+    session.commit()
     return p_uuid, project_name, time_in, status
 
 
@@ -244,20 +248,6 @@ def sel_timesheet_row():
         return sel
 
 
-# This function may not be necessary.
-def sel_jobdb_row():
-    """
-    Selects last row of jobdb, which should be the current job. This may not be used.
-    :return: Last row of jobdb.
-    """
-    with jobdb:
-        lid = cur.lastrowid
-        cur.execute(
-            "SELECT Id, UUID, Date, Lead_name, Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Id = ?", (lid,))
-        sel_jobdb = cur.fetchall()
-        return sel_jobdb
-
-
 def breaktime(answer):
     """Prompts user to specify reason for break.
 
@@ -288,9 +278,6 @@ def breaktime(answer):
         lead_name = row[6]
         start_time = row[7]
 
-    # TODO: Upon entering, check if project has been set up (see if sql entry is in memory?), otherwise
-    # an error is raised because some values are undefined.
-
     logging.debug("Called choices with answer: {}".format(answer))
     if answer.lower() in {'1', '1.', 'lunch'}:
         if status == 1:
@@ -317,7 +304,6 @@ def breaktime(answer):
                     [p_uuid, job_name, job_abbrev, stop_type, now])
 
             # Get time passed since beginning of task.
-            # TODO: Check hours calculation!!!
             curr_time = datetime.datetime.now().strftime('%I:%M %p')
             # diff is returning incorrect time
             diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
