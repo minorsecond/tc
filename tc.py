@@ -21,12 +21,7 @@ import os.path
 import logging
 import uuid
 
-from sqlalchemy import create_engine, Column, DateTime, Integer, ForeignKey, String
-from sqlalchemy.orm import sessionmaker, relationship
-from sqlalchemy.ext.declarative import declarative_base
 
-
-__all__ = ['Clocktime', 'Employee', 'Job']
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
@@ -43,75 +38,6 @@ debug = 1
 
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
-
-
-engine = create_engine('sqlite:///{}'.format(DB_NAME))
-
-"""
-A DBSession() instance establishes all conversations with the database
-and represents a "staging zone" for all the objects loaded into the
-database session object. Any change made against the objects in the
-session won't be persisted into the database until you call
-session.commit(). If you're not happy about the changes, you can
-revert all of them back to the last commit by calling
-session.rollback()
-http://www.pythoncentral.io/introductory-tutorial-python-sqlalchemy/
-"""
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
-
-Base = declarative_base()
-
-
-class Clocktime(Base):
-    """Table for clockin/clockout values
-
-    ForeignKeys exist for Job and Employee
-    many to one -> employee
-    many to one -> job
-    """
-
-    __tablename__ = "clocktimes"
-    id = Column(Integer, primary_key=True)
-    time_in = Column(DateTime)
-    time_out = Column(DateTime)
-    employee_id = Column(Integer, ForeignKey('employees.id'))
-    job_id = Column(Integer, ForeignKey('jobs.id'))
-
-    @property
-    def timeworked(self):
-        return self.time_out - self.time_in
-
-
-class Employee(Base):
-    """Table for employees
-
-    one to many -> clocktimes
-    """
-
-    __tablename__ = "employees"
-    id = Column(Integer, primary_key=True)
-    firstname = Column(String(50))
-    lastname = Column(String(50))
-    clocktimes = relationship('Clocktime', backref='employee')
-
-    @property
-    def name(self):
-        return self.firstname + " " + self.lastname
-
-
-class Job(Base):
-    """Table for jobs
-
-    one to many -> clocktimes
-    note that rate is cents/hr"""
-
-    __tablename__ = "jobs"
-    id = Column(Integer, primary_key=True)
-    name = Column(String(75))
-    abbr = Column(String(16))
-    rate = Column(Integer)  # cents/hr
-    clocktimes = relationship('Clocktime', backref='job')
 
 
 def update_now():
@@ -172,7 +98,6 @@ def project_start():
         raw_input("Press enter to continue")
     status = 1
     new_task = jobs(id=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
-
     session.add(new_task)
     session.commit()
     return p_uuid, project_name, time_in, status
