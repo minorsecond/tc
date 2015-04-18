@@ -61,13 +61,3 @@ target/
 
 # Testing
 *.csv
-
-# Formatting
-.idea
-.ropeproject
-
-# Temp files
-*.swp
-
-# Actual DB files
-*.db
