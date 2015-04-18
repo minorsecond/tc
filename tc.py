@@ -125,6 +125,48 @@ def project_start():
     return p_uuid
 
 
+# Experimental functions - https://github.com/NotTheEconomist/Timeclock/commit/74a8de1b66b4aeef51feaaf447d5cacacfdf2b5c
+def get_job_by_abbr(abbr):
+    jobs = session.query(models.Job).filter_by(abbr=abbr).all()
+    if len(jobs) > 1:
+        # two jobs with the same abbr in here -- should this be unique? If not:
+        for idx, job in enumerate(jobs, start=1):
+            print("{idx}. {job.name}".format(idx=idx, job=job))
+        selection = input("Which job? ")
+        job = jobs[int(selection) - 1]
+    elif len(jobs) == 1:
+        job = jobs[0]
+    else:
+        return None
+        # TODO: no jobs found with that info -- what do we do?
+    return job
+
+
+def clock_in():
+    now = datetime.datetime.now()
+    me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
+    job = get_job_by_abbr(input("Job abbreviation? "))  # set up jobs somewhere else?
+    c = Clocktime(time_in=now, employee=me, job=job)
+    session.add(c)
+    session.commit()
+
+
+def get_open_clktime(job, employee):
+    cq = session.query(Clocktime)
+    clktime = cq.filter_by(time_out=None, job=job, employee=employee).one()
+    # the `one` method will throw an error if there are more than one open
+    # clock times with that job and employee!
+    return clktime
+
+
+def clock_out():
+    job = get_job_by_abbr(input("Job abbr ?"))
+    now = datetime.now()
+    clktime = get_open_clktime(job, me)
+    clktime.time_out = now
+    session.commit()
+
+
 def round_to_nearest(num, b):
     """Rounds num to the nearest base
 
