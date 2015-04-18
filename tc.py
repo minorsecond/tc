@@ -28,7 +28,7 @@ from sqlalchemy.orm import sessionmaker
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-# Do we need separate DB for each table?
+# TODO: Figure out what to do with jobdb. This DB kept the total daily time for each task.
 DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
@@ -404,6 +404,7 @@ def report():
             main_menu()
 
 
+# TODO: Add code from v0.1 that prints current task at bottom of main menu if status == 1.
 def main_menu():
     while True:
         """Main menu for program. Prompts user for function."""
@@ -415,6 +416,7 @@ def main_menu():
               "4. Set up obs/break types\n" \
               "5. Timesheet Minute Formatter\n" \
               "6. Calculate Total Time Worked\n" \
+              "7. Generate Today's Timesheet\n" \
               "9. Quit\n"
         answer = raw_input(">>> ")
         if answer.startswith('1'):
@@ -438,11 +440,12 @@ def main_menu():
                 print(e)
         if answer.startswith('6'):
             total_time()
+        if answer.startswith('7'):
+            report()
         if answer.startswith('9'):
             break
 
 
 if __name__ == "__main__":
     os.system('cls' if os.name == 'nt' else 'clear')
-    wr_timesheet = init_csv()
     main_menu()
