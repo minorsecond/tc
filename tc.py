@@ -169,9 +169,10 @@ def project_start():
     logging.debug("project_name is {}".format(project_name))
     if debug == 1:
         print "DEBUGGING: PID = {}".format(p_uuid)
-        raw_input()
+        raw_input("Press enter to continue")
     status = 1
-    new_task = Job(id=p_uuid, abbr=abbrev, clocktimes=time_in, name=project_name, rate=p_rate)
+    new_task = jobs(id=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+
     session.add(new_task)
     session.commit()
     return p_uuid, project_name, time_in, status
