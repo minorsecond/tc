@@ -170,10 +170,11 @@ def project_start():
         print "DEBUGGING: PID = {}".format(p_uuid)
         raw_input()
     status = 1
-    return {p_uuid, project_name, time_in, status}
+    return p_uuid, project_name, time_in, status
 
 
 # Experimental functions - https://github.com/NotTheEconomist/Timeclock/commit/74a8de1b66b4aeef51feaaf447d5cacacfdf2b5c
+"""
 def get_job_by_abbr(abbr):
     jobs = session.query(models.Job).filter_by(abbr=abbr).all()
     if len(jobs) > 1:
@@ -213,7 +214,7 @@ def clock_out():
     clktime = get_open_clktime(job, me)
     clktime.time_out = now
     session.commit()
-
+"""
 
 def round_to_nearest(num, b):
     """Rounds num to the nearest base
@@ -223,15 +224,6 @@ def round_to_nearest(num, b):
 
     company_minutes = num + (b // 2)
     return company_minutes - (company_minutes % b)
-
-
-# TODO: Make changes to do away with break/lunch specific code, as it essentially does the same thing.
-def break_submenu():
-    print "What are you doing?\n" \
-          "1. Lunch\n" \
-          "2. Break\n"
-    answer = raw_input(">>>")
-    breaktime(answer)
 
 
 def sel_timesheet_row():
