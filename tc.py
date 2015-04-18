@@ -468,7 +468,7 @@ def main_menu():
     if answer.lower() in {'7', '7.'}:
         print(report())
     if answer.lower() in {'8', '8.'}:
-        SystemExit(0)
+        quit()
     else:
         main_menu()
 
