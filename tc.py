@@ -26,6 +26,7 @@ from sqlalchemy.orm import sessionmaker, relationship
 from sqlalchemy.ext.declarative import declarative_base
 
 
+__all__ = ['Clocktime', 'Employee', 'Job']
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
@@ -43,6 +44,7 @@ debug = 1
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
 
+
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 
 """
@@ -59,8 +61,6 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 Base = declarative_base()
-
-__all__ = ['Clocktime', 'Employee', 'Job']
 
 
 class Clocktime(Base):
@@ -118,7 +118,7 @@ def update_now():
     """
     Updates the "now" variable, which is a datetime object with
     Year, month, day, hour, minute. e.g. 2015-2-5 13:00
-    :return: datetime object with above parameters
+    :return: datetime object with above parameters.
     """
     now = datetime.datetime.now().strftime('%I:%M %p')
     return now
@@ -128,7 +128,7 @@ def query():
     """Prompts user for a yes/no answer
 
     if user responds with 'yes', 'ye', or 'y', return True
-    if user responds with 'no' or 'n', return False
+    if user responds with 'no' or 'n', return False.
     else: return None
     """
 
@@ -158,19 +158,19 @@ def project_start():
     global status
 
     logging.debug("project_start called")
-    clock_in = datetime.datetime.now()
+    time_in = datetime.datetime.now()
     abbrev = raw_input("What are you working on? (ABBREV): ")
     project_name = raw_input("What is the name of this project?: ")
-    lead_name = raw_input("For whom are you working?: ")
+    # lead_name = raw_input("For whom are you working?: ")
     p_uuid = str(uuid.uuid4())
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
-
     if debug == 1:
         print "DEBUGGING: PID = {}".format(p_uuid)
+        raw_input()
     status = 1
-    return p_uuid
+    return {p_uuid, project_name, time_in, status}
 
 
 # Experimental functions - https://github.com/NotTheEconomist/Timeclock/commit/74a8de1b66b4aeef51feaaf447d5cacacfdf2b5c
