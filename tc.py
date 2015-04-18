@@ -27,6 +27,7 @@ LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
 
+# TODO: Add employee DB.
 jobdb = sqlite3.connect('jobdb.db')
 conn = sqlite3.connect('timesheet.db')
 LOGLEVEL = logging.INFO
@@ -59,10 +60,9 @@ with conn:
 
 # This db is used for storing total time worked for each job.
 with jobdb:
-    job_cur = jobdb.cursor()
     if debug == 1:
-        job_cur.executescript('DROP TABLE IF EXISTS jobdb')
-    job_cur.execute(
+        cur.executescript('DROP TABLE IF EXISTS jobdb')
+    cur.execute(
         'CREATE TABLE if not exists jobdb(Id INTEGER PRIMARY KEY, UUID TEXT, Date DATE, Lead_name TEXT, Job_name TEXT\
          , Job_abbrev TEXT, Time_worked TEXT)')
 
@@ -123,8 +123,7 @@ def project_start():
     logging.debug("project_name is {}".format(project_name))
 
     if debug == 1:
-        print "DEBUGGING. Press enter to continue: PID = {}".format(p_uuid)
-        raw_input()
+        print "DEBUGGING: PID = {}".format(p_uuid)
     with conn:
         cur.execute(
             "INSERT INTO timesheet(UUID, Lead_name, Job_name, Job_abbrev, Start_time, Date) VALUES(?, ?, ?, ?, ?, ?)",
@@ -180,7 +179,7 @@ def sel_jobdb_row():
         lid = cur.lastrowid
         cur.execute(
             "SELECT Id, UUID, Date, Lead_name, Job_name, Job_abbrev, Time_worked FROM jobdb WHERE Id = ?", (lid,))
-        sel_jobdb = job_cur.fetchall()
+        sel_jobdb = cur.fetchall()
         return sel_jobdb
 
 
@@ -240,19 +239,17 @@ def breaktime(answer):
             # Get time passed since beginning of task.
             # TODO: Check hours calculation!!!
             curr_time = datetime.datetime.now().strftime('%I:%M %p')
+            print(start_time)
             diff = datetime.datetime.strptime(start_time, '%I:%M %p') - datetime.datetime.strptime(curr_time,
                                                                                                    '%I:%M %p')
             time = float(round_to_nearest(diff.seconds, 360)) / 3600
             with jobdb:
                 if debug == 1:
-                    print("DEBUGGING")
-                    print("Connected to jobdb. Data to be inserted into JOBDB Database:")
-                    print ("Lead Name: {0}, Job Name: {1}, Job Abbrev: {2}, Time Worked: {3}, Date: {4}, UUID: {5}")\
-                        .format(lead_name, job_name,job_abbrev, time, date, p_uuid)
-                job_cur = jobdb.cursor()
-                job_cur.execute(
-                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, Date) \
-                    VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date])
+                    print("Connected to jobdb.")
+                cur.execute(
+                    "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
+                    "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
+                )
 
             print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
             logging.info("Lunch break at {}".format(datetime.datetime.now()))
@@ -361,6 +358,7 @@ def get_time(time):
 
     if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
         time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
+        print(time)
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
@@ -371,8 +369,9 @@ def get_time(time):
                 split_ap = 'AM'
             while split_ap in {'p', 'P'}:
                 split_ap = 'PM'
-            time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-            time_conc = datetime.datetime.strptime(time_conc, '%I:%M %p')
+            global _time_conc
+            _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+            time_conc = datetime.datetime.strptime(_time_conc, '%I:%M %p')
         else:
             time_conc = datetime.datetime.strptime(time, '%I:%M %p')
     except SyntaxError:
@@ -410,15 +409,12 @@ def switch_task():
 
 
 def report():
-    """
-    Pulls data from jobsdb and prints.
-    """
     print("\nGenerating report for {0}\n").format(date)
     with jobdb:
-        job_cur.execute(
-            "SELECT Job_name, Job_abbrev , Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
+        cur.execute(
+            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
         while True:
-            sel = job_cur.fetchall()
+            sel = cur.fetchall()
             print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
             print("=======================================================")
             for row in sel:
@@ -465,7 +461,7 @@ def main_menu():
     if answer.lower() in {'7', '7.'}:
         print(report())
     if answer.lower() in {'8', '8.'}:
-        exit()
+        SystemExit(0)
     else:
         main_menu()
 
