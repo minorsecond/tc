@@ -89,7 +89,6 @@ def project_start():
     global status
 
     logging.debug("project_start called")
-    time_in = datetime.datetime.now()
     abbrev = raw_input("What are you working on? (ABBREV): ")
     project_name = raw_input("What is the name of this project?: ")
     # lead_name = raw_input("For whom are you working?: ")
@@ -103,10 +102,14 @@ def project_start():
         raw_input("Press enter to continue")
     status = 1
     new_task_job = Job(abbr=abbrev, name=project_name, rate=p_rate)
-    new_task_clock = Clocktime(time_in=update_now())
+    # TODO: Get this working - doesn't yet clock in on Clocktime table.
+    new_task_clock = Clocktime(time_in=update_now())  # Not sure if this is what NotTheEconomist had imagined.
+    print(update_now())
+    print(new_task_job)
+    print(new_task_clock)
+    raw_input()
     session.add(new_task_job, new_task_clock)
     session.commit()
-    return p_uuid, project_name, time_in, status
 
 
 # TODO: Implement these functions
