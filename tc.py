@@ -24,6 +24,8 @@ import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from models import Job
+
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
@@ -102,7 +104,7 @@ def project_start():
         print "DEBUGGING: PID = {}".format(p_uuid)
         raw_input("Press enter to continue")
     status = 1
-    new_task = Job(id=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+    new_task = Job(abbr=abbrev, name=project_name, rate=p_rate)
     session.add(new_task)
     session.commit()
     return p_uuid, project_name, time_in, status
