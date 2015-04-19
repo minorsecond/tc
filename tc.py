@@ -24,7 +24,7 @@ import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import Job
+from models import Job, Clocktime
 
 
 LOGFILE = "timeclock.log"
@@ -34,8 +34,6 @@ DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
-# Status variable - 0 = not in task. 1 = in task
-status = 0
 # Enable this flag (1) if debugging. Else leave at 0.
 debug = 1
 
@@ -104,8 +102,9 @@ def project_start():
         print "DEBUGGING: PID = {}".format(p_uuid)
         raw_input("Press enter to continue")
     status = 1
-    new_task = Job(abbr=abbrev, name=project_name, rate=p_rate)
-    session.add(new_task)
+    new_task_job = Job(abbr=abbrev, name=project_name, rate=p_rate)
+    new_task_clock = Clocktime(time_in=update_now())
+    session.add(new_task_job, new_task_clock)
     session.commit()
     return p_uuid, project_name, time_in, status
 
@@ -185,8 +184,8 @@ def breaktime():
     job_name = sel.name
     job_abbrev = sel.abbr
     rate = sel.rate
-    print(id, job_name, job_abbrev, rate)
-    raw_input()
+
+    # Check if currently in a job.
     if status == 0:
         raw_input("\nYou're not currently in job. Press enter to return to main menu.")
         main_menu()
@@ -378,5 +377,6 @@ def main_menu():
 
 
 if __name__ == "__main__":
+    status = 0
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu()

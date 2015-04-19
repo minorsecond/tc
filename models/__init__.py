@@ -21,9 +21,9 @@ class Clocktime(Base):
     id = Column(Integer, primary_key=True)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
-    employee_id = Column(Integer,ForeignKey('employees.id'))
+    employee_id = Column(Integer, ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
-
+    # Find out how this works.
     @property
     def timeworked(self):
         return self.time_out - self.time_in
