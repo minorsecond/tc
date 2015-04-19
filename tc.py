@@ -21,11 +21,13 @@ import os.path
 import logging
 import uuid
 
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-# TODO: Figure out what to do with jobdb. This DB kept the total daily time for each task.
 DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
@@ -39,6 +41,9 @@ debug = 1
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
 
+engine = create_engine('sqlite:///{}'.format(DB_NAME))
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
 
 def update_now():
     """
@@ -97,13 +102,13 @@ def project_start():
         print "DEBUGGING: PID = {}".format(p_uuid)
         raw_input("Press enter to continue")
     status = 1
-    new_task = jobs(id=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+    new_task = Job(id=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
     session.add(new_task)
     session.commit()
     return p_uuid, project_name, time_in, status
 
 
-# Experimental functions - https://github.com/NotTheEconomist/Timeclock/commit/74a8de1b66b4aeef51feaaf447d5cacacfdf2b5c
+# TODO: Implement these functions
 """
 def get_job_by_abbr(abbr):
     jobs = session.query(models.Job).filter_by(abbr=abbr).all()
@@ -328,7 +333,6 @@ def get_time(time):
 
     if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
         time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
-        print(time)
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
@@ -359,7 +363,7 @@ def total_time():
             "Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print "Your time sheet entry for {0} is {1} hours.".format(delta, delta_minutes)
+    print "Your time sheet entry is {0} hours.".format(delta_minutes)
     raw_input("\nPress enter to return to main menu.")
     main_menu()
 
@@ -408,10 +412,9 @@ def main_menu():
               "2. Break Time\n" \
               "3. Clock Out\n" \
               "4. Set up obs/break types\n" \
-              "5. Timesheet Minute Formatter\n" \
-              "6. Calculate Total Time Worked\n" \
-              "7. Generate Today's Timesheet\n" \
-              "9. Quit\n"
+              "5. Calculate Total Time Worked\n" \
+              "6. Generate Today's Timesheet\n" \
+              "7. Quit\n"
         answer = raw_input(">>> ")
         if answer.startswith('1'):
             project_start()
@@ -424,20 +427,11 @@ def main_menu():
             raise NotImplementedError()
             # TODO: implement set up break types
         if answer.startswith('5'):
-            time_input = raw_input("\nTime Formatter\n"
-                                   "Please enter hours and minutes worked today"
-                                   "in 00:00 format: ")
-            try:
-                d = time_formatter(time_input)
-                # TODO: what should we do with time_formatter? Time adustments?
-            except ValueError as e:
-                print(e)
-        if answer.startswith('6'):
             total_time()
-        if answer.startswith('7'):
+        if answer.startswith('6'):
             report()
-        if answer.startswith('9'):
-            break
+        if answer.startswith('7'):
+            sys.exit()
 
 
 if __name__ == "__main__":
