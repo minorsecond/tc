@@ -30,6 +30,7 @@ class Clocktime(Base):
     def timeworked(self):
         return self.time_out - self.time_in
 
+    @property
     def __str__(self):
         formatter="Employee: {employee.name}, "\
                   "Job: {job.abbr}, "\

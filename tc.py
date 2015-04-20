@@ -21,10 +21,10 @@ import os.path
 import logging
 import uuid
 
-from models import Job, Employee, Clocktime
-
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
+from models import Job, Employee, Clocktime
 
 
 LOGFILE = "timeclock.log"
@@ -41,6 +41,7 @@ day_start = datetime.datetime.now()
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
 
 def update_now():
     """
@@ -90,7 +91,7 @@ def project_start():
     project_name = raw_input("What is the name of this project?: ")
     # lead_name = raw_input("For whom are you working?: ")
     p_uuid = str(uuid.uuid4())
-    p_rate = raw_input("At what rate does this job pay? (Cents): ")
+    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
@@ -482,7 +483,7 @@ def main_menu():
               "1. Clock In\n" \
               "2. Break Time\n" \
               "3. Clock Out\n" \
-              "4. Set up obs/break types\n" \
+              "4. Configure\n" \
               "5. Calculate Total Time Worked\n" \
               "6. Generate Today's Timesheet\n" \
               "7. Quit\n"
@@ -505,6 +506,8 @@ def main_menu():
 
 
 if __name__ == "__main__":
+    debug = 1
+    status = 0
 
     # Initialize logging
     LOGFILE = "timeclock.log"
