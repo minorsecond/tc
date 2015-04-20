@@ -101,14 +101,10 @@ def project_start():
         print "DEBUGGING: PID = {}".format(p_uuid)
         raw_input("Press enter to continue")
     status = 1
-    new_task_job = Job(abbr=abbrev, name=project_name, rate=p_rate)
+    new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
     # TODO: Get this working - doesn't yet clock in on Clocktime table.
-    new_task_clock = Clocktime(time_in=update_now())  # Not sure if this is what NotTheEconomist had imagined.
-    print(update_now())
-    print(new_task_job)
-    print(new_task_clock)
-    raw_input()
-    session.add(new_task_job, new_task_clock)
+    for i in new_task_job:
+        session.add(i)
     session.commit()
 
 
