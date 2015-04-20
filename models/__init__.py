@@ -23,10 +23,22 @@ class Clocktime(Base):
     time_out = Column(DateTime)
     employee_id = Column(Integer, ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
-    # Find out how this works. May use timeworked & timeformatted (for tenths of hour)
+    # employee = many to one relationship with Employee
+    # job = many to one relationship with Job
+
     @property
     def timeworked(self):
         return self.time_out - self.time_in
+
+    @property
+    def __str__(self):
+        formatter="Employee: {employee.name}, "\
+                  "Job: {job.abbr}, "\
+                  "Start: {self.time_in}, "\
+                  "End: {self.time_out}, "\
+                  "Hours Worked: {self.timeworked}, "\
+                  "ID# {self.id}"
+        return formatter.format(employee=self.employee, job=self.job, self=self)
 
 class Employee(Base):
     """Table for employees
@@ -44,6 +56,10 @@ class Employee(Base):
     def name(self):
         return self.firstname + " " + self.lastname
 
+    def __str__(self):
+        return "{name:<70}{id:>10}".format(name=self.name,
+                                           id="ID# " + str(self.id))
+
 class Job(Base):
     """Table for jobs
     
@@ -52,10 +68,18 @@ class Job(Base):
 
     __tablename__ = "jobs"
     id = Column(Integer, primary_key=True)
-    name = Column(String(75))
+    name = Column(String(50))
     abbr = Column(String(16))
     rate = Column(Integer)  # cents/hr
     clocktimes = relationship('Clocktime', backref='job')
+
+    def __str__(self):
+        formatter = "Name: {name:<50} {abbr:>23}\n" \
+                    "Rate: ${rate:<7.2f}/hr {id:>62}"
+        return formatter.format(name=self.name,
+                                abbr="Abbr: " + str(self.abbr),
+                                rate=self.rate/100.0,
+                                id="ID# " + str(self.id))
 
 
 Base.metadata.create_all(engine)

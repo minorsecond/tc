@@ -24,7 +24,7 @@ import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import Job, Clocktime
+from models import Job, Employee, Clocktime
 
 
 LOGFILE = "timeclock.log"
@@ -34,9 +34,6 @@ DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
-# Enable this flag (1) if debugging. Else leave at 0.
-debug = 1
-
 
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
@@ -44,6 +41,7 @@ day_start = datetime.datetime.now()
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
 
 def update_now():
     """
@@ -93,7 +91,16 @@ def project_start():
     project_name = raw_input("What is the name of this project?: ")
     # lead_name = raw_input("For whom are you working?: ")
     p_uuid = str(uuid.uuid4())
-    p_rate = raw_input("At what rate does this job pay? (Cents): ")
+    try:
+        p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+    except ValueError, e:
+        try:
+            logging.debug(e)
+            print("Check input and try again\n")
+            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+        except:
+            raw_input("Press enter to return to main menu.")
+            main_menu()
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
@@ -269,9 +276,9 @@ def get_time(time):
 
     global time_conc
 
-    if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
+    if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6',
+                              '7', '8', '9', '10', '11', '12'}:
         time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
-
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
@@ -305,7 +312,7 @@ def total_time():
             "Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print "Your time sheet entry is {0} hours.".format(delta_minutes)
+    print "\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes)
     raw_input("\nPress enter to return to main menu.")
     main_menu()
 
@@ -344,6 +351,133 @@ def report():
             main_menu()
 
 
+def config():
+    """Configure jobs and employees"""
+
+    global session
+
+    # TODO: refactor these out into module-level so they're unit-testable
+    def add_job(**kwargs):
+        """Helper function to create Jobs
+
+        prompt for fields if none are provided
+        """
+        if not kwargs:
+            fields = ['name', 'abbr', 'rate']
+            kwargs = {field: raw_input("{}: ".format(field)) for
+                      field in fields}
+            # store rate as int of cents/hour
+            kwargs['rate'] = float(kwargs['rate']) * 100
+        new_job = Job(**kwargs)
+        session.add(new_job)
+        return new_job
+
+    def add_employee(**kwargs):
+        """Helper function to create Employees
+
+        prompt for fields if none are provided
+        """
+        if not kwargs:
+            fields = ['firstname', 'lastname']
+            kwargs = {field: raw_input("{}: ".format(field)) for
+                      field in fields}
+        new_employee = Employee(**kwargs)
+        session.add(new_employee)
+        return new_employee
+
+    def edit_job(jobs):
+        """Helper function to edit jobs
+
+        Prompts for which job to edit, which field to change, and calls
+        change_table_value to change it
+        """
+        show_tables(jobs)
+        requested_job_abbr = raw_input("Job abbreviation? ")
+        # TODO: If nothing is found, or multiple is found, handle gracefully
+        job_to_edit = session.query(Job)\
+                             .filter_by(abbr=requested_job_abbr)\
+                             .one()
+        print("1. Name\n"
+              "2. Abbreviation\n"
+              "3. Rate")
+        answer = raw_input("What do you want to change? ")
+        if answer.startswith('1'):  # Change name
+            val_to_change = 'name'
+        elif answer.startswith('2'):  # Change abbr
+            val_to_change = 'abbr'
+        elif answer.startswith('3'):  # Change rate
+            val_to_change = 'rate'
+        old_val = getattr(job_to_edit, val_to_change)
+        new_val = raw_input("What do you want to change it to? ")
+        if val_to_change == 'rate':
+            new_val = int(float(new_val) * 100)
+        print(job_to_edit)
+        print("Changing {} to {}".format(old_val, new_val))
+        confirm = raw_input("Are you sure? (y/n): ")
+        if confirm == 'y':
+            change_table_value(job_to_edit, val_to_change, new_val)
+        else:
+            print("Cancelled")
+
+    def edit_employee(employees):
+        # TODO
+        """Helper function to edit employees
+
+        Prompts for which employee to edit, which field to change, and calls
+        change_table_value to change it
+        """
+        pass
+
+    def show_tables(tables):
+        """Prints a table of jobs/employees"""
+        for table in tables:
+            print(table)
+
+    def change_table_value(table, attr, new_val):
+        """Simply changes table.attr = new_val"""
+        setattr(table, attr, new_val)
+
+    while True:
+        print("What do you want to configure?\n"
+              "1. Jobs\n"
+              "2. Employees\n"
+              "3. Back\n")
+        answer = raw_input(">>> ")
+
+        if answer.startswith('1'):
+            while True:
+                jobs = session.query(Job).all()
+                show_tables(jobs)
+                print("\n"
+                      "1. Add Job\n"
+                      "2. Edit Job\n"
+                      "3. Back\n")
+                answer = raw_input(">>> ")
+                if answer.startswith('1'):
+                    # TODO: do something with new_job? What?
+                    new_job = add_job()
+                elif answer.startswith('2'):
+                    edit_job(jobs)
+                elif answer.startswith('3'):
+                    try:
+                        session.commit()
+                    except Exception as e:
+                        logging.error("An error occurred updating "
+                                      "the jobs table {}".format(e))
+                        print("There was an error committing changes. "
+                              "Rolling back database to last good state.")
+                        session.rollback()
+                    break  # break the loop and go up a level
+                else:
+                    print("Invalid selection")
+        if answer.startswith('2'):
+            # TODO: Configure employees
+            raise NotImplementedError()
+        if answer.startswith('3'):
+            break  # kick out of config function
+
+
+# TODO: Add code from v0.1 that prints current task at bottom of main menu if status == 1.
 def main_menu():
     while True:
         """Main menu for program. Prompts user for function."""
@@ -352,7 +486,7 @@ def main_menu():
               "1. Clock In\n" \
               "2. Break Time\n" \
               "3. Clock Out\n" \
-              "4. Set up obs/break types\n" \
+              "4. Configure\n" \
               "5. Calculate Total Time Worked\n" \
               "6. Generate Today's Timesheet\n" \
               "7. Quit\n"
@@ -365,8 +499,7 @@ def main_menu():
             raise NotImplementedError()
             # TODO: implement clock out
         if answer.startswith('4'):
-            raise NotImplementedError()
-            # TODO: implement set up break types
+            config()
         if answer.startswith('5'):
             total_time()
         if answer.startswith('6'):
@@ -376,6 +509,18 @@ def main_menu():
 
 
 if __name__ == "__main__":
+    debug = 1
+    status = 0
+
+    # Initialize logging
+    LOGFILE = "timeclock.log"
+    FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
+                       r"%(module)s | %(message)s"
+    LOGLEVEL = logging.INFO
+    logging.basicConfig(filename=LOGFILE,
+                        format=FORMATTER_STRING,
+                        level=LOGLEVEL)
+
     status = 0
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu()
