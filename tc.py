@@ -86,33 +86,38 @@ def project_start():
     global clock_in
     global status
 
-    logging.debug("project_start called")
-    abbrev = raw_input("What are you working on? (ABBREV): ")
-    project_name = raw_input("What is the name of this project?: ")
-    # lead_name = raw_input("For whom are you working?: ")
-    p_uuid = str(uuid.uuid4())
-    try:
-        p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-    except ValueError, e:
+    if status == 1:
+        raw_input("You're already in a task. Press enter to return to main menu.")
+        main_menu()
+    else:
+        logging.debug("project_start called")
+        abbrev = raw_input("What are you working on? (ABBREV): ")
+        project_name = raw_input("What is the name of this project?: ")
+        # lead_name = raw_input("For whom are you working?: ")
+        p_uuid = str(uuid.uuid4())
         try:
-            logging.debug(e)
-            print("Check input and try again\n")
             p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-        except:
-            raw_input("Press enter to return to main menu.")
-            main_menu()
-    logging.debug("UUID is {}".format(p_uuid))
-    logging.debug("abbrev is {}".format(abbrev))
-    logging.debug("project_name is {}".format(project_name))
-    if debug == 1:
-        print "DEBUGGING: PID = {}".format(p_uuid)
-        raw_input("Press enter to continue")
-    status = 1
-    new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
-    # TODO: Get this working - doesn't yet clock in on Clocktime table.
-    for i in new_task_job:
-        session.add(i)
-    session.commit()
+        except ValueError, e:
+            try:
+                logging.debug(e)
+                print("Check input and try again\n")
+                p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+            except:
+                raw_input("Press enter to return to main menu.")
+                main_menu()
+        logging.debug("UUID is {}".format(p_uuid))
+        logging.debug("abbrev is {}".format(abbrev))
+        logging.debug("project_name is {}".format(project_name))
+        if debug == 1:
+            print "DEBUGGING: PID = {}".format(p_uuid)
+            raw_input("Press enter to continue")
+        status = 1
+        new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
+        # TODO: Get this working - doesn't yet clock in on Clocktime table.
+        for i in new_task_job:
+            session.add(i)
+        session.commit()
+        status = 1
 
 
 # TODO: Implement these functions
