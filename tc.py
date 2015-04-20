@@ -19,7 +19,6 @@ import sys
 import os
 import os.path
 import logging
-import uuid
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -81,10 +80,11 @@ def project_start():
     project name, project abbrev and id for use in other
     functions.
     """
-    global p_uuid
+    global p_rate
     global project_name
     global clock_in
     global status
+    global start_time
 
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -95,7 +95,6 @@ def project_start():
         abbrev = raw_input("What are you working on? (ABBREV): ")
         project_name = raw_input("What is the name of this project?: ")
         # lead_name = raw_input("For whom are you working?: ")
-        p_uuid = str(uuid.uuid4())
         try:
             p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
         except ValueError, e:
@@ -103,19 +102,16 @@ def project_start():
                 logging.debug(e)
                 print("Check input and try again\n")
                 p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-            except:
+            except ValueError:
                 raw_input("Press enter to return to main menu.")
                 main_menu()
-        logging.debug("UUID is {}".format(p_uuid))
         logging.debug("abbrev is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
-        if debug == 1:
-            print "DEBUGGING: PID = {}".format(p_uuid)
-            raw_input("Press enter to continue")
         new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
         for i in new_task_job:
             session.add(i)
         session.commit()
+        start_time = datetime.datetime.now()
         status = 1
 
 
@@ -162,6 +158,7 @@ def clock_out():
     session.commit()
 """
 
+
 def round_to_nearest(num, b):
     """Rounds num to the nearest base
 
@@ -175,8 +172,6 @@ def round_to_nearest(num, b):
 def breaktime():
     """Prompts user to specify reason for break.
 
-    :param answer: takes user input from timer function
-
     No real reason for this other than just general bookkeeping.
     Not a requirement. Would be nice to be able to pause the timer for breaks,
     rather than having to start the script all over again.
@@ -189,11 +184,17 @@ def breaktime():
     global diff
     global status
 
+    # Pull most recent (top) row from jobs table.
     sel = session.query(Job).order_by(Job.id.desc()).first()
     id = sel.id
     job_name = sel.name
     job_abbrev = sel.abbr
     rate = sel.rate
+
+    if debug == 1:
+        print"DEBUGGING: JOB Database, most recent row:\n"
+        print(sel)
+        raw_input("\nPress enter to continue.")
 
     # Check if currently in a job.
     if status == 0:
@@ -202,31 +203,21 @@ def breaktime():
         main_menu()
     else:
         now = update_now()
-        # Sel gets the last row printed, which should be the current job.
-        for row in sel:
-            print "Stopping {0}, ABBREV {1} for lunch at {2} on {3}".format(row[1], row[2], row[4], row[5])
-            job_name = row[1]
-            job_abbrev = row[2]
-            stop_type = row[3]
-            lead_name = row[6]
-            start_time = row[7]
-        for row in sel:
-            print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
-
-        stop_type = "lunch"
-        with conn:
-            cur.execute(
-                "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
-                [p_uuid, job_name, job_abbrev, stop_type, now])
+        print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
+        # Write time out to Clocktime table.
+        new_break = Clocktime(time_out=datetime.datetime.now())
+        session.add(new_break)
+        session.commit()
 
         # Get time passed since beginning of task.
-        curr_time = datetime.datetime.now().strftime('%I:%M %p')
+        # curr_time = datetime.datetime.now().strftime('%I:%M %p')
         # diff is returning incorrect time
-        diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
+        # diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
+        diff = datetime.datetime.now() - start_time
         time = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-                .format(start_time, curr_time, diff, time)
+                .format(start_time, datetime.datetime.now(), diff, time)
         with jobdb:
             if debug == 1:
                 print("Connected to DB: jobdb.\n")
