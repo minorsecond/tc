@@ -87,7 +87,8 @@ def project_start():
     global status
 
     if status == 1:
-        raw_input("You're already in a task. Press enter to return to main menu.")
+        raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
+        os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
         logging.debug("project_start called")
@@ -111,9 +112,7 @@ def project_start():
         if debug == 1:
             print "DEBUGGING: PID = {}".format(p_uuid)
             raw_input("Press enter to continue")
-        status = 1
         new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
-        # TODO: Get this working - doesn't yet clock in on Clocktime table.
         for i in new_task_job:
             session.add(i)
         session.commit()
@@ -199,6 +198,7 @@ def breaktime():
     # Check if currently in a job.
     if status == 0:
         raw_input("\nYou're not currently in job. Press enter to return to main menu.")
+        os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
         now = update_now()
