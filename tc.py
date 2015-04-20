@@ -91,21 +91,23 @@ def project_start():
     project_name = raw_input("What is the name of this project?: ")
     # lead_name = raw_input("For whom are you working?: ")
     p_uuid = str(uuid.uuid4())
-    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+    try:
+        p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+    except ValueError, e:
+        logging.debug(e)
+        print("Check input and try again\n")
+        p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
-    if debug == 1:
-        print "DEBUGGING: PID = {}".format(p_uuid)
-        raw_input("Press enter to continue")
     status = 1
     new_task_job = Job(abbr=abbrev, name=project_name, rate=p_rate)
     # TODO: Get this working - doesn't yet clock in on Clocktime table.
     new_task_clock = Clocktime(time_in=update_now())  # Not sure if this is what NotTheEconomist had imagined.
-    print(update_now())
-    print(new_task_job)
-    print(new_task_clock)
-    raw_input()
+    if debug == 1:
+        print(("DEBUGGING MODE"))
+        print(new_task_job)
+        raw_input("Press enter to continue.")
     session.add(new_task_job, new_task_clock)
     session.commit()
 
