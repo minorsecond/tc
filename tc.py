@@ -218,6 +218,7 @@ def breaktime():
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
                 .format(start_time, datetime.datetime.now(), diff, time)
+        # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
         with jobdb:
             if debug == 1:
                 print("Connected to DB: jobdb.\n")
@@ -225,10 +226,9 @@ def breaktime():
                 "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
                 "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
             )
-
         print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
-        logging.info("Lunch break at {}".format(datetime.datetime.now()))
         status = 0
+
         raw_input("Press Enter to begin working again")
         print("Are you still working on '{}' ? (y/n)").format(job_name)
         answer = query()
@@ -240,6 +240,7 @@ def breaktime():
                 "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
                 [p_uuid, job_name, job_abbrev, stop_type, now])
             main_menu()
+
         else:
             status = 0
             main_menu()
