@@ -205,9 +205,6 @@ def breaktime():
         for row in sel:
             print "Stopping {0}, ABBREV {1} for lunch at {2}".format(row[1], row[2], now)
 
-            # TODO: Check if the current job's PID matches all entries for same abbrev on same date. This should
-            # keep everything in order as far as time calculations. It should be as simple as subtracting break
-            # time from total logged hours for each PID.
         stop_type = "lunch"
         with conn:
             cur.execute(
@@ -278,22 +275,26 @@ def get_time(time):
 
     if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'}:
         time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
+
     try:
         split_hour = time.split(':')[0]
         split_minute = time.split(':')[1]
         split_minute2 = split_minute.split(' ')[0]
         split_ap = time.split(' ')[1]
+    except IndexError:
+        print("\nCheck format and try again.\n")
+        total_time()
+    try:
         if split_ap in {'a', 'A', 'p', 'P'}:
             while split_ap in {'a', 'A'}:
                 split_ap = 'AM'
             while split_ap in {'p', 'P'}:
                 split_ap = 'PM'
-            global _time_conc
             _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
             time_conc = datetime.datetime.strptime(_time_conc, '%I:%M %p')
         else:
             time_conc = datetime.datetime.strptime(time, '%I:%M %p')
-    except SyntaxError:
+    except NameError:
         print("Check format and try again.")
 
     return time_conc
@@ -347,7 +348,6 @@ def report():
             main_menu()
 
 
-# TODO: Add code from v0.1 that prints current task at bottom of main menu if status == 1.
 def main_menu():
     while True:
         """Main menu for program. Prompts user for function."""
