@@ -42,16 +42,6 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 
-def update_now():
-    """
-    Updates the "now" variable, which is a datetime object with
-    Year, month, day, hour, minute. e.g. 2015-2-5 13:00
-    :return: datetime object with above parameters.
-    """
-    now = datetime.datetime.now().strftime('%I:%M %p')
-    return now
-
-
 def query():
     """Prompts user for a yes/no answer
 
