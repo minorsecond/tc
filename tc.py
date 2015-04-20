@@ -94,9 +94,13 @@ def project_start():
     try:
         p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
     except ValueError, e:
-        logging.debug(e)
-        print("Check input and try again\n")
-        p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+        try:
+            logging.debug(e)
+            print("Check input and try again\n")
+            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+        except:
+            raw_input("Press enter to return to main menu.")
+            main_menu()
     logging.debug("UUID is {}".format(p_uuid))
     logging.debug("abbrev is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
@@ -309,9 +313,7 @@ def total_time():
             "Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print "Your time sheet entry for {0} is {1} hours.".format(
-        delta, delta_minutes)
-    print "Your time sheet entry is {0} hours.".format(delta_minutes)
+    print "\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes)
     raw_input("\nPress enter to return to main menu.")
     main_menu()
 
