@@ -1,11 +1,10 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey,\
-                       ForeignKeyConstraint, Numeric
+from sqlalchemy import Column, Integer, String, ForeignKey, \
+    create_engine
 from sqlalchemy.types import DateTime
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
-from decimal import Decimal  # Job.rate
-
+engine = create_engine('sqlite:///timesheet.db')
 Base = declarative_base()
 
 __all__ = ['Clocktime', 'Employee', 'Job']
@@ -22,7 +21,7 @@ class Clocktime(Base):
     id = Column(Integer, primary_key=True)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
-    employee_id = Column(Integer,ForeignKey('employees.id'))
+    employee_id = Column(Integer, ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
     # employee = many to one relationship with Employee
     # job = many to one relationship with Job
@@ -80,3 +79,6 @@ class Job(Base):
                                 abbr="Abbr: " + str(self.abbr),
                                 rate=self.rate/100.0,
                                 id="ID# " + str(self.id))
+
+
+Base.metadata.create_all(engine)

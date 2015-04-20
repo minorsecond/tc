@@ -1,7 +1,10 @@
+from datetime import datetime, timedelta
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from models import Base, Employee, Job, Clocktime
-from datetime import datetime, timedelta
+
 
 TESTDATA = {
         'employee': Employee(firstname="Adam", lastname="Smith"),
