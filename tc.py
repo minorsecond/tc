@@ -20,6 +20,7 @@ import os
 import os.path
 import logging
 import uuid
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -32,7 +33,6 @@ FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
 DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
-
 
 date = str(datetime.date.today())
 day_start = datetime.datetime.now()
@@ -98,9 +98,9 @@ def project_start():
                 main_menu()
         logging.debug("abbrev is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
-        # TODO:: Utilize this to keep current job persistent
         p_uuid = str(uuid.uuid4())
-        new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate), Clocktime(p_uuid=p_uuid,time_in=datetime.datetime.now())]
+        new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
+                        Clocktime(p_uuid=p_uuid, time_in=datetime.datetime.now())]
         for i in new_task_job:
             session.add(i)
         session.commit()
@@ -175,6 +175,7 @@ def breaktime():
     global start_time
     global diff
     global status
+    global p_uuid
 
     # Pull most recent (top) row from jobs table.
     sel = session.query(Job).order_by(Job.id.desc()).first()
@@ -186,8 +187,11 @@ def breaktime():
     if debug == 1:
         print"DEBUGGING: JOB Database, most recent row:\n"
         print(sel)
-        print("\nUUID: {0}").format(p_uuid)
-        raw_input("\nPress enter to continue.")
+        try:
+            print("\nUUID: {0}").format(p_uuid)
+            raw_input("\nPress enter to continue.")
+        except NameError:
+            print("p_uuid has not been created")
 
     # Check if currently in a job.
     if status == 0:
@@ -198,12 +202,17 @@ def breaktime():
         now = datetime.datetime.now()
         print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
         # I don't think an if statement is the right way to do this, really.
-        if session.query(Clocktime).filter(Clocktime.p_uuid==p_uuid):
-            new_break = Clocktime(p_uuid=p_uuid, time_out=datetime.datetime.now())
-            session.add(new_break)
-            session.commit()
-        else:
-            raw_input("Sqlite column syncing error. Dumping to main menu.")
+        out = session.query(). \
+            filter(Clocktime.p_uuid == p_uuid). \
+            update({"time_out": (Clocktime.time_out = datetime.datetime.now())})
+        session.add(out)
+        session.commit()
+
+        sel.time_out = datetime.datetime.now()
+        print(sel)
+        raw_input()
+        # new_break = Clocktime(time_out=datetime.datetime.now())
+        session.execute(sel)
 
         # TODO: Add time_worked to clocktimes
         diff = datetime.datetime.now() - start_time
@@ -212,7 +221,7 @@ def breaktime():
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
                 .format(start_time, datetime.datetime.now(), diff, time_worked)
         # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
-        print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
+        print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
         status = 0
 
         raw_input("Press Enter to begin working again")
@@ -377,9 +386,9 @@ def config():
         show_tables(jobs)
         requested_job_abbr = raw_input("Job abbreviation? ")
         # TODO: If nothing is found, or multiple is found, handle gracefully
-        job_to_edit = session.query(Job)\
-                             .filter_by(abbr=requested_job_abbr)\
-                             .one()
+        job_to_edit = session.query(Job) \
+            .filter_by(abbr=requested_job_abbr) \
+            .one()
         print("1. Name\n"
               "2. Abbreviation\n"
               "3. Rate")
