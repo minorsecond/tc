@@ -75,6 +75,7 @@ def project_start():
     global clock_in
     global status
     global start_time
+    global p_uuid
 
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -98,8 +99,8 @@ def project_start():
         logging.debug("abbrev is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
         # TODO:: Utilize this to keep current job persistent
-        p_uuid = uuid.uuid4()
-        new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
+        p_uuid = str(uuid.uuid4())
+        new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate), Clocktime(p_uuid=p_uuid,time_in=datetime.datetime.now())]
         for i in new_task_job:
             session.add(i)
         session.commit()
@@ -171,7 +172,6 @@ def breaktime():
     global job_name
     global job_abbrev
     global lead_name
-    global stop_type
     global start_time
     global diff
     global status
@@ -186,6 +186,7 @@ def breaktime():
     if debug == 1:
         print"DEBUGGING: JOB Database, most recent row:\n"
         print(sel)
+        print("\nUUID: {0}").format(p_uuid)
         raw_input("\nPress enter to continue.")
 
     # Check if currently in a job.
@@ -197,27 +198,17 @@ def breaktime():
         now = update_now()
         print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
         # Write time out to Clocktime table.
-        new_break = Clocktime(time_out=datetime.datetime.now())
+        new_break = Clocktime(p_uuid=p_uuid, time_out=datetime.datetime.now())
         session.add(new_break)
         session.commit()
 
-        # Get time passed since beginning of task.
-        # curr_time = datetime.datetime.now().strftime('%I:%M %p')
-        # diff is returning incorrect time
-        # diff = datetime.datetime.strptime(curr_time, '%I:%M %p') - datetime.datetime.strptime(start_time, '%I:%M %p')
+        # TODO: Add this to clocktimes
         diff = datetime.datetime.now() - start_time
         time = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
                 .format(start_time, datetime.datetime.now(), diff, time)
         # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
-        with jobdb:
-            if debug == 1:
-                print("Connected to DB: jobdb.\n")
-            cur.execute(
-                "INSERT INTO jobdb(UUID, Lead_name, Job_name, Job_abbrev, Time_worked, "
-                "Date) VALUES(?, ?, ?, ?, ?, ?)", [p_uuid, lead_name, job_name, job_abbrev, time, date]
-            )
         print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
         status = 0
 
