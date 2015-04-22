@@ -204,7 +204,7 @@ def breaktime():
         # I don't think an if statement is the right way to do this, really.
         out = session.query(). \
             filter(Clocktime.p_uuid == p_uuid). \
-            update({"time_out": (Clocktime.time_out = datetime.datetime.now())})
+            update(Clocktime.time_out == datetime.datetime.now())
         session.add(out)
         session.commit()
 
