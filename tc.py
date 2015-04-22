@@ -195,19 +195,22 @@ def breaktime():
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
-        now = update_now()
+        now = datetime.datetime.now()
         print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
-        # Write time out to Clocktime table.
-        new_break = Clocktime(p_uuid=p_uuid, time_out=datetime.datetime.now())
-        session.add(new_break)
-        session.commit()
+        # I don't think an if statement is the right way to do this, really.
+        if session.query(Clocktime).filter(Clocktime.p_uuid==p_uuid):
+            new_break = Clocktime(p_uuid=p_uuid, time_out=datetime.datetime.now())
+            session.add(new_break)
+            session.commit()
+        else:
+            raw_input("Sqlite column syncing error. Dumping to main menu.")
 
-        # TODO: Add this to clocktimes
+        # TODO: Add time_worked to clocktimes
         diff = datetime.datetime.now() - start_time
-        time = float(round_to_nearest(diff.seconds, 360)) / 3600
+        time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-                .format(start_time, datetime.datetime.now(), diff, time)
+                .format(start_time, datetime.datetime.now(), diff, time_worked)
         # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
         print ("Enjoy! You worked {0} hours on {1}.").format(time, job_name)
         status = 0
