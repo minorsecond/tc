@@ -19,7 +19,7 @@ import sys
 import os
 import os.path
 import logging
-
+import uuid
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -97,6 +97,8 @@ def project_start():
                 main_menu()
         logging.debug("abbrev is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
+        # TODO:: Utilize this to keep current job persistent
+        p_uuid = uuid.uuid4()
         new_task_job = [Job(abbr=abbrev, name=project_name, rate=p_rate), Clocktime(time_in=datetime.datetime.now())]
         for i in new_task_job:
             session.add(i)

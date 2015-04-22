@@ -19,6 +19,7 @@ class Clocktime(Base):
 
     __tablename__ = "clocktimes"
     id = Column(Integer, primary_key=True)
+    p_uuid = Column(String)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
     employee_id = Column(Integer, ForeignKey('employees.id'))
@@ -68,6 +69,7 @@ class Job(Base):
 
     __tablename__ = "jobs"
     id = Column(Integer, primary_key=True)
+    p_uuid = Column(String)
     name = Column(String(50))
     abbr = Column(String(16))
     rate = Column(Integer)  # cents/hr
