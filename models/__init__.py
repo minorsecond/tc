@@ -4,6 +4,9 @@ from sqlalchemy import Column, Integer, String, ForeignKey, \
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
 
+from sqa_uuid import UUID
+
+
 engine = create_engine('sqlite:///timesheet.db')
 Base = declarative_base()
 
@@ -19,7 +22,7 @@ class Clocktime(Base):
 
     __tablename__ = "clocktimes"
     id = Column(Integer, primary_key=True)
-    p_uuid = Column(String)
+    p_uuid = Column(UUID)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
     employee_id = Column(Integer, ForeignKey('employees.id'))
