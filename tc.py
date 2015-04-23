@@ -201,9 +201,7 @@ def breaktime():
     else:
         now = datetime.datetime.now()
         print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
-        # TODO Fix 'out' code. The assignment of time to time_out is wrong syntax.
-        now = datetime.datetime.now()
-        out = session.query(Clocktime). \
+        session.query(Clocktime). \
             filter(Clocktime.p_uuid == p_uuid). \
             update({"time_out": now}, synchronize_session='fetch')
         session.commit()
