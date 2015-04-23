@@ -161,6 +161,21 @@ def round_to_nearest(num, b):
     return company_minutes - (company_minutes % b)
 
 
+def clockout():
+    """
+    Clocks user out of project. Prints time_out (now) to clocktimes table for whichever row contains the same
+    p_uuid created in project_start().
+
+    :return:
+    """
+    now = datetime.now()
+    print 'Stopping {0}, ABBREV {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
+                                                                      now.minute, now.day, now.month, now.year)
+    session.query(Clocktime). \
+        filter(Clocktime.p_uuid == p_uuid). \
+        update({"time_out": now}, synchronize_session='fetch')
+    session.commit()
+
 def breaktime():
     """Prompts user to specify reason for break.
 
@@ -198,13 +213,7 @@ def breaktime():
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
-        now = datetime.now()
-        print "Stopping {0}, ABBREV {1} at {2}:{3} on {4}/{5}/{6}".format(job_name, job_abbrev, now.hour, \
-                                                                          now.minute, now.day, now.month, now.year)
-        session.query(Clocktime). \
-            filter(Clocktime.p_uuid == p_uuid). \
-            update({"time_out": now}, synchronize_session='fetch')
-        session.commit()
+        clockout()
 
         sel.time_out = datetime.now()
         print(sel)
@@ -309,8 +318,6 @@ def total_time():
 def switch_task():
     global job_name
     global job_abbrev
-    now = update_now()
-    sel = sel_timesheet_row()
     stop_type = "switch task"
     for row in sel:
         job_name = row[1]
