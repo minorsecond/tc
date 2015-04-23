@@ -71,7 +71,6 @@ def project_start():
     """
     global p_rate
     global project_name
-    global clock_in
     global status
     global start_time
     global p_uuid
@@ -482,6 +481,9 @@ def config():
 
 # TODO: Add code from v0.1 that prints current task at bottom of main menu if status == 1.
 def main_menu():
+    global project_name
+    global start_time
+
     while True:
         """Main menu for program. Prompts user for function."""
         print "PYPER Timesheet Utility\n\n" \
@@ -493,6 +495,8 @@ def main_menu():
               "5. Calculate Total Time Worked\n" \
               "6. Generate Today's Timesheet\n" \
               "7. Quit\n"
+        if status == 1:
+            print ("Current job {0} started at {1}.\n").format(project_name, start_time)
         answer = raw_input(">>> ")
         if answer.startswith('1'):
             project_start()
@@ -524,6 +528,5 @@ if __name__ == "__main__":
                         format=FORMATTER_STRING,
                         level=LOGLEVEL)
 
-    status = 0
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu()
