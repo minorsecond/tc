@@ -202,9 +202,9 @@ def breaktime():
         now = datetime.datetime.now()
         print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
         # I don't think an if statement is the right way to do this, really.
-        out = session.query(). \
+        out = session.query(Clocktime). \
             filter(Clocktime.p_uuid == p_uuid). \
-            update(Clocktime.time_out == datetime.datetime.now())
+            update({"time_out": Clocktime.time_out == datetime.datetime.now()}, synchronize_session='fetch')
         session.add(out)
         session.commit()
 
