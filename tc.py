@@ -328,19 +328,30 @@ def switch_task():
 
 
 def report():
-    print("\nGenerating report for {0}\n").format(date)
-    with jobdb:
-        cur.execute(
-            "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
-        while True:
-            sel = cur.fetchall()
-            print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
-            print("=======================================================")
-            for row in sel:
-                print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
-                    .format(row[0], row[1], row[2], row[3], row[4])
-            raw_input("\nPress enter to return to main menu.")
-            main_menu()
+    """
+    Prints a report table to screen.
+    :return:
+    """
+    global p_uuid
+
+    # TODO: Use property 'timeworked' in Clocktimes to generate time worked per job. Will need to add all job times.
+    # TODO: Create an option to write report to CSV.
+
+    # print("\nGenerating report for {0}\n").format(date)
+    time_worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).Clocktime.timeworked
+    print(time_worked)
+    #with jobdb:
+    #    cur.execute(
+    #        "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
+    #    while True:
+    #        sel = cur.fetchall()
+    print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
+    print("=======================================================")
+    for row in sel:
+        print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
+            .format(row[0], row[1], row[2], row[3], row[4])
+    raw_input("\nPress enter to return to main menu.")
+    main_menu()
 
 
 def config():

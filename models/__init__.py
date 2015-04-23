@@ -30,6 +30,8 @@ class Clocktime(Base):
     # employee = many to one relationship with Employee
     # job = many to one relationship with Job
 
+    # Should be able to query this, run it through the time_formatter function and output the results.
+    # May have to perform some math on it first (add all timeworked per job, per day) and output to a table.
     @property
     def timeworked(self):
         return self.time_out - self.time_in
