@@ -14,7 +14,7 @@ of an hour, and to generate reports.
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
-import datetime
+from datetime import datetime
 import sys
 import os
 import os.path
@@ -34,8 +34,7 @@ DB_NAME = "timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
-date = str(datetime.date.today())
-day_start = datetime.datetime.now()
+day_start = datetime.now()
 
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
@@ -100,11 +99,11 @@ def project_start():
         logging.debug("project_name is {}".format(project_name))
         p_uuid = str(uuid.uuid4())
         new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
-                        Clocktime(p_uuid=p_uuid, time_in=datetime.datetime.now())]
+                        Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
         for i in new_task_job:
             session.add(i)
         session.commit()
-        start_time = datetime.datetime.now()
+        start_time = datetime.now()
         status = 1
 
 
@@ -199,24 +198,25 @@ def breaktime():
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
-        now = datetime.datetime.now()
-        print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
+        now = datetime.now()
+        print "Stopping {0}, ABBREV {1} at {2}:{3} on {4}/{5}/{6}".format(job_name, job_abbrev, now.hour, \
+                                                                          now.minute, now.day, now.month, now.year)
         session.query(Clocktime). \
             filter(Clocktime.p_uuid == p_uuid). \
             update({"time_out": now}, synchronize_session='fetch')
         session.commit()
 
-        sel.time_out = datetime.datetime.now()
+        sel.time_out = datetime.now()
         print(sel)
         raw_input()
-        # new_break = Clocktime(time_out=datetime.datetime.now())
+        # new_break = Clocktime(time_out=datetime.now())
 
         # TODO: Add time_worked to clocktimes
-        diff = datetime.datetime.now() - start_time
+        diff = datetime.now() - start_time
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-                .format(start_time, datetime.datetime.now(), diff, time_worked)
+                .format(start_time, datetime.now(), diff, time_worked)
         # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
         print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
         status = 0
@@ -225,7 +225,7 @@ def breaktime():
         print("Are you still working on '{}' ? (y/n)").format(job_name)
         answer = query()
         if answer:
-            now = datetime.datetime.now().strftime('%I:%M %p')
+            now = datetime.now().strftime('%I:%M %p')
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             status = 1
             cur.execute(
@@ -283,9 +283,9 @@ def get_time(time):
             while split_ap in {'p', 'P'}:
                 split_ap = 'PM'
             _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-            time_conc = datetime.datetime.strptime(_time_conc, '%I:%M %p')
+            time_conc = datetime.strptime(_time_conc, '%I:%M %p')
         else:
-            time_conc = datetime.datetime.strptime(time, '%I:%M %p')
+            time_conc = datetime.strptime(time, '%I:%M %p')
     except NameError:
         print("Check format and try again.")
 
