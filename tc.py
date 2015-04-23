@@ -201,18 +201,17 @@ def breaktime():
     else:
         now = datetime.datetime.now()
         print "Stopping {0}, ABBREV {1} at {2} on {3}".format(job_name, job_abbrev, now, date)
-        # I don't think an if statement is the right way to do this, really.
+        # TODO Fix 'out' code. The assignment of time to time_out is wrong syntax.
+        now = datetime.datetime.now()
         out = session.query(Clocktime). \
             filter(Clocktime.p_uuid == p_uuid). \
-            update({"time_out": Clocktime.time_out == datetime.datetime.now()}, synchronize_session='fetch')
-        session.add(out)
+            update({"time_out": now}, synchronize_session='fetch')
         session.commit()
 
         sel.time_out = datetime.datetime.now()
         print(sel)
         raw_input()
         # new_break = Clocktime(time_out=datetime.datetime.now())
-        session.execute(sel)
 
         # TODO: Add time_worked to clocktimes
         diff = datetime.datetime.now() - start_time
