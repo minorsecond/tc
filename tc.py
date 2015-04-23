@@ -166,15 +166,28 @@ def clockout():
     Clocks user out of project. Prints time_out (now) to clocktimes table for whichever row contains the same
     p_uuid created in project_start().
 
+    :rtype : object
     :return:
     """
+
+    global status
     now = datetime.now()
     print 'Stopping {0}, ABBREV {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
                                                                       now.minute, now.day, now.month, now.year)
+    diff = datetime.now() - start_time
+    time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
+    if debug == 1:
+        print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
+            .format(start_time, datetime.now(), diff, time_worked)
+    # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
+    print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
+    status = 0
+
     session.query(Clocktime). \
         filter(Clocktime.p_uuid == p_uuid). \
         update({"time_out": now}, synchronize_session='fetch')
     session.commit()
+
 
 def breaktime():
     """Prompts user to specify reason for break.
@@ -187,7 +200,6 @@ def breaktime():
     global job_abbrev
     global lead_name
     global start_time
-    global diff
     global status
     global p_uuid
 
@@ -214,22 +226,6 @@ def breaktime():
         main_menu()
     else:
         clockout()
-
-        sel.time_out = datetime.now()
-        print(sel)
-        raw_input()
-        # new_break = Clocktime(time_out=datetime.now())
-
-        # TODO: Add time_worked to clocktimes
-        diff = datetime.now() - start_time
-        time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
-        if debug == 1:
-            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-                .format(start_time, datetime.now(), diff, time_worked)
-        # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
-        print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
-        status = 0
-
         raw_input("Press Enter to begin working again")
         print("Are you still working on '{}' ? (y/n)").format(job_name)
         answer = query()
@@ -245,7 +241,7 @@ def breaktime():
         else:
             status = 0
             main_menu()
-        logging.info("Back from lunch at {}".format(now))
+        logging.info("Stopping task at {}".format(now))
 
 
 def time_formatter(time_input):
@@ -492,8 +488,8 @@ def main_menu():
         if answer.startswith('2'):
             breaktime()
         if answer.startswith('3'):
-            raise NotImplementedError()
-            # TODO: implement clock out
+            clockout()
+            main_menu()
         if answer.startswith('4'):
             config()
         if answer.startswith('5'):
