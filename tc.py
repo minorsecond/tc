@@ -108,8 +108,8 @@ def project_start():
                     main_menu()
             logging.debug("job id is {}".format(abbrev))
             logging.debug("project_name is {}".format(project_name))
-            p_uuid = str(uuid.uuid4())
-            clockin()
+        p_uuid = str(uuid.uuid4())
+        clockin()
 
 
 # TODO: Implement these functions
@@ -186,6 +186,8 @@ def clockin():
     # in the job table. It is functioning correctly in the clocktime table as there should be a new row every time the
     # user changes status. For job, really just need uuid, name, abbr, rate, and time worked that day. Some use cases
     # to look out for are: switching from one task to another, and then back to the original task.
+
+    # TODO: Add menu of past week's jobs? (May use other time frame, just an example). Must fix above issue first.
 
     new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
                     Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
@@ -341,6 +343,7 @@ def total_time():
     """
     Prompts user to enter start and end time, and prints time worked in 1/10 of an hour to screen
 
+    :rtype : str
     :return: None
     """
 
@@ -496,6 +499,12 @@ def config():
                 if answer.startswith('1'):
                     # TODO: do something with new_job? What?
                     new_job = add_job()
+                    print("\nWould you like to begin working on {0}? (Y/n)").format(new_job.name)
+                    answer = query()
+                    if answer:
+                        project_start()
+                    else:
+                        main_menu()
                 elif answer.startswith('2'):
                     edit_job(jobs)
                 elif answer.startswith('3'):
