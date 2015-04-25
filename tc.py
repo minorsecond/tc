@@ -254,7 +254,7 @@ def breaktime():
                 main_menu()
         else:
             main_menu()
-            logging.info("Stopping task at {}".format(now))
+            logging.info("Stopping task at {}".format(datetime.now()))
 
 
 def time_formatter(time_input):
@@ -321,22 +321,6 @@ def total_time():
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
     print "\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes)
     raw_input("\nPress enter to return to main menu.")
-    main_menu()
-
-
-def switch_task():
-    global job_name
-    global job_abbrev
-    stop_type = "switch task"
-    for row in sel:
-        job_name = row[1]
-        job_abbrev = row[2]
-        stop_type = row[3]
-    with conn:
-        cur.execute(
-            "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Stop_time) VALUES(?, ?, ?, ?, ?)",
-            [p_uuid, job_name, job_abbrev, stop_type, now])
-    project_start()
     main_menu()
 
 
