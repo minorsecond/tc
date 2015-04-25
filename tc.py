@@ -207,7 +207,6 @@ def clockout():
     if debug == 1:
         print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
             .format(start_time, datetime.now(), diff, time_worked)
-    # TODO: Create field for time_worked, for each job per day? This is going to be the slightly tricky part.
     print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
     status = 0
 
@@ -329,6 +328,12 @@ def get_time(time):
 
 
 def total_time():
+    """
+    Prompts user to enter start and end time, and prints time worked in 1/10 of an hour to screen
+
+    :return: None
+    """
+
     t_in = get_time(
         raw_input(
             "Please enter your start time in 00:00 AM/PM format: "))
@@ -369,7 +374,7 @@ def report():
     #        sel = cur.fetchall()
     print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
     print("=======================================================")
-    for row in sel:
+    for row in p_uuid:
         print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
             .format(row[0], row[1], row[2], row[3], row[4])
     raw_input("\nPress enter to return to main menu.")
@@ -502,7 +507,6 @@ def config():
             break  # kick out of config function
 
 
-# TODO: Add code from v0.1 that prints current task at bottom of main menu if status == 1.
 def main_menu():
     global project_name
     global start_time
