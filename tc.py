@@ -168,8 +168,9 @@ def round_to_nearest(num, b):
 
 def clockin():
     """
+    Adds time, job, date, uuid data to tables for time tracking.
 
-    :return:
+    :return: None
     """
 
     global start_time
@@ -225,8 +226,6 @@ def clockout():
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
         update({"worked": tworked}, synchronize_session='fetch')
-
-
     session.commit()
 
 
@@ -378,7 +377,7 @@ def report():
     raw_input()
     time_worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).tw
     print(time_worked)
-    #with jobdb:
+    # with jobdb:
     #    cur.execute(
     #        "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
     #    while True:
