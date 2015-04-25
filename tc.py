@@ -20,8 +20,6 @@ import os
 import os.path
 import logging
 import uuid
-from difflib import SequenceMatcher
-
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -178,6 +176,16 @@ def clockin():
     global status
     global abbrev
 
+    sel = session.query(Job).order_by(Job.id.desc()).first()
+
+    new_task_clock = [Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
+
+    # TODO: Find a way to fix the following bug.
+    # This is writing a new row to the job table every time it is run. There should only be one row per job per day
+    # in the job table. It is functioning correctly in the clocktime table as there should be a new row every time the
+    # user changes status. For job, really just need uuid, name, abbr, rate, and time worked that day. Some use cases
+    # to look out for are: switching from one task to another, and then back to the original task.
+
     new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
                     Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
     for i in new_task_job:
@@ -213,9 +221,12 @@ def clockout():
     session.query(Clocktime). \
         filter(Clocktime.p_uuid == p_uuid). \
         update({"time_out": now}, synchronize_session='fetch')
+    tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).func.sum(Clocktime.timeworked)
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
-        update({"worked": time_worked}, synchronize_session='fetch')
+        update({"worked": tworked}, synchronize_session='fetch')
+
+
     session.commit()
 
 
