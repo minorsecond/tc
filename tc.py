@@ -510,7 +510,9 @@ def main_menu():
               "6. Generate Today's Timesheet\n" \
               "7. Quit\n"
         if status == 1:
-            print ("Current job {0} started at {1}.\n").format(project_name, start_time)
+            print ("***Current job {0} started at {1}.***\n").format(project_name, start_time)
+        else:
+            print("***Not currently in a job.***\n")
         answer = raw_input(">>> ")
         if answer.startswith('1'):
             project_start()
