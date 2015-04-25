@@ -20,6 +20,8 @@ import os
 import os.path
 import logging
 import uuid
+from difflib import SequenceMatcher
+
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -82,23 +84,34 @@ def project_start():
         main_menu()
     else:
         logging.debug("project_start called")
-        abbrev = raw_input("What are you working on? (ABBREV): ")
-        project_name = raw_input("What is the name of this project?: ")
-        # lead_name = raw_input("For whom are you working?: ")
-        try:
-            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-        except ValueError, e:
+        ctimes = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
+        last_time = ctimes.time_out.date()
+        if last_time < datetime.today().date():
+            sel = session.query(Job).order_by(Job.id.desc()).first()
+            print("Last project ID: {0}, named: {1}. Are you still working on this?").format(sel.abbr, sel.name)
+            answer = query()
+            if answer:
+                abbrev = sel.abbr
+                project_name = sel.name
+                p_rate = sel.rate
+        else:
+            abbrev = raw_input("What are you working on? (ABBREV): ")
+            project_name = raw_input("What is the name of this project?: ")
+            # lead_name = raw_input("For whom are you working?: ")
             try:
-                logging.debug(e)
-                print("Check input and try again\n")
                 p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-            except ValueError:
-                raw_input("Press enter to return to main menu.")
-                main_menu()
-        logging.debug("abbrev is {}".format(abbrev))
-        logging.debug("project_name is {}".format(project_name))
-        p_uuid = str(uuid.uuid4())
-        clockin()
+            except ValueError, e:
+                try:
+                    logging.debug(e)
+                    print("Check input and try again\n")
+                    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+                except ValueError:
+                    raw_input("Press enter to return to main menu.")
+                    main_menu()
+            logging.debug("abbrev is {}".format(abbrev))
+            logging.debug("project_name is {}".format(project_name))
+            p_uuid = str(uuid.uuid4())
+            clockin()
 
 
 # TODO: Implement these functions
@@ -184,6 +197,8 @@ def clockout():
     """
 
     global status
+    global start_time
+
     now = datetime.now()
     print 'Stopping {0}, ABBREV {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
                                                                       now.minute, now.day, now.month, now.year)
@@ -199,6 +214,9 @@ def clockout():
     session.query(Clocktime). \
         filter(Clocktime.p_uuid == p_uuid). \
         update({"time_out": now}, synchronize_session='fetch')
+    session.query(Job). \
+        filter(Job.p_uuid == p_uuid). \
+        update({"worked": time_worked}, synchronize_session='fetch')
     session.commit()
 
 
@@ -334,8 +352,15 @@ def report():
     # TODO: Use property 'timeworked' in Clocktimes to generate time worked per job. Will need to add all job times.
     # TODO: Create an option to write report to CSV.
 
-    # print("\nGenerating report for {0}\n").format(date)
-    time_worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).Clocktime.timeworked
+    # Probably going to want to use the following elsewhere, and have report() just pull a column from the table
+    # for the current date. Don't want to have to calculate this on-the-fly. Probably best to use in clockout(). It
+    # will be necessary to make sure it selects the current date, then the unique uuids, and writes to a new row
+    # containing the current date, so that it doesn't write over that in
+    for p_uuid in session.query(Clocktime.p_uuid).distinct():
+        times_dict = {'ID': p_uuid, 't_worked': 0}
+        print(times_dict)
+    raw_input()
+    time_worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).tw
     print(time_worked)
     #with jobdb:
     #    cur.execute(
