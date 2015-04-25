@@ -74,6 +74,7 @@ def project_start():
     global status
     global start_time
     global p_uuid
+    global abbrev
 
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -97,13 +98,7 @@ def project_start():
         logging.debug("abbrev is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
         p_uuid = str(uuid.uuid4())
-        new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
-                        Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
-        for i in new_task_job:
-            session.add(i)
-        session.commit()
-        start_time = datetime.now()
-        status = 1
+        clockin()
 
 
 # TODO: Implement these functions
@@ -158,6 +153,25 @@ def round_to_nearest(num, b):
 
     company_minutes = num + (b // 2)
     return company_minutes - (company_minutes % b)
+
+
+def clockin():
+    """
+
+    :return:
+    """
+
+    global start_time
+    global status
+    global abbrev
+
+    new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
+                    Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
+    for i in new_task_job:
+        session.add(i)
+    session.commit()
+    start_time = datetime.now()
+    status = 1
 
 
 def clockout():
@@ -232,10 +246,11 @@ def breaktime():
             now = datetime.now().strftime('%I:%M %p')
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
             status = 1
-            cur.execute(
-                "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
-                [p_uuid, job_name, job_abbrev, stop_type, now])
-            main_menu()
+            # TODO: Implement sqlalchemy db here. Decide how to do this - new row?
+            # cur.execute(
+             #    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
+             #   [p_uuid, job_name, job_abbrev, now])
+            # main_menu()
 
         else:
             status = 0
