@@ -245,7 +245,7 @@ def breaktime():
         if answer:
             now = datetime.now().strftime('%I:%M %p')
             print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
-            status = 1
+            clockin()
             # TODO: Implement sqlalchemy db here. Decide how to do this - new row?
             # cur.execute(
              #    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
