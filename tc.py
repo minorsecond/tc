@@ -93,7 +93,7 @@ def project_start():
                 project_name = sel.name
                 p_rate = sel.rate
         else:
-            abbrev = raw_input("What are you working on? (ABBREV): ")
+            abbrev = raw_input("What are you working on? (Job ID): ")
             project_name = raw_input("What is the name of this project?: ")
             # lead_name = raw_input("For whom are you working?: ")
             try:
@@ -106,7 +106,7 @@ def project_start():
                 except ValueError:
                     raw_input("Press enter to return to main menu.")
                     main_menu()
-            logging.debug("abbrev is {}".format(abbrev))
+            logging.debug("job id is {}".format(abbrev))
             logging.debug("project_name is {}".format(project_name))
             p_uuid = str(uuid.uuid4())
             clockin()
@@ -208,8 +208,8 @@ def clockout():
     global start_time
 
     now = datetime.now()
-    print 'Stopping {0}, ABBREV {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
-                                                                      now.minute, now.day, now.month, now.year)
+    print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
+                                                                          now.minute, now.day, now.month, now.year)
     diff = datetime.now() - start_time
     time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
     if debug == 1:
@@ -383,7 +383,7 @@ def report():
     #        "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
     #    while True:
     #        sel = cur.fetchall()
-    print("Job Name | Job Abbrev | Time Worked | Lead Name  | Date")
+    print("Job Name | Job ID | Time Worked | Lead Name  | Date")
     print("=======================================================")
     for row in p_uuid:
         print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
@@ -433,13 +433,13 @@ def config():
         change_table_value to change it
         """
         show_tables(jobs)
-        requested_job_abbr = raw_input("Job abbreviation? ")
+        requested_job_abbr = raw_input("Job ID? ")
         # TODO: If nothing is found, or multiple is found, handle gracefully
         job_to_edit = session.query(Job) \
             .filter_by(abbr=requested_job_abbr) \
             .one()
         print("1. Name\n"
-              "2. Abbreviation\n"
+              "2. ID\n"
               "3. Rate")
         answer = raw_input("What do you want to change? ")
         if answer.startswith('1'):  # Change name
