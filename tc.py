@@ -228,7 +228,7 @@ def breaktime():
         print(sel)
         try:
             print("\nUUID: {0}").format(p_uuid)
-            raw_input("\nPress enter to continue.")
+            raw_input("\nPress enter to continue.\n")
         except NameError:
             print("p_uuid has not been created")
 
@@ -238,24 +238,23 @@ def breaktime():
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
-        clockout()
-        raw_input("Press Enter to begin working again")
-        print("Are you still working on '{}' ? (y/n)").format(job_name)
+        print("Are you sure you want to stop working on {0} and take a break? (y/n)\n").format(job_name)
         answer = query()
         if answer:
-            now = datetime.now().strftime('%I:%M %p')
-            print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
-            clockin()
-            # TODO: Implement sqlalchemy db here. Decide how to do this - new row?
-            # cur.execute(
-             #    "INSERT INTO timesheet(UUID, Job_name, Job_abbrev, Stop_type, Start_time) VALUES(?, ?, ?, ?, ?)",
-             #   [p_uuid, job_name, job_abbrev, now])
-            # main_menu()
-
+            clockout()
+            raw_input("Press Enter to begin working again")
+            print("Are you still working on '{}' ? (y/n)").format(job_name)
+            answer = query()
+            if answer:
+                now = datetime.now().strftime('%I:%M %p')
+                print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
+                clockin()
+            else:
+                status = 0
+                main_menu()
         else:
-            status = 0
             main_menu()
-        logging.info("Stopping task at {}".format(now))
+            logging.info("Stopping task at {}".format(now))
 
 
 def time_formatter(time_input):
