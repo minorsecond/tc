@@ -22,6 +22,7 @@ import logging
 import uuid
 
 from sqlalchemy import create_engine
+from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 
 from models import Job, Employee, Clocktime
@@ -82,34 +83,33 @@ def project_start():
         main_menu()
     else:
         logging.debug("project_start called")
-        ctimes = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
-        last_time = ctimes.time_out.date()
-        if last_time < datetime.today().date():
-            sel = session.query(Job).order_by(Job.id.desc()).first()
-            print("Last project ID: {0}, named: {1}. Are you still working on this?").format(sel.abbr, sel.name)
-            answer = query()
-            if answer:
-                abbrev = sel.abbr
-                project_name = sel.name
-                p_rate = sel.rate
-        else:
-            abbrev = raw_input("What are you working on? (Job ID): ")
-            project_name = raw_input("What is the name of this project?: ")
-            # lead_name = raw_input("For whom are you working?: ")
+        #ctimes = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
+        #last_time = ctimes.time_out.date()
+        #if last_time < datetime.today().date():
+        #    sel = session.query(Job).order_by(Job.id.desc()).first()
+        #    print("Last project ID: {0}, named: {1}. Are you still working on this?").format(sel.abbr, sel.name)
+        #    answer = query()
+        #    if answer:
+        #        abbrev = sel.abbr
+        #        project_name = sel.name
+        #        p_rate = sel.rate
+        abbrev = raw_input("What are you working on? (Job ID): ")
+        project_name = raw_input("What is the name of this project?: ")
+        # lead_name = raw_input("For whom are you working?: ")
+        try:
+            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+        except ValueError, e:
             try:
+                logging.debug(e)
+                print("Check input and try again\n")
                 p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-            except ValueError, e:
-                try:
-                    logging.debug(e)
-                    print("Check input and try again\n")
-                    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-                except ValueError:
-                    raw_input("Press enter to return to main menu.")
-                    main_menu()
-            logging.debug("job id is {}".format(abbrev))
-            logging.debug("project_name is {}".format(project_name))
-        p_uuid = str(uuid.uuid4())
-        clockin()
+            except ValueError:
+                raw_input("Press enter to return to main menu.")
+                main_menu()
+        logging.debug("job id is {}".format(abbrev))
+        logging.debug("project_name is {}".format(project_name))
+    p_uuid = str(uuid.uuid4())
+    clockin()
 
 
 # TODO: Implement these functions
@@ -179,8 +179,6 @@ def clockin():
 
     sel = session.query(Job).order_by(Job.id.desc()).first()
 
-    new_task_clock = [Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
-
     # TODO: Find a way to fix the following bug.
     # This is writing a new row to the job table every time it is run. There should only be one row per job per day
     # in the job table. It is functioning correctly in the clocktime table as there should be a new row every time the
@@ -190,7 +188,7 @@ def clockin():
     # TODO: Add menu of past week's jobs? (May use other time frame, just an example). Must fix above issue first.
 
     new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
-                    Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
+                   Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
     for i in new_task_job:
         session.add(i)
     session.commit()
@@ -228,6 +226,8 @@ def clockout():
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
         update({"worked": tworked}, synchronize_session='fetch')
+    job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+    session.add(job)
     session.commit()
 
 
