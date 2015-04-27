@@ -176,6 +176,7 @@ def clockin():
     global start_time
     global status
     global abbrev
+    global tworked
 
     sel = session.query(Job).order_by(Job.id.desc()).first()
 
@@ -207,6 +208,7 @@ def clockout():
 
     global status
     global start_time
+    global tworked
 
     now = datetime.now()
     print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
@@ -222,12 +224,16 @@ def clockout():
     session.query(Clocktime). \
         filter(Clocktime.p_uuid == p_uuid). \
         update({"time_out": now}, synchronize_session='fetch')
-    tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).func.sum(Clocktime.timeworked)
+
+    session.query(Clocktime). \
+        filter(Clocktime.p_uuid == p_uuid). \
+        update({"tworked": time_worked}, synchronize_session='fetch')
+    worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).fetchall()
+    print(worked)
+    raw_input()
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
         update({"worked": tworked}, synchronize_session='fetch')
-    job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
-    session.add(job)
     session.commit()
 
 
