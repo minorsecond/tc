@@ -108,6 +108,9 @@ def project_start():
         logging.debug("job id is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
     p_uuid = str(uuid.uuid4())
+    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+    session.add(new_task_job)
+    session.commit()
     clockin()
 
 
@@ -179,18 +182,10 @@ def clockin():
 
     sel = session.query(Job).order_by(Job.id.desc()).first()
 
-    # TODO: Find a way to fix the following bug.
-    # This is writing a new row to the job table every time it is run. There should only be one row per job per day
-    # in the job table. It is functioning correctly in the clocktime table as there should be a new row every time the
-    # user changes status. For job, really just need uuid, name, abbr, rate, and time worked that day. Some use cases
-    # to look out for are: switching from one task to another, and then back to the original task.
-
     # TODO: Add menu of past week's jobs? (May use other time frame, just an example). Must fix above issue first.
 
-    new_task_job = [Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate),
-                   Clocktime(p_uuid=p_uuid, time_in=datetime.now())]
-    for i in new_task_job:
-        session.add(i)
+    new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
+    session.add(new_task_clock)
     session.commit()
     start_time = datetime.now()
     status = 1
@@ -231,17 +226,12 @@ def clockout():
 
     # Get all clocktime rows for p_uuid. Plan is to add times for each job (by p_uuid), and add that sum to the job
     # in the job table.
-
-    # TODO: Following is incomplete. Fix so that time for each puuid is summed for current date, and added to job table.
     tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
     for i in tworked:
-        _id = i.p_uuid
         _sum_time += i.tworked
-        print(_sum_time)
-        print(i)
-        # worked = #  code to sum all times
-
-    raw_input()
+        if debug == 1:
+            print("debugging: sum of time for i.jobname is {0}").format(_sum_time)
+            raw_input()
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
         update({"worked": _sum_time}, synchronize_session='fetch')
