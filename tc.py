@@ -379,18 +379,10 @@ def report():
     """
 
     time_worked = session.query(Job).all()
-    job_name = time_worked.name
-    id = time_worked.abbr
-    worked = time_worked.worked
-    lead = time_worked.lead
-    date = time_worked.date
-
-    print(job_name)
-    print("Job Name | Job ID | Time Worked | Lead Name  | Date")
-    print("=======================================================")
-    for row in time_worked:
-        print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
-            .format(row[0], row[1], row[2], row[3], row[4])
+    print("{:<8} {:<15} {:<10}").format('Id', 'Job Name', 'Hours')
+    for i in time_worked:
+        jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
+        print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
     raw_input("\nPress enter to return to main menu.")
     main_menu()
 
