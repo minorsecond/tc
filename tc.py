@@ -22,7 +22,6 @@ import logging
 import uuid
 
 from sqlalchemy import create_engine
-from sqlalchemy.sql import func
 from sqlalchemy.orm import sessionmaker
 
 from models import Job, Employee, Clocktime
@@ -228,12 +227,24 @@ def clockout():
     session.query(Clocktime). \
         filter(Clocktime.p_uuid == p_uuid). \
         update({"tworked": time_worked}, synchronize_session='fetch')
-    worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).fetchall()
-    print(worked)
+
+    # Get all clocktime rows for p_uuid. Plan is to add times for each job (by p_uuid), and add that sum to the job
+    # in the job table.
+
+    # TODO: Following is incomplete. Fix so that time for each puuid is summed for current date, and added to job table.
+    tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
+    for i in tworked:
+        _id = i.p_uuid
+        sum_worked = sum(i.tworked)
+        print(sum_worked)
+        print(_id)
+        # worked = #  code to sum all times
+
     raw_input()
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
-        update({"worked": tworked}, synchronize_session='fetch')
+        update({"worked": sum_worked}, synchronize_session='fetch')
+
     session.commit()
 
 
