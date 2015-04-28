@@ -377,29 +377,18 @@ def report():
     Prints a report table to screen.
     :return:
     """
-    global p_uuid
 
-    # TODO: Use property 'timeworked' in Clocktimes to generate time worked per job. Will need to add all job times.
-    # TODO: Create an option to write report to CSV.
+    time_worked = session.query(Job).all()
+    job_name = time_worked.name
+    id = time_worked.abbr
+    worked = time_worked.worked
+    lead = time_worked.lead
+    date = time_worked.date
 
-    # Probably going to want to use the following elsewhere, and have report() just pull a column from the table
-    # for the current date. Don't want to have to calculate this on-the-fly. Probably best to use in clockout(). It
-    # will be necessary to make sure it selects the current date, then the unique uuids, and writes to a new row
-    # containing the current date, so that it doesn't write over that in
-    for p_uuid in session.query(Clocktime.p_uuid).distinct():
-        times_dict = {'ID': p_uuid, 't_worked': 0}
-        print(times_dict)
-    raw_input()
-    time_worked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).tw
-    print(time_worked)
-    # with jobdb:
-    #    cur.execute(
-    #        "SELECT Job_name, Job_abbrev, Time_worked, Lead_name, Date FROM jobdb WHERE Date = ?", (date, ))
-    #    while True:
-    #        sel = cur.fetchall()
+    print(job_name)
     print("Job Name | Job ID | Time Worked | Lead Name  | Date")
     print("=======================================================")
-    for row in p_uuid:
+    for row in time_worked:
         print("\n{0}    | {1}      | {2}        | {3}       | {4}") \
             .format(row[0], row[1], row[2], row[3], row[4])
     raw_input("\nPress enter to return to main menu.")
