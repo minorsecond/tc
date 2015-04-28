@@ -82,17 +82,7 @@ def project_start():
         main_menu()
     else:
         logging.debug("project_start called")
-        #ctimes = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
-        #last_time = ctimes.time_out.date()
-        #if last_time < datetime.today().date():
-        #    sel = session.query(Job).order_by(Job.id.desc()).first()
-        #    print("Last project ID: {0}, named: {1}. Are you still working on this?").format(sel.abbr, sel.name)
-        #    answer = query()
-        #    if answer:
-        #        abbrev = sel.abbr
-        #        project_name = sel.name
-        #        p_rate = sel.rate
-        abbrev = raw_input("What are you working on? (Job ID): ")
+        abbrev = raw_input("\nWhat are you working on? (Job ID): ")
         project_name = raw_input("What is the name of this project?: ")
         # lead_name = raw_input("For whom are you working?: ")
         try:
@@ -380,9 +370,11 @@ def report():
     Prints a report table to screen.
     :return:
     """
+    os.system('cls' if os.name == 'nt' else 'clear')
     # TODO: Fix this so that only the current week's hours are printed.
     time_worked = session.query(Job).all()
-    print("{:<8} {:<15} {:<3}").format('Id', 'Job Name', 'Hours')
+    print("\n  Weekly Timesheet Report\n")
+    print("\n{:<8} {:<15} {:<3}").format('Id', 'Job Name', 'Hours')
     print("{:<8} {:<15} {:<3}").format('========', '==============', '=====')
     for i in time_worked:
         jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
@@ -529,6 +521,7 @@ def main_menu():
 
     while True:
         """Main menu for program. Prompts user for function."""
+        os.system('cls' if os.name == 'nt' else 'clear')
         print "PYPER Timesheet Utility\n\n" \
               "What would you like to do?\n" \
               "1. Clock In\n" \
