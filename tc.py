@@ -75,6 +75,11 @@ def project_start():
     global start_time
     global p_uuid
     global abbrev
+    abbr = []
+
+    sel = session.query(Job).order_by(Job.id.desc()).all()
+    for i in sel:
+        abbr.append((i.abbr))
 
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -82,26 +87,37 @@ def project_start():
         main_menu()
     else:
         logging.debug("project_start called")
-        abbrev = raw_input("\nWhat are you working on? (Job ID): ")
-        project_name = raw_input("What is the name of this project?: ")
-        # lead_name = raw_input("For whom are you working?: ")
-        try:
-            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-        except ValueError, e:
+        abbrev = raw_input('\nWhat are you working on? (Job ID): ')
+        # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
+        if abbrev in abbr:
+            job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
+            p_uuid = job.p_uuid
+            project_name = job.name
+
+            print("Are you working on {0}? (Y/n)").format(job.name)
+            answer = query()
+            if answer:
+                clockin()
+        else:
+            project_name = raw_input("What is the name of this project?: ")
+            # lead_name = raw_input("For whom are you working?: ")
             try:
-                logging.debug(e)
-                print("Check input and try again\n")
                 p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-            except ValueError:
-                raw_input("Press enter to return to main menu.")
-                main_menu()
-        logging.debug("job id is {}".format(abbrev))
-        logging.debug("project_name is {}".format(project_name))
-    p_uuid = str(uuid.uuid4())
-    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
-    session.add(new_task_job)
-    session.commit()
-    clockin()
+            except ValueError, e:
+                try:
+                    logging.debug(e)
+                    print("Check input and try again\n")
+                    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+                except ValueError:
+                    raw_input("Press enter to return to main menu.")
+                    main_menu()
+            logging.debug("job id is {}".format(abbrev))
+            logging.debug("project_name is {}".format(project_name))
+            p_uuid = str(uuid.uuid4())
+            new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+            session.add(new_task_job)
+            session.commit()
+            clockin()
 
 
 # TODO: Implement these functions

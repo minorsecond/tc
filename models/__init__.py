@@ -80,6 +80,7 @@ class Job(Base):
     abbr = Column(String(16))
     rate = Column(Integer)  # cents/hr
     worked = Column(Float)  # may have to use a different type here.
+    date = Column(DateTime)
     clocktimes = relationship('Clocktime', backref='job')
 
     def __str__(self):
