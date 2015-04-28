@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, ForeignKey, \
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, \
     create_engine
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
@@ -27,8 +27,9 @@ class Clocktime(Base):
     time_out = Column(DateTime)
     employee_id = Column(Integer, ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
+    tworked = Column(Float)
     # employee = many to one relationship with Employee
-    # job = many to one relationship with Job
+    # job = many to one relationship with Jobsu
 
     # Should be able to query this, run it through the time_formatter function and output the results.
     # May have to perform some math on it first (add all timeworked per job, per day) and output to a table.
@@ -78,7 +79,7 @@ class Job(Base):
     name = Column(String(50))
     abbr = Column(String(16))
     rate = Column(Integer)  # cents/hr
-    worked = Column(String) # may have to use a different type here.
+    worked = Column(Float)  # may have to use a different type here.
     clocktimes = relationship('Clocktime', backref='job')
 
     def __str__(self):
