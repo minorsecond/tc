@@ -205,6 +205,10 @@ def clockout():
     global tworked
     _sum_time = 0
 
+    sel = session.query(Job).order_by(Job.id.desc()).first()
+    job_name = sel.name
+    job_abbrev = sel.abbr
+
     now = datetime.now()
     print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
                                                                           now.minute, now.day, now.month, now.year)
