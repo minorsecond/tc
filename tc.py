@@ -247,9 +247,9 @@ def clockout():
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
         for i in tworked:
             _sum_time += i.tworked
-            if debug == 1:
-                print("debugging: sum of time for i.jobname is {0}").format(_sum_time)
-                raw_input()
+        if debug == 1:
+            print("Debugging: sum of time for {0} is {1}").format(i.job_id, _sum_time)
+            raw_input()
         sum_time = float(round_to_nearest(_sum_time, .1))
         session.query(Job). \
             filter(Job.p_uuid == p_uuid). \
@@ -552,7 +552,8 @@ def main_menu():
               "4. Configure\n" \
               "5. Calculate Total Time Worked\n" \
               "6. Generate Today's Timesheet\n" \
-              "7. Quit\n"
+              "7. Import/Export Timesheet\n" \
+              "8. Quit\n"
         if status == 1:
             print ("*** Current job {0} at {1}. ***\n").format(project_name, start_time.strftime('%I:%M %p'))
         else:
@@ -572,6 +573,8 @@ def main_menu():
         if answer.startswith('6'):
             report()
         if answer.startswith('7'):
+            raise NotImplementedError
+        if answer.startswith('8'):
             sys.exit()
 
 
