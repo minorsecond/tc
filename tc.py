@@ -224,6 +224,7 @@ def clockout():
                                                                               now.minute, now.day, now.month, now.year)
         diff = datetime.now() - start_time
         time = float(diff.seconds / 3600)
+        # Short tasks (3 minutes or less) still count as .1 of an hour per my company's policy.
         if time < .1:
             time = .1
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
@@ -553,9 +554,9 @@ def main_menu():
               "6. Generate Today's Timesheet\n" \
               "7. Quit\n"
         if status == 1:
-            print ("***Current job {0} started at {1}.***\n").format(project_name, start_time)
+            print ("*** Current job {0} at {1}. ***\n").format(project_name, start_time.strftime('%I:%M %p'))
         else:
-            print("***Not currently in a job.***\n")
+            print("*** Not currently in a job. ***\n")
         answer = raw_input(">>> ")
         if answer.startswith('1'):
             project_start()
