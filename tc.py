@@ -377,9 +377,10 @@ def report():
     Prints a report table to screen.
     :return:
     """
-
+    # TODO: Fix this so that only the current week's hours are printed.
     time_worked = session.query(Job).all()
-    print("{:<8} {:<15} {:<10}").format('Id', 'Job Name', 'Hours')
+    print("{:<8} {:<15} {:<3}").format('Id', 'Job Name', 'Hours')
+    print("{:<8} {:<15} {:<3}").format('========', '==============', '=====')
     for i in time_worked:
         jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
         print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
