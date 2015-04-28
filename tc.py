@@ -199,48 +199,51 @@ def clockout():
     :rtype : object
     :return:
     """
+    if status == 0:
+        raw_input("You're not currently in a job. Press enter to return to main menu")
+        main_menu()
+    else:
+        global status
+        global start_time
+        global tworked
+        _sum_time = 0
 
-    global status
-    global start_time
-    global tworked
-    _sum_time = 0
+        sel = session.query(Job).order_by(Job.id.desc()).first()
+        job_name = sel.name
+        job_abbrev = sel.abbr
 
-    sel = session.query(Job).order_by(Job.id.desc()).first()
-    job_name = sel.name
-    job_abbrev = sel.abbr
-
-    now = datetime.now()
-    print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
-                                                                          now.minute, now.day, now.month, now.year)
-    diff = datetime.now() - start_time
-    time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
-    if debug == 1:
-        print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-            .format(start_time, datetime.now(), diff, time_worked)
-    print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
-    status = 0
-
-    session.query(Clocktime). \
-        filter(Clocktime.p_uuid == p_uuid). \
-        update({"time_out": now}, synchronize_session='fetch')
-
-    session.query(Clocktime). \
-        filter(Clocktime.p_uuid == p_uuid). \
-        update({"tworked": time_worked}, synchronize_session='fetch')
-
-    # Get all clocktime rows for p_uuid. Plan is to add times for each job (by p_uuid), and add that sum to the job
-    # in the job table.
-    tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
-    for i in tworked:
-        _sum_time += i.tworked
+        now = datetime.now()
+        print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
+                                                                              now.minute, now.day, now.month, now.year)
+        diff = datetime.now() - start_time
+        time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
-            print("debugging: sum of time for i.jobname is {0}").format(_sum_time)
-            raw_input()
-    session.query(Job). \
-        filter(Job.p_uuid == p_uuid). \
-        update({"worked": _sum_time}, synchronize_session='fetch')
+            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
+                .format(start_time, datetime.now(), diff, time_worked)
+        print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
+        status = 0
 
-    session.commit()
+        session.query(Clocktime). \
+            filter(Clocktime.p_uuid == p_uuid). \
+            update({"time_out": now}, synchronize_session='fetch')
+
+        session.query(Clocktime). \
+            filter(Clocktime.p_uuid == p_uuid). \
+            update({"tworked": time_worked}, synchronize_session='fetch')
+
+        # Get all clocktime rows for p_uuid. Plan is to add times for each job (by p_uuid), and add that sum to the job
+        # in the job table.
+        tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
+        for i in tworked:
+            _sum_time += i.tworked
+            if debug == 1:
+                print("debugging: sum of time for i.jobname is {0}").format(_sum_time)
+                raw_input()
+        session.query(Job). \
+            filter(Job.p_uuid == p_uuid). \
+            update({"worked": _sum_time}, synchronize_session='fetch')
+
+        session.commit()
 
 
 def breaktime():
