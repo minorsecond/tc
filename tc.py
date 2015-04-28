@@ -208,6 +208,7 @@ def clockout():
     global status
     global start_time
     global tworked
+    _sum_time = 0
 
     now = datetime.now()
     print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
@@ -235,15 +236,15 @@ def clockout():
     tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
     for i in tworked:
         _id = i.p_uuid
-        sum_worked = sum(i.tworked)
-        print(sum_worked)
-        print(_id)
+        _sum_time += i.tworked
+        print(_sum_time)
+        print(i)
         # worked = #  code to sum all times
 
     raw_input()
     session.query(Job). \
         filter(Job.p_uuid == p_uuid). \
-        update({"worked": sum_worked}, synchronize_session='fetch')
+        update({"worked": _sum_time}, synchronize_session='fetch')
 
     session.commit()
 
