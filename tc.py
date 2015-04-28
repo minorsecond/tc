@@ -231,9 +231,14 @@ def clockout():
         diff = datetime.now() - start_time
         time = float(diff.seconds / 3600)
 
-        # Short tasks (3 minutes or less) still count as .1 of an hour per my company's policy.
+        # Short tasks (6 minutes or less) still count as .1 of an hour per my company's policy.
         if time < .1:
             time = .1
+
+        if debug == 1:
+            print('diff.seconds = {0}').format(diff.seconds)
+            print('time = {0}').format(time)
+            raw_input("Press enter to continue.")
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
@@ -252,6 +257,7 @@ def clockout():
 
         # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
+
         for i in tworked:
             _sum_time += i.tworked
         if debug == 1:
