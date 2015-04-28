@@ -98,6 +98,9 @@ def project_start():
             answer = query()
             if answer:
                 clockin()
+            else:
+                raw_input("Press enter to return to main menu.")
+                main_menu()
         else:
             project_name = raw_input("What is the name of this project?: ")
             # lead_name = raw_input("For whom are you working?: ")
@@ -186,8 +189,6 @@ def clockin():
     global abbrev
     global tworked
 
-    sel = session.query(Job).order_by(Job.id.desc()).first()
-
     # TODO: Add menu of past week's jobs? (May use other time frame, just an example). Must fix above issue first.
 
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
@@ -222,6 +223,9 @@ def clockout():
         print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
                                                                               now.minute, now.day, now.month, now.year)
         diff = datetime.now() - start_time
+        time = float(diff.seconds / 3600)
+        if time < .1:
+            time = .1
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
@@ -235,7 +239,7 @@ def clockout():
 
         session.query(Clocktime). \
             filter(Clocktime.p_uuid == p_uuid). \
-            update({"tworked": time_worked}, synchronize_session='fetch')
+            update({'tworked': time}, synchronize_session='fetch')
 
         # Get all clocktime rows for p_uuid. Plan is to add times for each job (by p_uuid), and add that sum to the job
         # in the job table.
@@ -245,9 +249,10 @@ def clockout():
             if debug == 1:
                 print("debugging: sum of time for i.jobname is {0}").format(_sum_time)
                 raw_input()
+        sum_time = float(round_to_nearest(_sum_time, .1))
         session.query(Job). \
             filter(Job.p_uuid == p_uuid). \
-            update({"worked": _sum_time}, synchronize_session='fetch')
+            update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
 
