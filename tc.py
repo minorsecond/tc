@@ -235,14 +235,13 @@ def clockout():
         if time < .1:
             time = .1
 
-        if debug == 1:
-            print('diff.seconds = {0}').format(diff.seconds)
-            print('time = {0}').format(time)
-            raw_input("Press enter to continue.")
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
                 .format(start_time, datetime.now(), diff, time_worked)
+            print('diff.seconds = {0}').format(diff.seconds)
+            print('time = {0}').format(time)
+            raw_input("Press enter to continue.")
         print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
         status = 0
 
