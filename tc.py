@@ -75,6 +75,11 @@ def project_start():
     global start_time
     global p_uuid
     global abbrev
+    abbr = []
+
+    sel = session.query(Job).order_by(Job.id.desc()).all()
+    for i in sel:
+        abbr.append((i.abbr))
 
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -82,36 +87,44 @@ def project_start():
         main_menu()
     else:
         logging.debug("project_start called")
-        #ctimes = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
-        #last_time = ctimes.time_out.date()
-        #if last_time < datetime.today().date():
-        #    sel = session.query(Job).order_by(Job.id.desc()).first()
-        #    print("Last project ID: {0}, named: {1}. Are you still working on this?").format(sel.abbr, sel.name)
-        #    answer = query()
-        #    if answer:
-        #        abbrev = sel.abbr
-        #        project_name = sel.name
-        #        p_rate = sel.rate
-        abbrev = raw_input("What are you working on? (Job ID): ")
-        project_name = raw_input("What is the name of this project?: ")
-        # lead_name = raw_input("For whom are you working?: ")
-        try:
-            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-        except ValueError, e:
-            try:
-                logging.debug(e)
-                print("Check input and try again\n")
-                p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-            except ValueError:
+        abbrev = raw_input('\nWhat are you working on? (Job ID): ')
+
+        # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
+        if abbrev in abbr:
+            job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
+            p_uuid = job.p_uuid
+            project_name = job.name
+
+            print("Are you working on {0}? (Y/n)").format(job.name)
+            answer = query()
+            if answer:
+                clockin()
+            else:
                 raw_input("Press enter to return to main menu.")
                 main_menu()
-        logging.debug("job id is {}".format(abbrev))
-        logging.debug("project_name is {}".format(project_name))
-    p_uuid = str(uuid.uuid4())
-    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
-    session.add(new_task_job)
-    session.commit()
-    clockin()
+        else:
+            # If new project, get new information from user.
+            project_name = raw_input("What is the name of this project?: ")
+            # lead_name = raw_input("For whom are you working?: ")
+            try:
+                p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+            except ValueError, e:
+                try:
+                    logging.debug(e)
+                    print("Check input and try again\n")
+                    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+                except ValueError:
+                    raw_input("Press enter to return to main menu.")
+                    main_menu()
+            logging.debug("job id is {}".format(abbrev))
+            logging.debug("project_name is {}".format(project_name))
+            p_uuid = str(uuid.uuid4())
+
+            # Set up the table row and commit.
+            new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+            session.add(new_task_job)
+            session.commit()
+            clockin()
 
 
 # TODO: Implement these functions
@@ -180,8 +193,6 @@ def clockin():
     global abbrev
     global tworked
 
-    sel = session.query(Job).order_by(Job.id.desc()).first()
-
     # TODO: Add menu of past week's jobs? (May use other time frame, just an example). Must fix above issue first.
 
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
@@ -199,48 +210,70 @@ def clockout():
     :rtype : object
     :return:
     """
+    if status == 0:
+        raw_input("You're not currently in a job. Press enter to return to main menu")
+        main_menu()
+    else:
+        global status
+        global start_time
+        global tworked
+        _sum_time = 0
 
-    global status
-    global start_time
-    global tworked
-    _sum_time = 0
+        sel = session.query(Job).order_by(Job.id.desc()).first()
+        job_name = sel.name
+        job_abbrev = sel.abbr
 
-    sel = session.query(Job).order_by(Job.id.desc()).first()
-    job_name = sel.name
-    job_abbrev = sel.abbr
+        now = datetime.now()
+        print '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
+                                                                                now.minute, now.day, now.month, now.year)
 
-    now = datetime.now()
-    print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
-                                                                          now.minute, now.day, now.month, now.year)
-    diff = datetime.now() - start_time
-    time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
-    if debug == 1:
-        print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-            .format(start_time, datetime.now(), diff, time_worked)
-    print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
-    status = 0
+        # Get difference between start time and now, and then convert to tenths of an hour.
+        diff = datetime.now() - start_time
+        time = float(diff.seconds / 3600)
 
-    session.query(Clocktime). \
-        filter(Clocktime.p_uuid == p_uuid). \
-        update({"time_out": now}, synchronize_session='fetch')
+        # Short tasks (6 minutes or less) still count as .1 of an hour per my company's policy.
+        if time < .1:
+            time = .1
 
-    session.query(Clocktime). \
-        filter(Clocktime.p_uuid == p_uuid). \
-        update({"tworked": time_worked}, synchronize_session='fetch')
+        time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
+        if time_worked < .1:
+            time_worked = .1
 
-    # Get all clocktime rows for p_uuid. Plan is to add times for each job (by p_uuid), and add that sum to the job
-    # in the job table.
-    tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
-    for i in tworked:
-        _sum_time += i.tworked
         if debug == 1:
-            print("debugging: sum of time for i.jobname is {0}").format(_sum_time)
-            raw_input()
-    session.query(Job). \
-        filter(Job.p_uuid == p_uuid). \
-        update({"worked": _sum_time}, synchronize_session='fetch')
+            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
+                .format(start_time, datetime.now(), diff, time_worked)
+            print('diff.seconds = {0}').format(diff.seconds)
+            print('time = {0}').format(time)
+            raw_input("Press enter to continue.")
+        print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
+        raw_input("\nPress enter to return to main menu.")
+        status = 0
 
-    session.commit()
+        # Update Clocktime table with time out and time worked.
+        session.query(Clocktime). \
+            filter(Clocktime.p_uuid == p_uuid). \
+            update({"time_out": now}, synchronize_session='fetch')
+
+        session.query(Clocktime). \
+            filter(Clocktime.p_uuid == p_uuid). \
+            update({'tworked': time}, synchronize_session='fetch')
+
+        # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
+        tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
+
+        for i in tworked:
+            _sum_time += i.tworked
+        if debug == 1:
+            print("Debugging: sum of time for {0} is {1}").format(i.job_id, _sum_time)
+            raw_input()
+
+        # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
+        sum_time = float(round_to_nearest(_sum_time, .1))
+        session.query(Job). \
+            filter(Job.p_uuid == p_uuid). \
+            update({"worked": sum_time}, synchronize_session='fetch')
+
+        session.commit()
 
 
 def breaktime():
@@ -279,6 +312,7 @@ def breaktime():
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu()
     else:
+        # If not currently in job, prompt user for confirmation.
         print("Are you sure you want to stop working on {0} and take a break? (y/n)\n").format(job_name)
         answer = query()
         if answer:
@@ -287,10 +321,12 @@ def breaktime():
             print("Are you still working on '{}' ? (y/n)").format(job_name)
             answer = query()
             if answer:
+                # If user is returning to same job, start it back up again with same p_uuid.
                 now = datetime.now().strftime('%I:%M %p')
                 print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
                 clockin()
             else:
+                # If user is not restarting job, set status to 0 and return to menu.
                 status = 0
                 main_menu()
         else:
@@ -324,6 +360,8 @@ def get_time(time):
 
     global time_conc
 
+    # If user doesn't enter in 00:00 format, this will reformat their input into 00:00 AM so that DateTime
+    # can parse it.
     if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6',
                               '7', '8', '9', '10', '11', '12'}:
         time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
@@ -377,9 +415,14 @@ def report():
     Prints a report table to screen.
     :return:
     """
+    os.system('cls' if os.name == 'nt' else 'clear')
+    # TODO: Fix this so that only the current week's hours are printed.
 
+    # Queries job table, pulling all rows.
     time_worked = session.query(Job).all()
-    print("{:<8} {:<15} {:<10}").format('Id', 'Job Name', 'Hours')
+    print("\n  Weekly Timesheet Report\n")
+    print("\n{:<8} {:<15} {:<3}").format('Id', 'Job Name', 'Hours')
+    print("{:<8} {:<15} {:<3}").format('========', '==============', '=====')
     for i in time_worked:
         jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
         print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
@@ -525,6 +568,7 @@ def main_menu():
 
     while True:
         """Main menu for program. Prompts user for function."""
+        os.system('cls' if os.name == 'nt' else 'clear')
         print "PYPER Timesheet Utility\n\n" \
               "What would you like to do?\n" \
               "1. Clock In\n" \
@@ -533,11 +577,12 @@ def main_menu():
               "4. Configure\n" \
               "5. Calculate Total Time Worked\n" \
               "6. Generate Today's Timesheet\n" \
-              "7. Quit\n"
+              "7. Import/Export Timesheet\n" \
+              "8. Quit\n"
         if status == 1:
-            print ("***Current job {0} started at {1}.***\n").format(project_name, start_time)
+            print ("*** Current job {0} at {1}. ***\n").format(project_name, start_time.strftime('%I:%M %p'))
         else:
-            print("***Not currently in a job.***\n")
+            print("*** Not currently in a job. ***\n")
         answer = raw_input(">>> ")
         if answer.startswith('1'):
             project_start()
@@ -553,11 +598,13 @@ def main_menu():
         if answer.startswith('6'):
             report()
         if answer.startswith('7'):
+            raise NotImplementedError
+        if answer.startswith('8'):
             sys.exit()
 
 
 if __name__ == "__main__":
-    debug = 1
+    debug = 0
     status = 0
 
     # Initialize logging
