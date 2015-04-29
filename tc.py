@@ -224,8 +224,8 @@ def clockout():
         job_abbrev = sel.abbr
 
         now = datetime.now()
-        print 'Stopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
-                                                                              now.minute, now.day, now.month, now.year)
+        print '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
+                                                                                now.minute, now.day, now.month, now.year)
 
         # Get difference between start time and now, and then convert to tenths of an hour.
         diff = datetime.now() - start_time
@@ -236,6 +236,9 @@ def clockout():
             time = .1
 
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
+        if time_worked < .1:
+            time_worked = .1
+
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
                 .format(start_time, datetime.now(), diff, time_worked)
@@ -243,6 +246,7 @@ def clockout():
             print('time = {0}').format(time)
             raw_input("Press enter to continue.")
         print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
+        raw_input("\nPress enter to return to main menu.")
         status = 0
 
         # Update Clocktime table with time out and time worked.
@@ -600,7 +604,7 @@ def main_menu():
 
 
 if __name__ == "__main__":
-    debug = 1
+    debug = 0
     status = 0
 
     # Initialize logging
