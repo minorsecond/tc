@@ -34,7 +34,7 @@ LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
-week_number = datetime.date(day_start).isocalendar()[1]
+week_num = datetime.date(day_start).isocalendar()[1]
 
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
@@ -62,6 +62,44 @@ def query():
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
+def job_newline():
+    """
+    Write new db row to job table, for starting new project or new week.
+    :return:
+    """
+
+    global p_rate
+    global project_name
+    global p_uuid
+
+    current_week = get_week_days(day_start.year, week_num)
+
+    project_name = raw_input("What is the name of this project?: ")
+    # lead_name = raw_input("For whom are you working?: ")
+    try:
+        p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+    except ValueError, e:
+        try:
+            logging.debug(e)
+            print("Check input and try again\n")
+            p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
+        except ValueError:
+            raw_input("Press enter to return to main menu.")
+            main_menu()
+    logging.debug("job id is {}".format(abbrev))
+    logging.debug("project_name is {}".format(project_name))
+    p_uuid = str(uuid.uuid4())
+
+    # Set up the table row and commit.
+    print(type(current_week))
+    print(current_week)
+    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=day_start,
+                       week=current_week)
+    session.add(new_task_job)
+    session.commit()
+    clockin(p_uuid)
+
+
 def project_start():
     """
     Prompts the user for project information, creates an id for
@@ -77,7 +115,7 @@ def project_start():
     global abbrev
     abbr = []
 
-    current_week = get_week_days(year, week_num)
+    current_week = get_week_days(day_start.year, week_num)
     sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
@@ -99,41 +137,22 @@ def project_start():
             # TODO: Test following!
             # Check if the job entry is for current week. Else, generate new uuid. Doesn't write current week to table
             # yet. Implement that, then test.
-            if job.week == current_week:
+
+            if datetime.date(datetime.strptime(job.week, '%Y-%m-%d')) == current_week:
                 p_uuid = job.p_uuid
-                p_uuid = str(uuid.uuid4())
+            else:
+                job_newline()
             project_name = job.name
 
             print("Are you working on {0}? (Y/n)").format(job.name)
             answer = query()
             if answer:
-                clockin()
+                clockin(p_uuid)
             else:
                 raw_input("Press enter to return to main menu.")
                 main_menu()
         else:
-            # If new project, get new information from user.
-            project_name = raw_input("What is the name of this project?: ")
-            # lead_name = raw_input("For whom are you working?: ")
-            try:
-                p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-            except ValueError, e:
-                try:
-                    logging.debug(e)
-                    print("Check input and try again\n")
-                    p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
-                except ValueError:
-                    raw_input("Press enter to return to main menu.")
-                    main_menu()
-            logging.debug("job id is {}".format(abbrev))
-            logging.debug("project_name is {}".format(project_name))
-            p_uuid = str(uuid.uuid4())
-
-            # Set up the table row and commit.
-            new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=day_start)
-            session.add(new_task_job)
-            session.commit()
-            clockin()
+            job_newline()
 
 
 # TODO: Implement these functions
@@ -190,7 +209,7 @@ def round_to_nearest(num, b):
     return company_minutes - (company_minutes % b)
 
 
-def clockin():
+def clockin(p_uuid):
     """
     Adds time, job, date, uuid data to tables for time tracking.
 
@@ -211,7 +230,7 @@ def clockin():
     status = 1
 
 
-def clockout():
+def clockout(p_uuid):
     """
     Clocks user out of project. Prints time_out (now) to clocktimes table for whichever row contains the same
     p_uuid created in project_start().
@@ -305,7 +324,7 @@ def get_week_days(year, week):
     else:
         d = d - timedelta(d.weekday())
     dlt = timedelta(days=(week - 1) * 7)
-    return d + dlt, d + dlt + timedelta(days=4)
+    return d + dlt + timedelta(days=4)
 
 
 def breaktime():
@@ -621,7 +640,8 @@ def main_menu():
         if answer.startswith('2'):
             breaktime()
         if answer.startswith('3'):
-            clockout()
+            print(p_uuid)
+            clockout(p_uuid)
             main_menu()
         if answer.startswith('4'):
             config()
