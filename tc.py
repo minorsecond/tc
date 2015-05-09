@@ -208,6 +208,26 @@ def round_to_nearest(num, b):
     return company_minutes - (company_minutes % b)
 
 
+def prev_jobs():
+    # TODO
+    """
+    Get list of previous jobs and give user option to re-open them.
+    :return:
+    """
+
+    # Generate dict of previous jobs
+    time_worked = session.query(Job).all()
+    print('Previous Jobs\n')
+    print("\n{:<8} {:<15} {:<3}\n").format('Id', 'Job Name')
+    for i in time_worked:
+        jobs = {'abbr': i.abbr, 'name': i.name}
+        print("{:<8} {:<15} {:<10}").format(i.abbr, i.name)
+    Print('Enter job ID\n')
+    print('>>>')
+    input("Press enter to return to main menu")
+    main_menu()
+
+
 def clockin(p_uuid):
     """
     Adds time, job, date, uuid data to tables for time tracking.
@@ -219,8 +239,6 @@ def clockin(p_uuid):
     global status
     global abbrev
     global tworked
-
-    # TODO: Add menu of past week's jobs? (May use other time frame, just an example). Must fix above issue first.
 
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
     session.add(new_task_clock)
