@@ -20,6 +20,7 @@ import os
 import os.path
 import logging
 import uuid
+import csv
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -613,6 +614,23 @@ def config():
             break  # kick out of config function
 
 
+def export_timesheet():
+    """
+    Export timesheet to a formatted CSV file. Use all dates.
+    :return: None
+    """
+
+    outfile = open('PyperTimesheet.csv', 'wb')
+    outcsv = csv.writer(outfile)
+    time_worked = session.query(Job).all()
+    header = ('Id', 'Job Name', 'Hours Worked', 'Date', 'Week Ending:')
+    outcsv.writerow(header)
+    for i in time_worked:
+        outcsv.writerow([i.abbr, i.name, i.worked, datetime.date(i.date), i.week])
+    outfile.close()
+    main_menu()
+
+
 def imp_exp_sub():
     """
     Sub-menu for main-menu import/export option. This will lead to functions that read/write from CSV.
@@ -629,7 +647,7 @@ def imp_exp_sub():
         if answer.startswith('1'):
             raise NotImplementedError
         elif answer.startswith('2'):
-            raise NotImplementedError
+            export_timesheet()
         else:
             main_menu()
 
