@@ -210,6 +210,9 @@ def clockout():
     :rtype : object
     :return:
     """
+
+    # TODO: Try to refactor, make DB writing code a separate function.
+
     if status == 0:
         raw_input("You're not currently in a job. Press enter to return to main menu")
         main_menu()
@@ -259,8 +262,8 @@ def clockout():
             update({"time_out": now}, synchronize_session='fetch')
 
         session.query(Clocktime). \
-            filter(Clocktime.p_uuid == p_uuid). \
-            update({'tworked': time}, synchronize_session='fetch')
+            filter(Clocktime.id == clk_id). \
+            update({'tworked': time_worked}, synchronize_session='fetch')
 
         # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
