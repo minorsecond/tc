@@ -613,6 +613,27 @@ def config():
             break  # kick out of config function
 
 
+def imp_exp_sub():
+    """
+    Sub-menu for main-menu import/export option. This will lead to functions that read/write from CSV.
+    :return:
+    """
+
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("Import/Export Timesheet\n"
+              "1. Import CSV Timesheet\n"
+              "2. Export CSV Timesheet\n")
+
+        answer = raw_input('>>> ')
+        if answer.startswith('1'):
+            raise NotImplementedError
+        elif answer.startswith('2'):
+            raise NotImplementedError
+        else:
+            main_menu()
+
+
 def main_menu():
     global project_name
     global start_time
@@ -649,7 +670,7 @@ def main_menu():
         if answer.startswith('6'):
             report()
         if answer.startswith('7'):
-            raise NotImplementedError
+            imp_exp_sub()
         if answer.startswith('8'):
             sys.exit()
 
