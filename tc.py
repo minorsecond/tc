@@ -34,6 +34,7 @@ LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
+week_number = datetime.date(day_start).isocalendar()[1]
 
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
@@ -76,7 +77,10 @@ def project_start():
     global abbrev
     abbr = []
 
+    current_week = get_week_days(year, week_num)
     sel = session.query(Job).order_by(Job.id.desc()).all()
+
+    # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append((i.abbr))
 
@@ -91,7 +95,13 @@ def project_start():
         # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
         if abbrev in abbr:
             job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
-            p_uuid = job.p_uuid
+
+            # TODO: Test following!
+            # Check if the job entry is for current week. Else, generate new uuid. Doesn't write current week to table
+            # yet. Implement that, then test.
+            if job.week == current_week:
+                p_uuid = job.p_uuid
+                p_uuid = str(uuid.uuid4())
             project_name = job.name
 
             print("Are you working on {0}? (Y/n)").format(job.name)

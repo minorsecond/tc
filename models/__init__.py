@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship
 
 from sqa_uuid import UUID
 
-
 engine = create_engine('sqlite:///timesheet.db')
 Base = declarative_base()
 
@@ -81,6 +80,7 @@ class Job(Base):
     rate = Column(Integer)  # cents/hr
     worked = Column(Float)  # may have to use a different type here.
     date = Column(DateTime)
+    week = Column(Integer)
     clocktimes = relationship('Clocktime', backref='job')
 
     def __str__(self):
