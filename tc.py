@@ -67,7 +67,7 @@ def job_newline():
     Write new db row to job table, for starting new project or new week.
     :return:
     """
-
+    # TODO: Get rid of these globals!!
     global p_rate
     global project_name
     global p_uuid
@@ -105,6 +105,8 @@ def project_start():
     project name, project abbrev and id for use in other
     functions.
     """
+
+    # TODO: Get rid of these globals!!
     global p_rate
     global project_name
     global status
@@ -211,7 +213,7 @@ def clockin(p_uuid):
 
     :return: None
     """
-
+    # TODO: Get rid of these globals!!
     global start_time
     global status
     global abbrev
@@ -226,7 +228,7 @@ def clockin(p_uuid):
     status = 1
 
 
-def clockout(p_uuid):
+def clockout():
     """
     Clocks user out of project. Prints time_out (now) to clocktimes table for whichever row contains the same
     p_uuid created in project_start().
@@ -239,6 +241,7 @@ def clockout(p_uuid):
         raw_input("You're not currently in a job. Press enter to return to main menu")
         main_menu()
     else:
+        # TODO: Get rid of these globals!!
         global status
         global start_time
         global tworked
@@ -327,6 +330,7 @@ def breaktime():
     Not a requirement. Would be nice to be able to pause the timer for breaks,
     rather than having to start the script all over again.
     """
+    # TODO: Get rid of these globals!!
     global job_name
     global job_abbrev
     global lead_name
@@ -633,7 +637,7 @@ def main_menu():
         if answer.startswith('2'):
             breaktime()
         if answer.startswith('3'):
-            clockout(p_uuid)
+            clockout()
             main_menu()
         if answer.startswith('4'):
             config()
