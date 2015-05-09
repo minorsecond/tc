@@ -219,9 +219,12 @@ def clockout():
         global tworked
         _sum_time = 0
 
-        sel = session.query(Job).order_by(Job.id.desc()).first()
-        job_name = sel.name
-        job_abbrev = sel.abbr
+        # TODO: Fix the following line. It doesn't match p_uuid for some reason.
+        sel_job = session.query(Job).filter(Job.p_uuid == p_uuid).first()
+        job_name = sel_job.name
+        job_abbrev = sel_job.abbr
+        sel_clk = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
+        clk_id = sel_clk.id
 
         now = datetime.now()
         print '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
@@ -249,9 +252,10 @@ def clockout():
         raw_input("\nPress enter to return to main menu.")
         status = 0
 
-        # Update Clocktime table with time out and time worked.
+        # Update Clocktime table with time out and time worked. Need to match with current pid so that not all
+        # clock activities for the job are written to.
         session.query(Clocktime). \
-            filter(Clocktime.p_uuid == p_uuid). \
+            filter(Clocktime.id == clk_id). \
             update({"time_out": now}, synchronize_session='fetch')
 
         session.query(Clocktime). \
@@ -580,7 +584,7 @@ def main_menu():
               "7. Import/Export Timesheet\n" \
               "8. Quit\n"
         if status == 1:
-            print ("*** Current job {0} at {1}. ***\n").format(project_name, start_time.strftime('%I:%M %p'))
+            print ("*** Current job {0} started at {1}. ***\n").format(project_name, start_time.strftime('%I:%M %p'))
         else:
             print("*** Not currently in a job. ***\n")
         answer = raw_input(">>> ")
