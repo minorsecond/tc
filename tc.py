@@ -14,7 +14,7 @@ of an hour, and to generate reports.
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
-from datetime import datetime
+from datetime import datetime, timedelta, date
 import sys
 import os
 import os.path
@@ -25,7 +25,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from models import Job, Employee, Clocktime
-
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
@@ -121,7 +120,7 @@ def project_start():
             p_uuid = str(uuid.uuid4())
 
             # Set up the table row and commit.
-            new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate)
+            new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=day_start)
             session.add(new_task_job)
             session.commit()
             clockin()
@@ -212,6 +211,7 @@ def clockout():
     """
 
     # TODO: Try to refactor, make DB writing code a separate function.
+    # TODO: Figure out how to handle dates in jobs table. Need to show "week" field that lists last day of week (date).
 
     if status == 0:
         raw_input("You're not currently in a job. Press enter to return to main menu")
@@ -222,7 +222,6 @@ def clockout():
         global tworked
         _sum_time = 0
 
-        # TODO: Fix the following line. It doesn't match p_uuid for some reason.
         sel_job = session.query(Job).filter(Job.p_uuid == p_uuid).first()
         job_name = sel_job.name
         job_abbrev = sel_job.abbr
@@ -281,6 +280,22 @@ def clockout():
             update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
+
+
+def get_week_days(year, week):
+    """
+    Calculates week end date for given year and week number.
+    :param year:
+    :param week:
+    :return: Timedelta, looks like: "2004-01-04" to be used in tables to differentiate weeks
+    """
+    d = date(year, 1, 1)
+    if (d.weekday() > 3):
+        d = d + timedelta(7 - d.weekday())
+    else:
+        d = d - timedelta(d.weekday())
+    dlt = timedelta(days=(week - 1) * 7)
+    return d + dlt, d + dlt + timedelta(days=4)
 
 
 def breaktime():
