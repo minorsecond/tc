@@ -91,8 +91,6 @@ def job_newline():
     p_uuid = str(uuid.uuid4())
 
     # Set up the table row and commit.
-    print(type(current_week))
-    print(current_week)
     new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=day_start,
                        week=current_week)
     session.add(new_task_job)
@@ -134,10 +132,8 @@ def project_start():
         if abbrev in abbr:
             job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
 
-            # TODO: Test following!
             # Check if the job entry is for current week. Else, generate new uuid. Doesn't write current week to table
             # yet. Implement that, then test.
-
             if datetime.date(datetime.strptime(job.week, '%Y-%m-%d')) == current_week:
                 p_uuid = job.p_uuid
             else:
@@ -238,9 +234,6 @@ def clockout(p_uuid):
     :rtype : object
     :return:
     """
-
-    # TODO: Try to refactor, make DB writing code a separate function.
-    # TODO: Figure out how to handle dates in jobs table. Need to show "week" field that lists last day of week (date).
 
     if status == 0:
         raw_input("You're not currently in a job. Press enter to return to main menu")
@@ -640,7 +633,6 @@ def main_menu():
         if answer.startswith('2'):
             breaktime()
         if answer.startswith('3'):
-            print(p_uuid)
             clockout(p_uuid)
             main_menu()
         if answer.startswith('4'):
