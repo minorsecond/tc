@@ -465,15 +465,18 @@ def report():
     """
     os.system('cls' if os.name == 'nt' else 'clear')
     # TODO: Fix this so that only the current week's hours are printed.
-
+    current_week = get_week_days(day_start.year, week_num)
     # Queries job table, pulling all rows.
     time_worked = session.query(Job).all()
     print("\n  Weekly Timesheet Report\n")
     print("\n{:<8} {:<15} {:<3}").format('Id', 'Job Name', 'Hours')
     print("{:<8} {:<15} {:<3}").format('========', '==============', '=====')
+
+    # Print jobs for current week.
     for i in time_worked:
-        jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
-        print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
+        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+            jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
+            print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
     raw_input("\nPress enter to return to main menu.")
     main_menu()
 
