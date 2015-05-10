@@ -332,13 +332,6 @@ def breaktime(status, p_uuid, project_name, start_time):
     """
 
 
-    # Pull most recent (top) row from jobs table.
-    sel = session.query(Job).order_by(Job.id.desc()).first()
-    id = sel.id
-    job_name = sel.name
-    job_abbrev = sel.abbr
-    rate = sel.rate
-
     if debug == 1:
         print"DEBUGGING: JOB Database, most recent row:\n"
         print(sel)
@@ -354,6 +347,9 @@ def breaktime(status, p_uuid, project_name, start_time):
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu(project_name, status, start_time, p_uuid)
     else:
+        # Pull most recent (top) row from jobs table.
+        sel = session.query(Job).order_by(Job.id.desc()).first()
+        job_name = sel.name
         # If not currently in job, prompt user for confirmation.
         print("Are you sure you want to stop working on {0} and take a break? (y/n)\n").format(job_name)
         answer = query()
