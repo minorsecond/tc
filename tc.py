@@ -315,7 +315,7 @@ def get_week_days(year, week):
     :return: Timedelta, looks like: "2004-01-04" to be used in tables to differentiate weeks
     """
     d = date(year, 1, 1)
-    if (d.weekday() > 3):
+    if d.weekday() > 3:
         d = d + timedelta(7 - d.weekday())
     else:
         d = d - timedelta(d.weekday())
@@ -566,7 +566,8 @@ def config(project_name, status, start_time, p_uuid):
         print("What do you want to configure?\n"
               "1. Jobs\n"
               "2. Employees\n"
-              "3. Back\n")
+              "3. Delete Tables\n"
+              "4. Back\n")
         answer = raw_input(">>> ")
 
         if answer.startswith('1'):
@@ -589,7 +590,7 @@ def config(project_name, status, start_time, p_uuid):
                         main_menu(project_name, status, start_time, p_uuid)
                 elif answer.startswith('2'):
                     edit_job(jobs)
-                elif answer.startswith('3'):
+                elif answer.startswith('4'):
                     try:
                         session.commit()
                     except Exception as e:
@@ -601,10 +602,24 @@ def config(project_name, status, start_time, p_uuid):
                     break  # break the loop and go up a level
                 else:
                     print("Invalid selection")
-        if answer.startswith('2'):
+        elif answer.startswith('2'):
             # TODO: Configure employees
             raise NotImplementedError()
-        if answer.startswith('3'):
+        elif answer.startswith('3'):
+            print('Do you wish to delete the tables? (Y/n)\n')
+            answer = query()
+            if answer:
+                print('WARNING - THIS WILL DELETE ALL DATA. PROCEED? (Y/n)\n')
+                answer = query()
+                if answer:
+                    session.query(Clocktime).delete()
+                    session.query(Job).delete()
+                    session.commit()
+                else:
+                    main_menu(project_name, status, start_time, p_uuid)
+            else:
+                main_menu(project_name, status, start_time, p_uuid)
+        elif answer.startswith('4'):
             break  # kick out of config function
 
 
