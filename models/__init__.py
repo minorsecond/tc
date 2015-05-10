@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 
 from sqa_uuid import UUID
 
-engine = create_engine('sqlite:///timesheet.db')
+engine = create_engine('sqlite:///.timesheet.db')
 Base = declarative_base()
 
 __all__ = ['Clocktime', 'Employee', 'Job']

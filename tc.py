@@ -320,7 +320,7 @@ def get_week_days(year, week):
     else:
         d = d - timedelta(d.weekday())
     dlt = timedelta(days=(week - 1) * 7)
-    return d + dlt + timedelta(days=4)
+    return d + dlt + timedelta(days=5)
 
 
 def breaktime(status, p_uuid, project_name, start_time):
@@ -331,16 +331,6 @@ def breaktime(status, p_uuid, project_name, start_time):
     rather than having to start the script all over again.
     """
 
-
-    if debug == 1:
-        print"DEBUGGING: JOB Database, most recent row:\n"
-        print(sel)
-        try:
-            print("\nUUID: {0}").format(p_uuid)
-            raw_input("\nPress enter to continue.\n")
-        except NameError:
-            print("p_uuid has not been created")
-
     # Check if currently in a job.
     if status == 0:
         raw_input("\nYou're not currently in job. Press enter to return to main menu.")
@@ -350,6 +340,14 @@ def breaktime(status, p_uuid, project_name, start_time):
         # Pull most recent (top) row from jobs table.
         sel = session.query(Job).order_by(Job.id.desc()).first()
         job_name = sel.name
+        if debug == 1:
+            print"DEBUGGING: JOB Database, most recent row:\n"
+            print(sel)
+            try:
+                print("\nUUID: {0}").format(p_uuid)
+                raw_input("\nPress enter to continue.\n")
+            except NameError:
+                print("p_uuid has not been created")
         # If not currently in job, prompt user for confirmation.
         print("Are you sure you want to stop working on {0} and take a break? (y/n)\n").format(job_name)
         answer = query()
