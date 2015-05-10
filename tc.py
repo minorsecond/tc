@@ -473,7 +473,7 @@ def report(project_name, status, start_time, p_uuid):
     main_menu(project_name, status, start_time, p_uuid)
 
 
-def config():
+def config(project_name, status, start_time, p_uuid):
     """Configure jobs and employees"""
 
     global session
@@ -581,9 +581,9 @@ def config():
                     print("\nWould you like to begin working on {0}? (Y/n)").format(new_job.name)
                     answer = query()
                     if answer:
-                        project_start(abbrev, status, start_time, p_uuid)
+                        project_start(project_name, status, start_time, p_uuid)
                     else:
-                        main_menu(abbrev, status, start_time, p_uuid)
+                        main_menu(project_name, status, start_time, p_uuid)
                 elif answer.startswith('2'):
                     edit_job(jobs)
                 elif answer.startswith('3'):
@@ -670,7 +670,7 @@ def main_menu(project_name, status, start_time, p_uuid):
         if answer.startswith('3'):
             clockout(project_name, status, p_uuid)
         if answer.startswith('4'):
-            config()
+            config(project_name, status, start_time, p_uuid)
         if answer.startswith('5'):
             total_time(project_name, status, start_time, p_uuid)
         if answer.startswith('6'):
