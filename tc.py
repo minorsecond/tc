@@ -63,14 +63,14 @@ def query():
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def job_newline(abbrev, status):
+def job_newline(abbrev, status, start_time, p_uuid):
     """
     Write new db row to job table, for starting new project or new week.
     :return:
     """
 
     current_week = get_week_days(day_start.year, week_num)
-
+    p_rate = 0
     project_name = raw_input("What is the name of this project?: ")
     # lead_name = raw_input("For whom are you working?: ")
     try:
@@ -82,7 +82,7 @@ def job_newline(abbrev, status):
             p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
         except ValueError:
             raw_input("Press enter to return to main menu.")
-            main_menu(project_name, status)
+            main_menu(project_name, status, start_time, p_uuid)
     logging.debug("job id is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
     p_uuid = str(uuid.uuid4())
@@ -109,7 +109,7 @@ def project_start(project_name, status, start_time, p_uuid):
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
-        abbr.append((i.abbr))
+        abbr.append(i.abbr)
 
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -128,7 +128,7 @@ def project_start(project_name, status, start_time, p_uuid):
             if datetime.date(datetime.strptime(job.week, '%Y-%m-%d')) == current_week:
                 p_uuid = job.p_uuid
             else:
-                job_newline(abbrev, status)
+                job_newline(abbrev, status, start_time, p_uuid)
             project_name = job.name
 
             print("Are you working on {0}? (Y/n)").format(job.name)
@@ -137,9 +137,9 @@ def project_start(project_name, status, start_time, p_uuid):
                 clockin(p_uuid, project_name)
             else:
                 raw_input("Press enter to return to main menu.")
-                main_menu(project_name)
+                main_menu(project_name, status, start_time, p_uuid)
         else:
-            job_newline(abbrev, status)
+            job_newline(abbrev, status, start_time, p_uuid)
 
 
 # TODO: Implement these functions
@@ -196,7 +196,7 @@ def round_to_nearest(num, b):
     return company_minutes - (company_minutes % b)
 
 
-def prev_jobs():
+def prev_jobs(project_name, status, start_time, p_uuid):
     # TODO
     """
     Get list of previous jobs and give user option to re-open them.
@@ -208,12 +208,12 @@ def prev_jobs():
     print('Previous Jobs\n')
     print("\n{:<8} {:<15} {:<3}\n").format('Id', 'Job Name')
     for i in time_worked:
-        jobs = {'abbr': i.abbr, 'name': i.name}
+        # jobs = {'abbr': i.abbr, 'name': i.name}
         print("{:<8} {:<15} {:<10}").format(i.abbr, i.name)
     print('Enter job ID\n')
     print('>>>')
     input("Press enter to return to main menu")
-    main_menu()
+    main_menu(project_name, status, start_time, p_uuid)
 
 
 def clockin(p_uuid, project_name):
@@ -252,8 +252,9 @@ def clockout(project_name, status, p_uuid):
         start_time = sel_clk.time_in
 
         now = datetime.now()
-        print '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
-                                                                                now.minute, now.day, now.month, now.year)
+        print '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour,
+                                                                                now.minute, now.day, now.month,
+                                                                                now.year)
 
         # Get difference between start time and now, and then convert to tenths of an hour.
         diff = datetime.now() - start_time
@@ -398,8 +399,10 @@ def get_time(time):
     """
     Format user input time so that datetime can process it correctly.
     """
-
-    global time_conc
+    time_conc = 0
+    split_ap = 0
+    split_hour = 0
+    split_minute2 = 0
 
     # If user doesn't enter in 00:00 format, this will reformat their input into 00:00 AM so that DateTime
     # can parse it.
@@ -683,7 +686,6 @@ def main_menu(project_name, status, start_time, p_uuid):
 
 if __name__ == "__main__":
     debug = 0
-    status = 0
 
     # Initialize logging
     LOGFILE = "timeclock.log"
