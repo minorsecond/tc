@@ -30,7 +30,7 @@ from models import Job, Employee, Clocktime
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-DB_NAME = "timesheet.db"
+DB_NAME = ".timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
