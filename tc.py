@@ -63,15 +63,11 @@ def query():
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def job_newline():
+def job_newline(abbrev, status):
     """
     Write new db row to job table, for starting new project or new week.
     :return:
     """
-    # TODO: Get rid of these globals!!
-    global p_rate
-    global project_name
-    global p_uuid
 
     current_week = get_week_days(day_start.year, week_num)
 
@@ -86,7 +82,7 @@ def job_newline():
             p_rate = float(raw_input("At what rate does this job pay? (Cents): "))
         except ValueError:
             raw_input("Press enter to return to main menu.")
-            main_menu()
+            main_menu(project_name, status)
     logging.debug("job id is {}".format(abbrev))
     logging.debug("project_name is {}".format(project_name))
     p_uuid = str(uuid.uuid4())
@@ -96,24 +92,16 @@ def job_newline():
                        week=current_week)
     session.add(new_task_job)
     session.commit()
-    clockin(p_uuid)
+    clockin(p_uuid, project_name)
 
 
-def project_start():
+def project_start(project_name, status, start_time, p_uuid):
     """
     Prompts the user for project information, creates an id for
     recalling data (will be used in the future) and returns
     project name, project abbrev and id for use in other
     functions.
     """
-
-    # TODO: Get rid of these globals!!
-    global p_rate
-    global project_name
-    global status
-    global start_time
-    global p_uuid
-    global abbrev
     abbr = []
 
     current_week = get_week_days(day_start.year, week_num)
@@ -126,7 +114,7 @@ def project_start():
     if status == 1:
         raw_input("\nYou're already in a task. Press enter to return to main menu.\n\n")
         os.system('cls' if os.name == 'nt' else 'clear')
-        main_menu()
+        main_menu(project_name, status, start_time, p_uuid)
     else:
         logging.debug("project_start called")
         abbrev = raw_input('\nWhat are you working on? (Job ID): ')
@@ -140,18 +128,18 @@ def project_start():
             if datetime.date(datetime.strptime(job.week, '%Y-%m-%d')) == current_week:
                 p_uuid = job.p_uuid
             else:
-                job_newline()
+                job_newline(abbrev, status)
             project_name = job.name
 
             print("Are you working on {0}? (Y/n)").format(job.name)
             answer = query()
             if answer:
-                clockin(p_uuid)
+                clockin(p_uuid, project_name)
             else:
                 raw_input("Press enter to return to main menu.")
-                main_menu()
+                main_menu(project_name)
         else:
-            job_newline()
+            job_newline(abbrev, status)
 
 
 # TODO: Implement these functions
@@ -222,32 +210,26 @@ def prev_jobs():
     for i in time_worked:
         jobs = {'abbr': i.abbr, 'name': i.name}
         print("{:<8} {:<15} {:<10}").format(i.abbr, i.name)
-    Print('Enter job ID\n')
+    print('Enter job ID\n')
     print('>>>')
     input("Press enter to return to main menu")
     main_menu()
 
 
-def clockin(p_uuid):
+def clockin(p_uuid, project_name):
     """
     Adds time, job, date, uuid data to tables for time tracking.
 
     :return: None
     """
-    # TODO: Get rid of these globals!!
-    global start_time
-    global status
-    global abbrev
-    global tworked
 
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
     session.add(new_task_clock)
     session.commit()
-    start_time = datetime.now()
-    status = 1
+    main_menu(project_name, 1, datetime.now(), p_uuid)
 
 
-def clockout():
+def clockout(project_name, status, p_uuid):
     """
     Clocks user out of project. Prints time_out (now) to clocktimes table for whichever row contains the same
     p_uuid created in project_start().
@@ -258,12 +240,8 @@ def clockout():
 
     if status == 0:
         raw_input("You're not currently in a job. Press enter to return to main menu")
-        main_menu()
+        main_menu(project_name, status, status, p_uuid)
     else:
-        # TODO: Get rid of these globals!!
-        global status
-        global start_time
-        global tworked
         _sum_time = 0
 
         sel_job = session.query(Job).filter(Job.p_uuid == p_uuid).first()
@@ -271,6 +249,7 @@ def clockout():
         job_abbrev = sel_job.abbr
         sel_clk = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
         clk_id = sel_clk.id
+        start_time = sel_clk.time_in
 
         now = datetime.now()
         print '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour, \
@@ -324,6 +303,7 @@ def clockout():
             update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
+        main_menu(project_name, status, start_time, p_uuid)
 
 
 def get_week_days(year, week):
@@ -342,20 +322,14 @@ def get_week_days(year, week):
     return d + dlt + timedelta(days=4)
 
 
-def breaktime():
+def breaktime(status, p_uuid, project_name, start_time):
     """Prompts user to specify reason for break.
 
     No real reason for this other than just general bookkeeping.
     Not a requirement. Would be nice to be able to pause the timer for breaks,
     rather than having to start the script all over again.
     """
-    # TODO: Get rid of these globals!!
-    global job_name
-    global job_abbrev
-    global lead_name
-    global start_time
-    global status
-    global p_uuid
+
 
     # Pull most recent (top) row from jobs table.
     sel = session.query(Job).order_by(Job.id.desc()).first()
@@ -377,13 +351,13 @@ def breaktime():
     if status == 0:
         raw_input("\nYou're not currently in job. Press enter to return to main menu.")
         os.system('cls' if os.name == 'nt' else 'clear')
-        main_menu()
+        main_menu(project_name, status, start_time, p_uuid)
     else:
         # If not currently in job, prompt user for confirmation.
         print("Are you sure you want to stop working on {0} and take a break? (y/n)\n").format(job_name)
         answer = query()
         if answer:
-            clockout()
+            clockout(project_name, status, p_uuid)
             raw_input("Press Enter to begin working again")
             print("Are you still working on '{}' ? (y/n)").format(job_name)
             answer = query()
@@ -391,13 +365,13 @@ def breaktime():
                 # If user is returning to same job, start it back up again with same p_uuid.
                 now = datetime.now().strftime('%I:%M %p')
                 print "Resuming '{0}' at: '{1}\n' ".format(job_name, now)
-                clockin()
+                clockin(p_uuid, project_name)
             else:
                 # If user is not restarting job, set status to 0 and return to menu.
                 status = 0
-                main_menu()
+                main_menu(project_name, status, start_time, p_uuid)
         else:
-            main_menu()
+            main_menu(project_name, status, start_time, p_uuid)
             logging.info("Stopping task at {}".format(datetime.now()))
 
 
@@ -438,8 +412,7 @@ def get_time(time):
         split_minute2 = split_minute.split(' ')[0]
         split_ap = time.split(' ')[1]
     except IndexError:
-        print("\nCheck format and try again.\n")
-        total_time()
+        print("\nInvalid Input.\n")
     try:
         if split_ap in {'a', 'A', 'p', 'P'}:
             while split_ap in {'a', 'A'}:
@@ -456,7 +429,7 @@ def get_time(time):
     return time_conc
 
 
-def total_time():
+def total_time(project_name, status, start_time, p_uuid):
     """
     Prompts user to enter start and end time, and prints time worked in 1/10 of an hour to screen
 
@@ -474,10 +447,10 @@ def total_time():
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
     print "\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes)
     raw_input("\nPress enter to return to main menu.")
-    main_menu()
+    main_menu(project_name, status, start_time, p_uuid)
 
 
-def report():
+def report(project_name, status, start_time, p_uuid):
     """
     Prints a report table to screen.
     :return:
@@ -497,7 +470,7 @@ def report():
             jobs = {'job_name': i.name, 'job_id': i.abbr, 'hours': i.worked}
             print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
     raw_input("\nPress enter to return to main menu.")
-    main_menu()
+    main_menu(project_name, status, start_time, p_uuid)
 
 
 def config():
@@ -608,9 +581,9 @@ def config():
                     print("\nWould you like to begin working on {0}? (Y/n)").format(new_job.name)
                     answer = query()
                     if answer:
-                        project_start()
+                        project_start(abbrev, status, start_time, p_uuid)
                     else:
-                        main_menu()
+                        main_menu(abbrev, status, start_time, p_uuid)
                 elif answer.startswith('2'):
                     edit_job(jobs)
                 elif answer.startswith('3'):
@@ -632,7 +605,7 @@ def config():
             break  # kick out of config function
 
 
-def export_timesheet():
+def export_timesheet(project_name, status, start_time, p_uuid):
     """
     Export timesheet to a formatted CSV file. Use all dates.
     :return: None
@@ -646,10 +619,10 @@ def export_timesheet():
     for i in time_worked:
         outcsv.writerow([i.abbr, i.name, i.worked, datetime.date(i.date), i.week])
     outfile.close()
-    main_menu()
+    main_menu(project_name, status, start_time, p_uuid)
 
 
-def imp_exp_sub():
+def imp_exp_sub(project_name, status, start_time, p_uuid):
     """
     Sub-menu for main-menu import/export option. This will lead to functions that read/write from CSV.
     :return:
@@ -665,14 +638,12 @@ def imp_exp_sub():
         if answer.startswith('1'):
             raise NotImplementedError
         elif answer.startswith('2'):
-            export_timesheet()
+            export_timesheet(project_name, status, start_time, p_uuid)
         else:
-            main_menu()
+            main_menu(project_name, status, start_time, p_uuid)
 
 
-def main_menu():
-    global project_name
-    global start_time
+def main_menu(project_name, status, start_time, p_uuid):
 
     while True:
         """Main menu for program. Prompts user for function."""
@@ -693,20 +664,19 @@ def main_menu():
             print("*** Not currently in a job. ***\n")
         answer = raw_input(">>> ")
         if answer.startswith('1'):
-            project_start()
+            project_start(project_name, status, start_time, p_uuid)
         if answer.startswith('2'):
-            breaktime()
+            breaktime(status, p_uuid, project_name, start_time)
         if answer.startswith('3'):
-            clockout()
-            main_menu()
+            clockout(project_name, status, p_uuid)
         if answer.startswith('4'):
             config()
         if answer.startswith('5'):
-            total_time()
+            total_time(project_name, status, start_time, p_uuid)
         if answer.startswith('6'):
-            report()
+            report(project_name, status, start_time, p_uuid)
         if answer.startswith('7'):
-            imp_exp_sub()
+            imp_exp_sub(project_name, status, start_time, p_uuid)
         if answer.startswith('8'):
             sys.exit()
 
@@ -725,4 +695,4 @@ if __name__ == "__main__":
                         level=LOGLEVEL)
 
     os.system('cls' if os.name == 'nt' else 'clear')
-    main_menu()
+    main_menu('None', 0, 0, 0)
