@@ -131,7 +131,7 @@ def project_start(project_name, status, start_time, p_uuid):
                 job_newline(abbrev, status, start_time, p_uuid)
             project_name = job.name
 
-            print("Are you working on {0}? (Y/n)").format(job.name)
+            print("Are you working on {0}? (Y/n)".format(job.name))
             answer = query()
             if answer:
                 clockin(p_uuid, project_name)
@@ -206,10 +206,10 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     # Generate dict of previous jobs
     time_worked = session.query(Job).all()
     print('Previous Jobs\n')
-    print("\n{:<8} {:<15} {:<3}\n").format('Id', 'Job Name')
+    print("\n{:<8} {:<15} {:<3}\n".format('Id', 'Job Name'))
     for i in time_worked:
         # jobs = {'abbr': i.abbr, 'name': i.name}
-        print("{:<8} {:<15} {:<10}").format(i.abbr, i.name)
+        print("{:<8} {:<15} {:<10}".format(i.abbr, i.name))
     print('Enter job ID\n')
     print('>>>')
     input("Press enter to return to main menu")
@@ -252,9 +252,9 @@ def clockout(project_name, status, p_uuid):
         start_time = sel_clk.time_in
 
         now = datetime.now()
-        print('\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}').format(job_name, job_abbrev, now.hour,
+        print('\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(job_name, job_abbrev, now.hour,
                                                                                 now.minute, now.day, now.month,
-                                                                                now.year)
+                                                                                now.year))
 
         # Get difference between start time and now, and then convert to tenths of an hour.
         diff = datetime.now() - start_time
@@ -269,12 +269,12 @@ def clockout(project_name, status, p_uuid):
             time_worked = .1
 
         if debug == 1:
-            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}") \
-                .format(start_time, datetime.now(), diff, time_worked)
-            print('diff.seconds = {0}').format(diff.seconds)
-            print('time = {0}').format(time)
+            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}" \
+                  .format(start_time, datetime.now(), diff, time_worked))
+            print('diff.seconds = {0}'.format(diff.seconds))
+            print('time = {0}'.format(time))
             input("Press enter to continue.")
-        print ("Enjoy! You worked {0} hours on {1}.").format(time_worked, job_name)
+        print("Enjoy! You worked {0} hours on {1}.".format(time_worked, job_name))
         input("\nPress enter to return to main menu.")
         status = 0
 
@@ -294,7 +294,7 @@ def clockout(project_name, status, p_uuid):
         for i in tworked:
             _sum_time += i.tworked
         if debug == 1:
-            print("Debugging: sum of time for {0} is {1}").format(i.job_id, _sum_time)
+            print("Debugging: sum of time for {0} is {1}".format(i.job_id, _sum_time))
             input('Press enter to continue')
 
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
@@ -344,22 +344,22 @@ def breaktime(status, p_uuid, project_name, start_time):
             print("DEBUGGING: JOB Database, most recent row:\n")
             print(sel)
             try:
-                print("\nUUID: {0}").format(p_uuid)
+                print("\nUUID: {0}".format(p_uuid))
                 input("\nPress enter to continue.\n")
             except NameError:
                 print("p_uuid has not been created")
         # If not currently in job, prompt user for confirmation.
-        print("Are you sure you want to stop working on {0} and take a break? (y/n)\n").format(job_name)
+        print("Are you sure you want to stop working on {0} and take a break? (y/n)\n".format(job_name))
         answer = query()
         if answer:
             clockout(project_name, status, p_uuid)
             input("Press Enter to begin working again")
-            print("Are you still working on '{}' ? (y/n)").format(job_name)
+            print("Are you still working on '{}' ? (y/n)".format(job_name))
             answer = query()
             if answer:
                 # If user is returning to same job, start it back up again with same p_uuid.
                 now = datetime.now().strftime('%I:%M %p')
-                print("Resuming '{0}' at: '{1}\n' ").format(job_name, now)
+                print("Resuming '{0}' at: '{1}\n' ".format(job_name, now))
                 clockin(p_uuid, project_name)
             else:
                 # If user is not restarting job, set status to 0 and return to menu.
@@ -442,7 +442,7 @@ def total_time(project_name, status, start_time, p_uuid):
             "Please enter your end time in 00:00 AM/PM format: "))
     delta = t_out - t_in
     delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print("\n*** Your time sheet entry is {0} hours. ***").format(delta_minutes)
+    print("\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes))
     input("\nPress enter to return to main menu.")
     main_menu(project_name, status, start_time, p_uuid)
 
@@ -458,13 +458,13 @@ def report(project_name, status, start_time, p_uuid):
     # Queries job table, pulling all rows.
     time_worked = session.query(Job).all()
     print("\n  Weekly Timesheet Report\n")
-    print("\n{:<8} {:<15} {:<3}").format('Id', 'Job Name', 'Hours')
-    print("{:<8} {:<15} {:<3}").format('========', '==============', '=====')
+    print("\n{:<8} {:<15} {:<3}".format('Id', 'Job Name', 'Hours'))
+    print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
 
     # Print jobs for current week.
     for i in time_worked:
         if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-            print("{:<8} {:<15} {:<10}").format(i.abbr, i.name, i.worked)
+            print("{:<8} {:<15} {:<10}".format(i.abbr, i.name, i.worked))
     input("\nPress enter to return to main menu.")
     main_menu(project_name, status, start_time, p_uuid)
 
@@ -575,7 +575,7 @@ def config(project_name, status, start_time, p_uuid):
                 if answer.startswith('1'):
                     # TODO: do something with new_job? What?
                     new_job = add_job()
-                    print("\nWould you like to begin working on {0}? (Y/n)").format(new_job.name)
+                    print("\nWould you like to begin working on {0}? (Y/n)".format(new_job.name))
                     answer = query()
                     if answer:
                         project_start(project_name, status, start_time, p_uuid)
@@ -670,7 +670,7 @@ def main_menu(project_name, status, start_time, p_uuid):
               "7. Import/Export Timesheet\n"
               "8. Quit\n")
         if status == 1:
-            print ("*** Current job {0} started at {1}. ***\n").format(project_name, start_time.strftime('%I:%M %p'))
+            print("*** Current job {0} started at {1}. ***\n".format(project_name, start_time.strftime('%I:%M %p')))
         else:
             print("*** Not currently in a job. ***\n")
         answer = input(">>> ")
