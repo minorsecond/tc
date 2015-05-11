@@ -27,6 +27,7 @@ from sqlalchemy.orm import sessionmaker
 
 from models import Job, Employee, Clocktime
 
+
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
@@ -88,7 +89,8 @@ def job_newline(abbrev, status, start_time, p_uuid):
     p_uuid = str(uuid.uuid4())
 
     # Set up the table row and commit.
-    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=day_start,
+    today = datetime.today().strftime('%Y-%m-%d')
+    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=today,
                        week=current_week)
     session.add(new_task_job)
     session.commit()
@@ -452,21 +454,48 @@ def report(project_name, status, start_time, p_uuid):
     Prints a report table to screen.
     :return:
     """
-    os.system('cls' if os.name == 'nt' else 'clear')
-    # TODO: Fix this so that only the current week's hours are printed.
-    current_week = get_week_days(day_start.year, week_num)
-    # Queries job table, pulling all rows.
-    time_worked = session.query(Job).all()
-    print("\n  Weekly Timesheet Report\n")
-    print("\n{:<8} {:<15} {:<3}".format('Id', 'Job Name', 'Hours'))
-    print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
 
-    # Print jobs for current week.
-    for i in time_worked:
-        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-            print("{:<8} {:<15} {:<10}".format(i.abbr, i.name, i.worked))
-    input("\nPress enter to return to main menu.")
-    main_menu(project_name, status, start_time, p_uuid)
+    while True:
+        os.system('cls' if os.name == 'nt' else 'clear')
+        print("Timesheet Viewer\n"
+              "1. Weely Timesheet\n"
+              "2. Daily Timesheet\n")
+
+        answer = input('>>> ')
+        if answer.startswith('1'):
+            os.system('cls' if os.name == 'nt' else 'clear')
+            # TODO: Fix this so that only the current week's hours are printed.
+            current_week = get_week_days(day_start.year, week_num)
+            # Queries job table, pulling all rows.
+            time_worked = session.query(Job).all()
+            print("\n  Weekly Timesheet Report\n")
+            print("\n{:<8} {:<15} {:<3}".format('Id', 'Job Name', 'Hours', 'Week End'))
+            print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
+
+            # Print jobs for current week.
+            for i in time_worked:
+                if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+                    print("{:<8} {:<15} {:<10}".format(i.abbr, i.name, i.worked, i.week))
+            input("\nPress enter to return to main menu.")
+            main_menu(project_name, status, start_time, p_uuid)
+        elif answer.startswith('2'):
+            today = datetime.today().strftime('%Y-%m-%d')
+            os.system('cls' if os.name == 'nt' else 'clear')
+            current_week = get_week_days(day_start.year, week_num)
+            # Queries job table, pulling all rows.
+            time_worked = session.query(Job).all()
+            print("\n  Daily Timesheet Report\n")
+            print("\n{:<8} {:<15} {:<3}".format('Id', 'Job Name', 'Hours', 'Date'))
+            print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
+
+            # Print jobs for current day.
+            for i in time_worked:
+                if datetime.date(datetime.strptime(i.date, '%Y-%m-%d %I:%m:%s')) == today:
+                    print("{:<8} {:<15} {:<10} {:<15}".format(i.abbr, i.name, i.worked, i.date))
+            input("\nPress enter to return to main menu.")
+            main_menu(project_name, status, start_time, p_uuid)
+        else:
+            report()
 
 
 def config(project_name, status, start_time, p_uuid):
