@@ -73,7 +73,6 @@ def job_newline(abbrev, status, start_time, p_uuid):
     current_week = get_week_days(day_start.year, week_num)
     p_rate = 0
     project_name = input("What is the name of this project?: ")
-    # lead_name = raw_input("For whom are you working?: ")
     try:
         p_rate = float(input("At what rate does this job pay? (Cents): "))
     except ValueError as e:
@@ -459,7 +458,8 @@ def report(project_name, status, start_time, p_uuid):
         os.system('cls' if os.name == 'nt' else 'clear')
         print("Timesheet Viewer\n"
               "1. Weely Timesheet\n"
-              "2. Daily Timesheet\n")
+              "2. Daily Timesheet\n"
+              "3. Main Menu\n")
 
         answer = input('>>> ')
         if answer.startswith('1'):
@@ -486,13 +486,14 @@ def report(project_name, status, start_time, p_uuid):
             print("\n  Daily Timesheet Report\n")
             print("\n{:<8} {:<15} {:<10} {:<5}".format('Id', 'Job Name', 'Hours', 'Date'))
             print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
-
             # Print jobs for current day.
             for i in time_worked:
                 if i.date.strftime('%Y-%m-%d') == today:
                     day = i.date.strftime('%Y-%m-%d')
                     print("{:<8} {:<15} {:<10} {:<15}".format(i.abbr, i.name, i.worked, day))
             input("\nPress enter to return to main menu.")
+            main_menu(project_name, status, start_time, p_uuid)
+        elif answer.startswith('3'):
             main_menu(project_name, status, start_time, p_uuid)
         else:
             report(project_name, status, start_time, p_uuid)
@@ -681,6 +682,15 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
             export_timesheet(project_name, status, start_time, p_uuid)
         else:
             main_menu(project_name, status, start_time, p_uuid)
+
+
+# TODO: Write the db_editor script.
+def db_editor():
+    """
+    Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
+    Should flag row so that it's known that it was manually edited.
+    :return:
+    """
 
 
 def main_menu(project_name, status, start_time, p_uuid):
