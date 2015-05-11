@@ -89,7 +89,7 @@ def job_newline(abbrev, status, start_time, p_uuid):
     p_uuid = str(uuid.uuid4())
 
     # Set up the table row and commit.
-    today = datetime.today().strftime('%Y-%m-%d')
+    today = datetime.today()
     new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=today,
                        week=current_week)
     session.add(new_task_job)
@@ -481,21 +481,21 @@ def report(project_name, status, start_time, p_uuid):
         elif answer.startswith('2'):
             today = datetime.today().strftime('%Y-%m-%d')
             os.system('cls' if os.name == 'nt' else 'clear')
-            current_week = get_week_days(day_start.year, week_num)
             # Queries job table, pulling all rows.
             time_worked = session.query(Job).all()
             print("\n  Daily Timesheet Report\n")
-            print("\n{:<8} {:<15} {:<3}".format('Id', 'Job Name', 'Hours', 'Date'))
+            print("\n{:<8} {:<15} {:<10} {:<5}".format('Id', 'Job Name', 'Hours', 'Date'))
             print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
 
             # Print jobs for current day.
             for i in time_worked:
-                if datetime.date(datetime.strptime(i.date, '%Y-%m-%d %I:%m:%s')) == today:
-                    print("{:<8} {:<15} {:<10} {:<15}".format(i.abbr, i.name, i.worked, i.date))
+                if i.date.strftime('%Y-%m-%d') == today:
+                    day = i.date.strftime('%Y-%m-%d')
+                    print("{:<8} {:<15} {:<10} {:<15}".format(i.abbr, i.name, i.worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         else:
-            report()
+            report(project_name, status, start_time, p_uuid)
 
 
 def config(project_name, status, start_time, p_uuid):
@@ -695,7 +695,7 @@ def main_menu(project_name, status, start_time, p_uuid):
               "3. Clock Out\n"
               "4. Configure\n"
               "5. Calculate Total Time Worked\n"
-              "6. Generate Today's Timesheet\n"
+              "6. View Timesheets\n"
               "7. Import/Export Timesheet\n"
               "8. Quit\n")
         if status == 1:
