@@ -475,14 +475,14 @@ def report(project_name, status, start_time, p_uuid):
             # Queries job table, pulling all rows.
             time_worked = session.query(Job).all()
             print("\n  Weekly Timesheet Report\n")
-            print("\n{:<8} {:<15} {:<8} {:<10}".format('Id', 'Job Name', 'Hours', 'Date'))
-            print("{:<8} {:<15} {:<8} {:<10}".format('========', '==============', '=====', '=========='))
+            print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
+            print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
 
             # Print jobs for current week.
             for i in time_worked:
                 day = i.date.strftime('%Y-%m-%d')
                 if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-                    print("{:<8} {:<15} {:<8} {:<10}".format(i.abbr, i.name, i.worked, day))
+                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('2'):
@@ -490,13 +490,13 @@ def report(project_name, status, start_time, p_uuid):
             # Queries job table, pulling all rows.
             time_worked = session.query(Job).all()
             print("\n  Daily Timesheet Report\n")
-            print("\n{:<8} {:<15} {:<10} {:<5}".format('Id', 'Job Name', 'Hours', 'Date'))
-            print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
+            print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
+            print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
             # Print jobs for current day.
             for i in time_worked:
                 if i.date.strftime('%Y-%m-%d') == today:
                     day = i.date.strftime('%Y-%m-%d')
-                    print("{:<8} {:<15} {:<10} {:<15}".format(i.abbr, i.name, i.worked, day))
+                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('3'):
