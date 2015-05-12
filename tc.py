@@ -15,6 +15,7 @@ of an hour, and to generate reports.
 # 08/31/2014
 
 from datetime import datetime, timedelta, date
+import math
 import sys
 import os
 import os.path
@@ -68,11 +69,11 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     Write new db row to job table, for starting new project or new week.
     :return:
     """
-
+    p_rate = 0
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
-    p_rate = 0
     if new is True:
+        print(p_uuid)
         project_name = input("What is the name of this project?: ")
         try:
             p_rate = float(input("At what rate does this job pay? (Cents): "))
@@ -142,6 +143,7 @@ def project_start(project_name, status, start_time, p_uuid):
                 input("Press enter to return to main menu.")
                 main_menu(project_name, status, start_time, p_uuid)
         else:
+            p_uuid = uuid.uuid4()
             job_newline(abbrev, status, start_time, p_uuid, None, True)
 
 
@@ -299,13 +301,13 @@ def clockout(project_name, status, p_uuid):
                 input('Press enter to continue')
 
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
-        sum_time = float(round_to_nearest(_sum_time, .1))
+        sum_time = math.ceil(float(round_to_nearest(_sum_time, .1)))
         session.query(Job). \
             filter(Job.p_uuid == str(p_uuid)). \
             update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
-        main_menu(project_name, status, start_time, p_uuid)
+        main_menu(project_name, status, start_time, None)
 
 
 def get_week_days(year, week):
@@ -401,28 +403,32 @@ def get_time(time):
 
     # If user doesn't enter in 00:00 format, this will reformat their input into 00:00 AM so that DateTime
     # can parse it.
-    if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6',
-                              '7', '8', '9', '10', '11', '12'}:
-        time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
-    try:
-        split_hour = time.split(':')[0]
-        split_minute = time.split(':')[1]
-        split_minute2 = split_minute.split(' ')[0]
-        split_ap = time.split(' ')[1]
-    except IndexError:
-        print("\nInvalid Input.\n")
-    try:
-        if split_ap in {'a', 'A', 'p', 'P'}:
-            while split_ap in {'a', 'A'}:
-                split_ap = 'AM'
-            while split_ap in {'p', 'P'}:
-                split_ap = 'PM'
-            _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-            time_conc = datetime.strptime(_time_conc, '%I:%M %p')
-        else:
-            time_conc = datetime.strptime(time, '%I:%M %p')
-    except NameError:
-        print("Check format and try again.")
+    if time:
+        if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6',
+                                  '7', '8', '9', '10', '11', '12'}:
+            time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
+        try:
+            split_hour = time.split(':')[0]
+            split_minute = time.split(':')[1]
+            split_minute2 = split_minute.split(' ')[0]
+            split_ap = time.split(' ')[1]
+        except IndexError:
+            print("\nInvalid Input.\n")
+        try:
+            if split_ap in {'a', 'A', 'p', 'P'}:
+                while split_ap in {'a', 'A'}:
+                    split_ap = 'AM'
+                while split_ap in {'p', 'P'}:
+                    split_ap = 'PM'
+                _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
+                time_conc = datetime.strptime(_time_conc, '%I:%M %p')
+            else:
+                time_conc = datetime.strptime(time, '%I:%M %p')
+        except NameError:
+            print("Check format and try again.")
+    else:
+        print("\nYou didn't enter anything.\n")
+        raise ValueError
 
     return time_conc
 
