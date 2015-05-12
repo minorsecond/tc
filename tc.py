@@ -37,7 +37,7 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
-
+today = datetime.today().strftime('%Y-%m-%d')
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -93,7 +93,7 @@ def job_newline(abbrev, status, start_time, p_uuid):
                        week=current_week)
     session.add(new_task_job)
     session.commit()
-    clockin(p_uuid, project_name)
+    clockin(p_uuid, p_rate, project_name, current_week)
 
 
 def project_start(project_name, status, start_time, p_uuid):
@@ -123,19 +123,22 @@ def project_start(project_name, status, start_time, p_uuid):
         # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
         if abbrev in abbr:
             job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
-
-            # Check if the job entry is for current week. Else, generate new uuid. Doesn't write current week to table
-            # yet. Implement that, then test.
-            if datetime.date(datetime.strptime(job.week, '%Y-%m-%d')) == current_week:
-                p_uuid = job.p_uuid
-            else:
-                job_newline(abbrev, status, start_time, p_uuid)
-            project_name = job.name
-
             print("Are you working on {0}? (Y/n)".format(job.name))
             answer = query()
+
             if answer:
-                clockin(p_uuid, project_name)
+                # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
+                project_name = job.name
+                if job.date.strftime('%Y-%m-%d') == today:
+                    p_uuid = job.p_uuid
+                    clockin(p_uuid, project_name)
+
+                else:
+                    p_uuid = uuid.uuid4()
+                    p_rate = 000
+                    clockin(p_uuid, p_rate, project_name, current_week, abbrev)
+                    # job_newline(abbrev, status, start_time, p_uuid)
+
             else:
                 input("Press enter to return to main menu.")
                 main_menu(project_name, status, start_time, p_uuid)
@@ -217,7 +220,7 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     main_menu(project_name, status, start_time, p_uuid)
 
 
-def clockin(p_uuid, project_name):
+def clockin(p_uuid, p_rate, project_name, current_week, abbrev):
     """
     Adds time, job, date, uuid data to tables for time tracking.
 
@@ -225,7 +228,9 @@ def clockin(p_uuid, project_name):
     """
 
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
-    session.add(new_task_clock)
+    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=today,
+                       week=current_week)
+    session.add(new_task_clock, new_task_job)
     session.commit()
     main_menu(project_name, 1, datetime.now(), p_uuid)
 
@@ -294,9 +299,9 @@ def clockout(project_name, status, p_uuid):
 
         for i in tworked:
             _sum_time += i.tworked
-        if debug == 1:
-            print("Debugging: sum of time for {0} is {1}".format(i.job_id, _sum_time))
-            input('Press enter to continue')
+            if debug == 1:
+                print("Debugging: sum of time for {0} is {1}".format(i.job_id, _sum_time))
+                input('Press enter to continue')
 
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
         sum_time = float(round_to_nearest(_sum_time, .1))
@@ -479,7 +484,6 @@ def report(project_name, status, start_time, p_uuid):
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('2'):
-            today = datetime.today().strftime('%Y-%m-%d')
             os.system('cls' if os.name == 'nt' else 'clear')
             # Queries job table, pulling all rows.
             time_worked = session.query(Job).all()
