@@ -37,7 +37,6 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
-today = datetime.today().strftime('%Y-%m-%d')
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -64,39 +63,41 @@ def query():
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def job_newline(abbrev, status, start_time, p_uuid):
+def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     """
     Write new db row to job table, for starting new project or new week.
     :return:
     """
 
     current_week = get_week_days(day_start.year, week_num)
+    today = datetime.today()
     p_rate = 0
-    project_name = input("What is the name of this project?: ")
-    try:
-        p_rate = float(input("At what rate does this job pay? (Cents): "))
-    except ValueError as e:
+    if new is True:
+        project_name = input("What is the name of this project?: ")
         try:
-            logging.debug(e)
-            print("Check input and try again\n")
             p_rate = float(input("At what rate does this job pay? (Cents): "))
-        except ValueError:
-            input("Press enter to return to main menu.")
-            main_menu(project_name, status, start_time, p_uuid)
-    logging.debug("job id is {}".format(abbrev))
-    logging.debug("project_name is {}".format(project_name))
-    p_uuid = str(uuid.uuid4())
+        except ValueError as e:
+            try:
+                logging.debug(e)
+                print("Check input and try again\n")
+                p_rate = float(input("At what rate does this job pay? (Cents): "))
+            except ValueError:
+                input("Press enter to return to main menu.")
+                main_menu(project_name, status, start_time, p_uuid)
+        logging.debug("job id is {}".format(abbrev))
+        logging.debug("project_name is {}".format(project_name))
 
     # Set up the table row and commit.
-    today = datetime.today()
-    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=today,
+    new_task_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
                        week=current_week)
     session.add(new_task_job)
     session.commit()
-    clockin(p_uuid, p_rate, project_name, current_week)
+
+    clockin(p_uuid, project_name)
 
 
 def project_start(project_name, status, start_time, p_uuid):
+    today = datetime.today().strftime('%Y-%m-%d')
     """
     Prompts the user for project information, creates an id for
     recalling data (will be used in the future) and returns
@@ -135,15 +136,13 @@ def project_start(project_name, status, start_time, p_uuid):
 
                 else:
                     p_uuid = uuid.uuid4()
-                    p_rate = 000
-                    clockin(p_uuid, p_rate, project_name, current_week, abbrev)
-                    # job_newline(abbrev, status, start_time, p_uuid)
+                    job_newline(abbrev, status, start_time, p_uuid, project_name, False)
 
             else:
                 input("Press enter to return to main menu.")
                 main_menu(project_name, status, start_time, p_uuid)
         else:
-            job_newline(abbrev, status, start_time, p_uuid)
+            job_newline(abbrev, status, start_time, p_uuid, None, True)
 
 
 # TODO: Implement these functions
@@ -220,17 +219,14 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     main_menu(project_name, status, start_time, p_uuid)
 
 
-def clockin(p_uuid, p_rate, project_name, current_week, abbrev):
+def clockin(p_uuid, project_name):
     """
     Adds time, job, date, uuid data to tables for time tracking.
 
     :return: None
     """
-
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
-    new_task_job = Job(p_uuid=p_uuid, abbr=abbrev, name=project_name, rate=p_rate, date=today,
-                       week=current_week)
-    session.add(new_task_clock, new_task_job)
+    session.add(new_task_clock)
     session.commit()
     main_menu(project_name, 1, datetime.now(), p_uuid)
 
@@ -243,14 +239,12 @@ def clockout(project_name, status, p_uuid):
     :rtype : object
     :return:
     """
-
+    _sum_time = float(0)
     if status == 0:
         input("You're not currently in a job. Press enter to return to main menu")
-        main_menu(project_name, status, status, p_uuid)
+        main_menu(project_name, status, None, p_uuid)
     else:
-        _sum_time = 0
-
-        sel_job = session.query(Job).filter(Job.p_uuid == p_uuid).first()
+        sel_job = session.query(Job).filter(Job.p_uuid == str(p_uuid)).first()
         job_name = sel_job.name
         job_abbrev = sel_job.abbr
         sel_clk = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
@@ -293,12 +287,13 @@ def clockout(project_name, status, p_uuid):
         session.query(Clocktime). \
             filter(Clocktime.id == clk_id). \
             update({'tworked': time_worked}, synchronize_session='fetch')
-
         # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
 
         for i in tworked:
-            _sum_time += i.tworked
+            print(i.tworked)
+            if i.tworked is not None:
+                _sum_time += i.tworked
             if debug == 1:
                 print("Debugging: sum of time for {0} is {1}".format(i.job_id, _sum_time))
                 input('Press enter to continue')
@@ -306,7 +301,7 @@ def clockout(project_name, status, p_uuid):
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
         sum_time = float(round_to_nearest(_sum_time, .1))
         session.query(Job). \
-            filter(Job.p_uuid == p_uuid). \
+            filter(Job.p_uuid == str(p_uuid)). \
             update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
@@ -458,11 +453,11 @@ def report(project_name, status, start_time, p_uuid):
     Prints a report table to screen.
     :return:
     """
-
+    today = datetime.today().strftime('%Y-%m-%d')
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         print("Timesheet Viewer\n"
-              "1. Weely Timesheet\n"
+              "1. Weekly Timesheet\n"
               "2. Daily Timesheet\n"
               "3. Main Menu\n")
 
@@ -474,13 +469,14 @@ def report(project_name, status, start_time, p_uuid):
             # Queries job table, pulling all rows.
             time_worked = session.query(Job).all()
             print("\n  Weekly Timesheet Report\n")
-            print("\n{:<8} {:<15} {:<3}".format('Id', 'Job Name', 'Hours', 'Week End'))
-            print("{:<8} {:<15} {:<3}".format('========', '==============', '====='))
+            print("\n{:<8} {:<15} {:<8} {:<10}".format('Id', 'Job Name', 'Hours', 'Date'))
+            print("{:<8} {:<15} {:<8} {:<10}".format('========', '==============', '=====', '=========='))
 
             # Print jobs for current week.
             for i in time_worked:
+                day = i.date.strftime('%Y-%m-%d')
                 if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-                    print("{:<8} {:<15} {:<10}".format(i.abbr, i.name, i.worked, i.week))
+                    print("{:<8} {:<15} {:<8} {:<10}".format(i.abbr, i.name, i.worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('2'):
@@ -698,7 +694,6 @@ def db_editor():
 
 
 def main_menu(project_name, status, start_time, p_uuid):
-
     while True:
         """Main menu for program. Prompts user for function."""
         os.system('cls' if os.name == 'nt' else 'clear')
