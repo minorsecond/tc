@@ -74,7 +74,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     today = datetime.today()
     if new is True:
         print(p_uuid)
-        project_name = input("What is the name of this project?: ")
+        project_name = input("What is the name of this project?: ").upper()
         try:
             p_rate = float(input("At what rate does this job pay? (Cents): "))
         except ValueError as e:
