@@ -271,7 +271,7 @@ def clockout(project_name, status, p_uuid):
             time_worked = .1
 
         if debug == 1:
-            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}" \
+            print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}"
                   .format(start_time, datetime.now(), diff, time_worked))
             print('diff.seconds = {0}'.format(diff.seconds))
             print('time = {0}'.format(time))
@@ -421,7 +421,7 @@ def get_time(time):
                 while split_ap in {'p', 'P'}:
                     split_ap = 'PM'
                 _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
-                time_conc = datetime.strptime(_time_conc, '%I:%M %p')
+                time_conc = datetime.strptime(str(_time_conc), '%I:%M %p')
             else:
                 time_conc = datetime.strptime(time, '%I:%M %p')
         except NameError:
@@ -470,7 +470,6 @@ def report(project_name, status, start_time, p_uuid):
         answer = input('>>> ')
         if answer.startswith('1'):
             os.system('cls' if os.name == 'nt' else 'clear')
-            # TODO: Fix this so that only the current week's hours are printed.
             current_week = get_week_days(day_start.year, week_num)
             # Queries job table, pulling all rows.
             time_worked = session.query(Job).all()
@@ -698,6 +697,15 @@ def db_editor():
     :return:
     """
 
+    # Create backup of DB, entitled 'backup_data'.
+    session.add(DB_NAME)
+    db_backup = DB_NAME
+    db_backup.tbl_name = 'backup_data'
+    session.add(db_backup)
+    session.commit()
+
+    # TODO: Write code to sort Job rows by date, same for clocktime
+    sel_job = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
 
 def main_menu(project_name, status, start_time, p_uuid):
     while True:
