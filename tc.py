@@ -261,12 +261,16 @@ def clockout(project_name, status, p_uuid):
         time = float(diff.seconds / 3600)
 
         # Short tasks (6 minutes or less) still count as .1 of an hour per my company's policy.
-        if time < .1:
-            time = .1
+        if time < .05:
+            time = 0
+        elif time < .1:
+            time = 0.1
 
         time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
-        if time_worked < .1:
-            time_worked = .1
+        if time_worked < .05:
+            time_worked = 0
+        elif time_worked < .1:
+            time_worked = 0.1
 
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}"
@@ -287,6 +291,9 @@ def clockout(project_name, status, p_uuid):
         session.query(Clocktime). \
             filter(Clocktime.id == clk_id). \
             update({'tworked': time_worked}, synchronize_session='fetch')
+
+        session.commit()
+
         # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
 
@@ -299,7 +306,10 @@ def clockout(project_name, status, p_uuid):
                 input('Press enter to continue')
 
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
-        sum_time = math.ceil(float(round_to_nearest(_sum_time, .1)))
+        sum_time = float(round_to_nearest(_sum_time, .1))
+
+        # Round number down to nearest tenth of an hour (there are some weird issues otherwise)
+        sum_time = math.floor(sum_time * 10) / 10
         session.query(Job). \
             filter(Job.p_uuid == str(p_uuid)). \
             update({"worked": sum_time}, synchronize_session='fetch')
@@ -695,6 +705,11 @@ def db_editor():
     :return:
     """
 
+    # Set current week, and lists
+    current_week = get_week_days(day_start.year, week_num)
+    job_list = []
+    clk_list = []
+
     # Create backup of DB, entitled 'backup_data'.
     session.add(DB_NAME)
     db_backup = DB_NAME
@@ -702,8 +717,35 @@ def db_editor():
     session.add(db_backup)
     session.commit()
 
-    # TODO: Write code to sort Job rows by date, same for clocktime
-    sel_job = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
+    # Sort Job and clocktime tables by date.
+    sel_job = session.query(Job).order_by(Job.date.desc()).all()
+    sel_clk = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
+
+    # TODO: Create menu.
+    # Print clocktime and job rows.
+    for i in sel_job:
+        day = i.date.strftime('%Y-%m-%d')
+        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+            print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+            job_list.append(i.id)
+
+    for i in sel_clk:
+        day = i.date.strftime('%Y-%m-%d')
+        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+            print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+            clk_list.append(i.id)
+
+
+def db_recover(status):
+    """
+    Function to check last db entry and give option to recover, or delete. This will be useful because if the program
+    crashes, the time_out fields will not be written to, causing an error on next run. This function should check if
+    the time_out field of the last row is empty and, if so, give said options.
+    :return: None
+    """
+
+    # if status is 0:
+
 
 def main_menu(project_name, status, start_time, p_uuid):
     while True:
