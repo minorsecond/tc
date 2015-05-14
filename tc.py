@@ -69,7 +69,6 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     Write new db row to job table, for starting new project or new week.
     :return:
     """
-    p_rate = 0
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
     if new is True:
@@ -107,7 +106,6 @@ def project_start(project_name, status, start_time, p_uuid):
     """
     abbr = []
 
-    current_week = get_week_days(day_start.year, week_num)
     sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
