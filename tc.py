@@ -194,7 +194,7 @@ def round_to_nearest(num, b):
 
     round_to_nearest(7, 5) -> 5
     """
-    b = Decimal(b)
+
     company_minutes = num + (b // 2)
     return company_minutes - (company_minutes % b)
 
@@ -239,7 +239,10 @@ def clockout(project_name, status, p_uuid):
     :rtype : object
     :return:
     """
-    _sum_time = 0.0
+    context = Context(prec=3, rounding=ROUND_DOWN)
+    setcontext(context)
+    _sum_time = Decimal(0.0)
+
 
     if status == 0:
         input("You're not currently in a job. Press enter to return to main menu")
@@ -300,14 +303,14 @@ def clockout(project_name, status, p_uuid):
 
         for i in tworked:
             if i.tworked is not None:
-                _sum_time += i.tworked
+                worked = Decimal(i.tworked)
+                _sum_time += worked
             if debug == 1:
                 print("Debugging: sum of time for {0} is {1}".format(i.job_id, _sum_time))
                 input('Press enter to continue')
 
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
-        sum_time = Decimal(round_to_nearest(Decimal(_sum_time), .1))
-
+        sum_time = Decimal(round_to_nearest(_sum_time, Decimal('0.1')))
         # Round number down to nearest tenth of an hour (there are some weird issues otherwise)
         # sum_time = Decimal(math.floor(sum_time * 10) / 10)
         session.query(Job). \
