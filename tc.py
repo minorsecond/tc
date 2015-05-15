@@ -492,7 +492,8 @@ def report(project_name, status, start_time, p_uuid):
             for i in time_worked:
                 day = i.date.strftime('%Y-%m-%d')
                 if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+                    worked = str(i.worked)
+                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('2'):
@@ -504,6 +505,7 @@ def report(project_name, status, start_time, p_uuid):
             print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
             # Print jobs for current day.
             for i in time_worked:
+                worked = str(i.worked)
                 if i.date.strftime('%Y-%m-%d') == today:
                     day = i.date.strftime('%Y-%m-%d')
                     print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
@@ -606,7 +608,8 @@ def config(project_name, status, start_time, p_uuid):
               "1. Jobs\n"
               "2. Employees\n"
               "3. Delete Tables\n"
-              "4. Back\n")
+              "4. Back Up Tables"
+              "5. Back\n")
         answer = input(">>> ")
 
         if answer.startswith('1'):
@@ -659,6 +662,9 @@ def config(project_name, status, start_time, p_uuid):
             else:
                 main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('4'):
+            raise NotImplementedError
+
+        elif answer.startswith('5'):
             break  # kick out of config function
 
 
