@@ -15,13 +15,13 @@ of an hour, and to generate reports.
 # 08/31/2014
 
 from datetime import datetime, timedelta, date
-import math
 import sys
 import os
 import os.path
 import logging
 import uuid
 import csv
+from decimal import *
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -194,7 +194,7 @@ def round_to_nearest(num, b):
 
     round_to_nearest(7, 5) -> 5
     """
-
+    b = Decimal(b)
     company_minutes = num + (b // 2)
     return company_minutes - (company_minutes % b)
 
@@ -239,7 +239,8 @@ def clockout(project_name, status, p_uuid):
     :rtype : object
     :return:
     """
-    _sum_time = float(0)
+    _sum_time = 0.0
+
     if status == 0:
         input("You're not currently in a job. Press enter to return to main menu")
         main_menu(project_name, status, None, p_uuid)
@@ -258,19 +259,19 @@ def clockout(project_name, status, p_uuid):
 
         # Get difference between start time and now, and then convert to tenths of an hour.
         diff = datetime.now() - start_time
-        time = float(diff.seconds / 3600)
+        time = Decimal(diff.seconds / 3600)
 
         # Short tasks (6 minutes or less) still count as .1 of an hour per my company's policy.
         if time < .05:
-            time = 0
+            time = Decimal(0)
         elif time < .1:
-            time = 0.1
+            time = Decimal(0.1)
 
-        time_worked = float(round_to_nearest(diff.seconds, 360)) / 3600
+        time_worked = Decimal(round_to_nearest(diff.seconds, 360)) / 3600
         if time_worked < .05:
-            time_worked = 0
+            time_worked = Decimal(0)
         elif time_worked < .1:
-            time_worked = 0.1
+            time_worked = Decimal(0.1)
 
         if debug == 1:
             print("Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}"
@@ -278,7 +279,7 @@ def clockout(project_name, status, p_uuid):
             print('diff.seconds = {0}'.format(diff.seconds))
             print('time = {0}'.format(time))
             input("Press enter to continue.")
-        print("Enjoy! You worked {0} hours on {1}.".format(time_worked, job_name))
+        print("Enjoy! You worked {0} hours on {1}.".format(round(time_worked, 1), job_name))
         input("\nPress enter to return to main menu.")
         status = 0
 
@@ -290,7 +291,7 @@ def clockout(project_name, status, p_uuid):
 
         session.query(Clocktime). \
             filter(Clocktime.id == clk_id). \
-            update({'tworked': time_worked}, synchronize_session='fetch')
+            update({'tworked': Decimal(time_worked)}, synchronize_session='fetch')
 
         session.commit()
 
@@ -298,7 +299,6 @@ def clockout(project_name, status, p_uuid):
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
 
         for i in tworked:
-            print(i.tworked)
             if i.tworked is not None:
                 _sum_time += i.tworked
             if debug == 1:
@@ -306,10 +306,10 @@ def clockout(project_name, status, p_uuid):
                 input('Press enter to continue')
 
         # Round the sum of tenths of an hour worked to the nearest tenth and then update to job table.
-        sum_time = float(round_to_nearest(_sum_time, .1))
+        sum_time = Decimal(round_to_nearest(Decimal(_sum_time), .1))
 
         # Round number down to nearest tenth of an hour (there are some weird issues otherwise)
-        sum_time = math.floor(sum_time * 10) / 10
+        # sum_time = Decimal(math.floor(sum_time * 10) / 10)
         session.query(Job). \
             filter(Job.p_uuid == str(p_uuid)). \
             update({"worked": sum_time}, synchronize_session='fetch')
