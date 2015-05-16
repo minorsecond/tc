@@ -608,7 +608,7 @@ def config(project_name, status, start_time, p_uuid):
               "1. Jobs\n"
               "2. Employees\n"
               "3. Delete Tables\n"
-              "4. Back Up Tables"
+              "4. Back Up Tables\n"
               "5. Back\n")
         answer = input(">>> ")
 
@@ -743,6 +743,14 @@ def db_editor():
         if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
             print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
             clk_list.append(i.id)
+
+
+def db_backup():
+    """
+    Fuction to create a copy of db as .timsheet.db.bk. Should be used before any change is made to the db.
+    :return:
+    """
+
 
 
 def db_recover(status):
