@@ -72,6 +72,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     """
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
+    sqlite3_backup()
     if new is True:
         print(p_uuid)
         project_name = input("What is the name of this project?: ").upper()
@@ -106,7 +107,6 @@ def project_start(project_name, status, start_time, p_uuid):
     functions.
     """
     abbr = []
-
     sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
@@ -243,6 +243,7 @@ def clockout(project_name, status, p_uuid):
     context = Context(prec=3, rounding=ROUND_DOWN)
     setcontext(context)
     _sum_time = Decimal(0.0)
+    sqlite3_backup()
 
 
     if status == 0:
@@ -714,7 +715,7 @@ def db_editor():
     Should flag row so that it's known that it was manually edited.
     :return:
     """
-
+    sqlite3_backup()
     # Set current week, and lists
     current_week = get_week_days(day_start.year, week_num)
     job_list = []
@@ -784,6 +785,7 @@ def db_recover(status):
     """
 
     # if status is 0:
+    sqlite3_backup()
 
 
 def main_menu(project_name, status, start_time, p_uuid):
