@@ -22,6 +22,7 @@ import logging
 import uuid
 import csv
 from decimal import *
+import shutil
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -745,12 +746,30 @@ def db_editor():
             clk_list.append(i.id)
 
 
-def db_backup():
-    """
-    Fuction to create a copy of db as .timsheet.db.bk. Should be used before any change is made to the db.
-    :return:
-    """
+def sqlite3_backup():
+    """Create timestamped database copy, preferably use a backup directory."""
 
+    backup_file = os.path.join(os.path.basename(DB_NAME) +
+                               datetime.now().strftime("-%Y%m%d-%H%M%S"))
+
+    # Make new backup file
+    shutil.copyfile(DB_NAME, backup_file)
+    print("\nCreating {}...".format(backup_file))
+
+
+def clean_data():
+    """Delete files older than NO_OF_DAYS days"""
+
+    print("\n------------------------------")
+    print("Cleaning up old backups")
+
+    for filename in os.path.basename(DB_NAME):
+        backup_file = filename
+        # Delete file if over 2 weeks old
+        if os.stat(backup_file).st_ctime < (datetime.now() - 14):
+            if os.path.isfile(backup_file):
+                os.remove(backup_file)
+                print("Deleting {}...".format(ibackup_file))
 
 
 def db_recover(status):
@@ -812,6 +831,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename=LOGFILE,
                         format=FORMATTER_STRING,
                         level=LOGLEVEL)
-
+    sqlite3_backup()
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
