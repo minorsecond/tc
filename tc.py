@@ -22,6 +22,7 @@ import logging
 import uuid
 import csv
 from decimal import *
+import shutil
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -71,6 +72,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     """
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
+    sqlite3_backup()
     if new is True:
         print(p_uuid)
         project_name = input("What is the name of this project?: ").upper()
@@ -105,7 +107,6 @@ def project_start(project_name, status, start_time, p_uuid):
     functions.
     """
     abbr = []
-
     sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
@@ -242,6 +243,7 @@ def clockout(project_name, status, p_uuid):
     context = Context(prec=3, rounding=ROUND_DOWN)
     setcontext(context)
     _sum_time = Decimal(0.0)
+    sqlite3_backup()
 
 
     if status == 0:
@@ -492,7 +494,8 @@ def report(project_name, status, start_time, p_uuid):
             for i in time_worked:
                 day = i.date.strftime('%Y-%m-%d')
                 if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+                    worked = str(i.worked)
+                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('2'):
@@ -504,6 +507,7 @@ def report(project_name, status, start_time, p_uuid):
             print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
             # Print jobs for current day.
             for i in time_worked:
+                worked = str(i.worked)
                 if i.date.strftime('%Y-%m-%d') == today:
                     day = i.date.strftime('%Y-%m-%d')
                     print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
@@ -606,7 +610,8 @@ def config(project_name, status, start_time, p_uuid):
               "1. Jobs\n"
               "2. Employees\n"
               "3. Delete Tables\n"
-              "4. Back\n")
+              "4. Back Up Tables\n"
+              "5. Back\n")
         answer = input(">>> ")
 
         if answer.startswith('1'):
@@ -659,6 +664,9 @@ def config(project_name, status, start_time, p_uuid):
             else:
                 main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('4'):
+            raise NotImplementedError
+
+        elif answer.startswith('5'):
             break  # kick out of config function
 
 
@@ -707,7 +715,7 @@ def db_editor():
     Should flag row so that it's known that it was manually edited.
     :return:
     """
-
+    sqlite3_backup()
     # Set current week, and lists
     current_week = get_week_days(day_start.year, week_num)
     job_list = []
@@ -739,6 +747,35 @@ def db_editor():
             clk_list.append(i.id)
 
 
+def sqlite3_backup():
+    """Create timestamped database copy, preferably use a backup directory."""
+    path = os.path.dirname(os.path.realpath(__file__))
+    if not os.path.isdir('.backup'):
+        os.makedirs('.backup')
+
+    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) +
+                               datetime.now().strftime("-%Y%m%d-%H%M%S"))
+
+    # Make new backup file
+    shutil.copyfile(DB_NAME, backup_file)
+    print("\nCreating {}...".format(backup_file))
+
+
+def clean_data():
+    """Delete files older than NO_OF_DAYS days"""
+
+    print("\n------------------------------")
+    print("Cleaning up old backups")
+
+    for filename in os.path.basename(DB_NAME):
+        backup_file = filename
+        # Delete file if over 2 weeks old
+        if os.stat(backup_file).st_ctime < (datetime.now() - 14):
+            if os.path.isfile(backup_file):
+                os.remove(backup_file)
+                print("Deleting {}...".format(backup_file))
+
+
 def db_recover(status):
     """
     Function to check last db entry and give option to recover, or delete. This will be useful because if the program
@@ -748,6 +785,7 @@ def db_recover(status):
     """
 
     # if status is 0:
+    sqlite3_backup()
 
 
 def main_menu(project_name, status, start_time, p_uuid):
@@ -798,6 +836,6 @@ if __name__ == "__main__":
     logging.basicConfig(filename=LOGFILE,
                         format=FORMATTER_STRING,
                         level=LOGLEVEL)
-
+    sqlite3_backup()
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
