@@ -72,7 +72,6 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     today = datetime.today()
     sqlite3_backup()
     if new is True:
-        print(p_uuid)
         project_name = input("What is the name of this project?: ").upper()
         try:
             p_rate = float(input("At what rate does this job pay? (Cents): "))
@@ -265,15 +264,11 @@ def clockout(project_name, status, p_uuid):
         time = Decimal(diff.seconds / 3600)
 
         # Short tasks (6 minutes or less) still count as .1 of an hour per my company's policy.
-        if time < .05:
-            time = Decimal(0)
-        elif time < .1:
+        if time < .1:
             time = Decimal(0.1)
 
         time_worked = Decimal(round_to_nearest(diff.seconds, 360)) / 3600
-        if time_worked < .05:
-            time_worked = Decimal(0)
-        elif time_worked < .1:
+        if time_worked < .1:
             time_worked = Decimal(0.1)
 
         if debug == 1:
@@ -748,7 +743,7 @@ def db_editor():
 
 def sqlite3_backup():
     """Create timestamped database copy, preferably use a backup directory."""
-    path = os.path.dirname(os.path.realpath(__file__))
+    path = os.path.dirname(os.path.realpath('tc.py'))
     if not os.path.isdir('.backup'):
         os.makedirs('.backup')
 
@@ -757,7 +752,6 @@ def sqlite3_backup():
 
     # Make new backup file
     shutil.copyfile(DB_NAME, backup_file)
-    print("\nCreating {}...\n".format(backup_file))
 
 
 def clean_data():
@@ -766,13 +760,16 @@ def clean_data():
     print("\n------------------------------")
     print("Cleaning up old backups")
 
-    for filename in os.path.basename(DB_NAME):
-        backup_file = filename
+    path = os.path.join(os.path.dirname(os.path.realpath('tc.py')), '.backup')
+    for filename in os.listdir(path):
+        file_path = os.path.join(path, filename)
+        s = os.stat(file_path).st_ctime
+        file_time = datetime.fromtimestamp(s)
         # Delete file if over 2 weeks old
-        if os.stat(backup_file).st_ctime < (datetime.now() - 14):
-            if os.path.isfile(backup_file):
-                os.remove(backup_file)
-                print("Deleting {}...".format(backup_file))
+        if os.path.isfile(file_path):
+            if file_time < (datetime.now() - timedelta(days=14)):
+                os.remove(file_path)
+                print("Deleting {}...".format(file_path))
 
 
 def db_recover(status):
@@ -836,5 +833,6 @@ if __name__ == "__main__":
                         format=FORMATTER_STRING,
                         level=LOGLEVEL)
     sqlite3_backup()
+    clean_data()
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
