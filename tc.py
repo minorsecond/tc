@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # -*- coding: ascii -*-
 
 """
@@ -700,6 +699,7 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
 
         answer = input('>>> ')
         if answer.startswith('1'):
+            # TODO: CSV Parsing
             raise NotImplementedError
         elif answer.startswith('2'):
             export_timesheet(project_name, status, start_time, p_uuid)
@@ -757,7 +757,7 @@ def sqlite3_backup():
 
     # Make new backup file
     shutil.copyfile(DB_NAME, backup_file)
-    print("\nCreating {}...".format(backup_file))
+    print("\nCreating {}...\n".format(backup_file))
 
 
 def clean_data():
