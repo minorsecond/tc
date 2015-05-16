@@ -29,7 +29,6 @@ from sqlalchemy.orm import sessionmaker
 
 from models import Job, Employee, Clocktime
 
-
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
@@ -676,10 +675,10 @@ def export_timesheet(project_name, status, start_time, p_uuid):
     :return: None
     """
 
-    outfile = open('PyperTimesheet.csv', 'wb')
+    outfile = open('PyperTimesheet.csv', 'wt')
     outcsv = csv.writer(outfile)
     time_worked = session.query(Job).all()
-    header = ('Id', 'Job Name', 'Hours Worked', 'Date', 'Week Ending:')
+    header = ('Id', 'Job Name', 'Hours Worked', 'Date', 'Week Ending')
     outcsv.writerow(header)
     for i in time_worked:
         outcsv.writerow([i.abbr, i.name, i.worked, datetime.date(i.date), i.week])
