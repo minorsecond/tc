@@ -748,8 +748,11 @@ def db_editor():
 
 def sqlite3_backup():
     """Create timestamped database copy, preferably use a backup directory."""
+    path = os.path.dirname(os.path.realpath(__file__))
+    if not os.path.isdir('.backup'):
+        os.makedirs('.backup')
 
-    backup_file = os.path.join(os.path.basename(DB_NAME) +
+    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) +
                                datetime.now().strftime("-%Y%m%d-%H%M%S"))
 
     # Make new backup file
@@ -769,7 +772,7 @@ def clean_data():
         if os.stat(backup_file).st_ctime < (datetime.now() - 14):
             if os.path.isfile(backup_file):
                 os.remove(backup_file)
-                print("Deleting {}...".format(ibackup_file))
+                print("Deleting {}...".format(backup_file))
 
 
 def db_recover(status):
