@@ -528,10 +528,11 @@ def config(project_name, status, start_time, p_uuid):
             kwargs = {field: input("{}: ".format(field)) for
                       field in fields}
             # store rate as int of cents/hour
-            kwargs['rate'] = float(kwargs['rate']) * 100
+            kwargs['rate'] = int(kwargs['rate']) * 100
+            kwargs['p_uuid'] = str(uuid.uuid4())
         new_job = Job(**kwargs)
         session.add(new_job)
-        return new_job
+        return kwargs
 
     def add_employee(**kwargs):
         """Helper function to create Employees
@@ -619,10 +620,13 @@ def config(project_name, status, start_time, p_uuid):
                 if answer.startswith('1'):
                     # TODO: do something with new_job? What?
                     new_job = add_job()
-                    print("\nWould you like to begin working on {0}? (Y/n)".format(new_job.name))
+                    name = new_job['name']
+                    print("\nWould you like to begin working on {0}? (Y/n)".format(name))
                     answer = query()
                     if answer:
-                        project_start(project_name, status, start_time, p_uuid)
+                        abbrev = str(new_job['abbr'])
+                        p_uuid = str(uuid.uuid4())
+                        job_newline(abbrev, status, start_time, p_uuid, None, False)
                     else:
                         main_menu(project_name, status, start_time, p_uuid)
                 elif answer.startswith('2'):
