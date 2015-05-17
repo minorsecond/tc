@@ -144,9 +144,9 @@ def project_start(project_name, status, start_time, p_uuid):
 
 
 # TODO: Implement these functions
-"""
+
 def get_job_by_abbr(abbr):
-    jobs = session.query(models.Job).filter_by(abbr=abbr).all()
+    jobs = session.query(Job).filter_by(abbr=abbr).all()
     if len(jobs) > 1:
         # two jobs with the same abbr in here -- should this be unique? If not:
         for idx, job in enumerate(jobs, start=1):
@@ -161,6 +161,7 @@ def get_job_by_abbr(abbr):
     return job
 
 
+"""
 def clock_in():
     now = datetime.datetime.now()
     me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
@@ -529,7 +530,6 @@ def config(project_name, status, start_time, p_uuid):
                       field in fields}
             # store rate as int of cents/hour
             kwargs['rate'] = int(kwargs['rate']) * 100
-            kwargs['p_uuid'] = str(uuid.uuid4())
         new_job = Job(**kwargs)
         session.add(new_job)
         return kwargs
@@ -539,6 +539,7 @@ def config(project_name, status, start_time, p_uuid):
 
         prompt for fields if none are provided
         """
+        # TODO: Add code to check job table for existing abbr
         if not kwargs:
             fields = ['firstname', 'lastname']
             kwargs = {field: input("{}: ".format(field)) for
@@ -625,7 +626,6 @@ def config(project_name, status, start_time, p_uuid):
                     answer = query()
                     if answer:
                         abbrev = str(new_job['abbr'])
-                        p_uuid = str(uuid.uuid4())
                         job_newline(abbrev, status, start_time, p_uuid, None, False)
                     else:
                         main_menu(project_name, status, start_time, p_uuid)
