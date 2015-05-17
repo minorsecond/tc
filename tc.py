@@ -26,7 +26,7 @@ import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import Job, Employee, Clocktime
+from models import Job, Employee, Clocktime, Timesheet
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
@@ -87,7 +87,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
         logging.debug("project_name is {}".format(project_name))
 
     # Set up the table row and commit.
-    new_task_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
+    new_task_job = Timesheet(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
                        week=current_week)
     session.add(new_task_job)
     session.commit()
@@ -104,7 +104,7 @@ def project_start(project_name, status, start_time, p_uuid):
     functions.
     """
     abbr = []
-    sel = session.query(Job).order_by(Job.id.desc()).all()
+    sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
@@ -120,7 +120,7 @@ def project_start(project_name, status, start_time, p_uuid):
 
         # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
         if abbrev in abbr:
-            job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
+            job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
             print("Are you working on {0}? (Y/n)".format(job.name))
             answer = query()
 
@@ -205,7 +205,7 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     """
 
     # Generate dict of previous jobs
-    time_worked = session.query(Job).all()
+    time_worked = session.query(Timesheet).all()
     print('Previous Jobs\n')
     print("\n{:<8} {:<15} {:<3}\n".format('Id', 'Job Name'))
     for i in time_worked:
@@ -247,7 +247,7 @@ def clockout(project_name, status, p_uuid):
         input("You're not currently in a job. Press enter to return to main menu")
         main_menu(project_name, status, None, p_uuid)
     else:
-        sel_job = session.query(Job).filter(Job.p_uuid == str(p_uuid)).first()
+        sel_job = session.query(Timesheet).filter(Timesheet.p_uuid == str(p_uuid)).first()
         job_name = sel_job.name
         job_abbrev = sel_job.abbr
         sel_clk = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
@@ -308,8 +308,8 @@ def clockout(project_name, status, p_uuid):
         sum_time = Decimal(round_to_nearest(_sum_time, Decimal('0.1')))
         # Round number down to nearest tenth of an hour (there are some weird issues otherwise)
         # sum_time = Decimal(math.floor(sum_time * 10) / 10)
-        session.query(Job). \
-            filter(Job.p_uuid == str(p_uuid)). \
+        session.query(Timesheet). \
+            filter(Timesheet.p_uuid == str(p_uuid)). \
             update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
@@ -347,7 +347,7 @@ def breaktime(status, p_uuid, project_name, start_time):
         main_menu(project_name, status, start_time, p_uuid)
     else:
         # Pull most recent (top) row from jobs table.
-        sel = session.query(Job).order_by(Job.id.desc()).first()
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).first()
         job_name = sel.name
         if debug == 1:
             print("DEBUGGING: JOB Database, most recent row:\n")
@@ -478,7 +478,7 @@ def report(project_name, status, start_time, p_uuid):
             os.system('cls' if os.name == 'nt' else 'clear')
             current_week = get_week_days(day_start.year, week_num)
             # Queries job table, pulling all rows.
-            time_worked = session.query(Job).all()
+            time_worked = session.query(Timesheet).all()
             print("\n  Weekly Timesheet Report\n")
             print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
             print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
@@ -494,7 +494,7 @@ def report(project_name, status, start_time, p_uuid):
         elif answer.startswith('2'):
             os.system('cls' if os.name == 'nt' else 'clear')
             # Queries job table, pulling all rows.
-            time_worked = session.query(Job).all()
+            time_worked = session.query(Timesheet).all()
             print("\n  Daily Timesheet Report\n")
             print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
             print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
@@ -671,7 +671,7 @@ def export_timesheet(project_name, status, start_time, p_uuid):
 
     outfile = open('PyperTimesheet.csv', 'wt')
     outcsv = csv.writer(outfile)
-    time_worked = session.query(Job).all()
+    time_worked = session.query(Timesheet).all()
     header = ('Id', 'Job Name', 'Hours Worked', 'Date', 'Week Ending')
     outcsv.writerow(header)
     for i in time_worked:
@@ -723,7 +723,7 @@ def db_editor():
     session.commit()
 
     # Sort Job and clocktime tables by date.
-    sel_job = session.query(Job).order_by(Job.date.desc()).all()
+    sel_job = session.query(Timesheet).order_by(Timesheet.date.desc()).all()
     sel_clk = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
 
     # TODO: Create menu.
@@ -767,7 +767,7 @@ def clean_data():
         file_time = datetime.fromtimestamp(s)
         # Delete file if over 2 weeks old
         if os.path.isfile(file_path):
-            if file_time < (datetime.now() - timedelta(days=14)):
+            if file_time < (datetime.now() - timedelta(days=2)):
                 os.remove(file_path)
                 print("Deleting {}...".format(file_path))
 

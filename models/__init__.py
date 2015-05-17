@@ -6,7 +6,6 @@ from sqlalchemy.orm import relationship
 
 from sqa_uuid import UUID
 
-
 engine = create_engine('sqlite:///.timesheet.db')
 Base = declarative_base()
 
@@ -79,9 +78,6 @@ class Job(Base):
     name = Column(String(50))
     abbr = Column(String(16))
     rate = Column(Integer)  # cents/hr
-    worked = Column(Float)  # may have to use a different type here.
-    date = Column(DateTime)
-    week = Column(String(10))
     clocktimes = relationship('Clocktime', backref='job')
 
     def __str__(self):
@@ -93,4 +89,27 @@ class Job(Base):
                                 id="ID# " + str(self.id))
 
 
+class Timesheet(Base):
+    """Table for jobs
+
+    one to many -> clocktimes
+    note that rate is cents/hr"""
+
+    __tablename__ = "timesheet"
+    id = Column(Integer, primary_key=True)
+    p_uuid = Column(String)
+    name = Column(String(50))
+    abbr = Column(String(16))
+    rate = Column(Integer)  # cents/hr
+    worked = Column(Float)  # may have to use a different type here.
+    date = Column(DateTime)
+    week = Column(String(10))
+
+    def __str__(self):
+        formatter = "Name: {name:<50} {abbr:>23}\n" \
+                    "Rate: ${rate:<7.2f}/hr {id:>62}"
+        return formatter.format(name=self.name,
+                                abbr="Abbr: " + str(self.abbr),
+                                rate=self.rate / 100.0,
+                                id="ID# " + str(self.id))
 Base.metadata.create_all(engine)
