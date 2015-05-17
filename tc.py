@@ -26,7 +26,7 @@ import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from models import Job, Employee, Clocktime
+from models import Job, Employee, Clocktime, Timesheet
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
@@ -87,9 +87,12 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
         logging.debug("project_name is {}".format(project_name))
 
     # Set up the table row and commit.
-    new_task_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
+    new_task_time = Timesheet(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
                        week=current_week)
-    session.add(new_task_job)
+    new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
+
+    session.add(new_task_time)
+    session.add(new_job)
     session.commit()
 
     clockin(p_uuid, project_name)
@@ -104,11 +107,15 @@ def project_start(project_name, status, start_time, p_uuid):
     functions.
     """
     abbr = []
-    sel = session.query(Job).order_by(Job.id.desc()).all()
+    joblist = []
+    sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+    job_sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append(i.abbr)
+    for i in job_sel:
+        joblist.append(i.abbr)
 
     if status == 1:
         input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -120,33 +127,35 @@ def project_start(project_name, status, start_time, p_uuid):
 
         # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
         if abbrev in abbr:
-            job = session.query(Job).filter(Job.abbr == abbrev).order_by(Job.id.desc()).first()
-            print("Are you working on {0}? (Y/n)".format(job.name))
-            answer = query()
+            if abbrev in joblist:
+                job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
+                print("Are you working on {0}? (Y/n)".format(job.name))
+                answer = query()
 
-            if answer:
-                # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
-                project_name = job.name
-                if job.date.strftime('%Y-%m-%d') == today:
-                    p_uuid = job.p_uuid
-                    clockin(p_uuid, project_name)
+                if answer:
+                    # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
+                    project_name = job.name
+                    if job.date.strftime('%Y-%m-%d') == today:
+                        p_uuid = job.p_uuid
+                        clockin(p_uuid, project_name)
 
-                else:
-                    p_uuid = uuid.uuid4()
-                    job_newline(abbrev, status, start_time, p_uuid, project_name, False)
-
+                    else:
+                        p_uuid = uuid.uuid4()
+                        job_newline(abbrev, status, start_time, p_uuid, project_name, False)
             else:
-                input("Press enter to return to main menu.")
+                input("\n *** WARNING: Table discrepancy. Use config tool to check/edit as needed. Press enter"
+                      "to return to main menu. \n")
                 main_menu(project_name, status, start_time, p_uuid)
+
         else:
             p_uuid = uuid.uuid4()
             job_newline(abbrev, status, start_time, p_uuid, None, True)
 
 
 # TODO: Implement these functions
-"""
+
 def get_job_by_abbr(abbr):
-    jobs = session.query(models.Job).filter_by(abbr=abbr).all()
+    jobs = session.query(Job).filter_by(abbr=abbr).all()
     if len(jobs) > 1:
         # two jobs with the same abbr in here -- should this be unique? If not:
         for idx, job in enumerate(jobs, start=1):
@@ -161,6 +170,7 @@ def get_job_by_abbr(abbr):
     return job
 
 
+"""
 def clock_in():
     now = datetime.datetime.now()
     me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
@@ -205,7 +215,7 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     """
 
     # Generate dict of previous jobs
-    time_worked = session.query(Job).all()
+    time_worked = session.query(Timesheet).all()
     print('Previous Jobs\n')
     print("\n{:<8} {:<15} {:<3}\n".format('Id', 'Job Name'))
     for i in time_worked:
@@ -247,7 +257,7 @@ def clockout(project_name, status, p_uuid):
         input("You're not currently in a job. Press enter to return to main menu")
         main_menu(project_name, status, None, p_uuid)
     else:
-        sel_job = session.query(Job).filter(Job.p_uuid == str(p_uuid)).first()
+        sel_job = session.query(Timesheet).filter(Timesheet.p_uuid == str(p_uuid)).first()
         job_name = sel_job.name
         job_abbrev = sel_job.abbr
         sel_clk = session.query(Clocktime).order_by(Clocktime.id.desc()).first()
@@ -308,8 +318,8 @@ def clockout(project_name, status, p_uuid):
         sum_time = Decimal(round_to_nearest(_sum_time, Decimal('0.1')))
         # Round number down to nearest tenth of an hour (there are some weird issues otherwise)
         # sum_time = Decimal(math.floor(sum_time * 10) / 10)
-        session.query(Job). \
-            filter(Job.p_uuid == str(p_uuid)). \
+        session.query(Timesheet). \
+            filter(Timesheet.p_uuid == str(p_uuid)). \
             update({"worked": sum_time}, synchronize_session='fetch')
 
         session.commit()
@@ -347,7 +357,7 @@ def breaktime(status, p_uuid, project_name, start_time):
         main_menu(project_name, status, start_time, p_uuid)
     else:
         # Pull most recent (top) row from jobs table.
-        sel = session.query(Job).order_by(Job.id.desc()).first()
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).first()
         job_name = sel.name
         if debug == 1:
             print("DEBUGGING: JOB Database, most recent row:\n")
@@ -478,7 +488,7 @@ def report(project_name, status, start_time, p_uuid):
             os.system('cls' if os.name == 'nt' else 'clear')
             current_week = get_week_days(day_start.year, week_num)
             # Queries job table, pulling all rows.
-            time_worked = session.query(Job).all()
+            time_worked = session.query(Timesheet).all()
             print("\n  Weekly Timesheet Report\n")
             print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
             print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
@@ -494,7 +504,7 @@ def report(project_name, status, start_time, p_uuid):
         elif answer.startswith('2'):
             os.system('cls' if os.name == 'nt' else 'clear')
             # Queries job table, pulling all rows.
-            time_worked = session.query(Job).all()
+            time_worked = session.query(Timesheet).all()
             print("\n  Daily Timesheet Report\n")
             print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
             print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
@@ -528,16 +538,17 @@ def config(project_name, status, start_time, p_uuid):
             kwargs = {field: input("{}: ".format(field)) for
                       field in fields}
             # store rate as int of cents/hour
-            kwargs['rate'] = float(kwargs['rate']) * 100
+            kwargs['rate'] = int(kwargs['rate']) * 100
         new_job = Job(**kwargs)
         session.add(new_job)
-        return new_job
+        return kwargs
 
     def add_employee(**kwargs):
         """Helper function to create Employees
 
         prompt for fields if none are provided
         """
+        # TODO: Add code to check job table for existing abbr
         if not kwargs:
             fields = ['firstname', 'lastname']
             kwargs = {field: input("{}: ".format(field)) for
@@ -619,10 +630,12 @@ def config(project_name, status, start_time, p_uuid):
                 if answer.startswith('1'):
                     # TODO: do something with new_job? What?
                     new_job = add_job()
-                    print("\nWould you like to begin working on {0}? (Y/n)".format(new_job.name))
+                    name = new_job['name']
+                    print("\nWould you like to begin working on {0}? (Y/n)".format(name))
                     answer = query()
                     if answer:
-                        project_start(project_name, status, start_time, p_uuid)
+                        abbrev = str(new_job['abbr'])
+                        job_newline(abbrev, status, start_time, p_uuid, None, False)
                     else:
                         main_menu(project_name, status, start_time, p_uuid)
                 elif answer.startswith('2'):
@@ -651,6 +664,7 @@ def config(project_name, status, start_time, p_uuid):
                 if answer:
                     session.query(Clocktime).delete()
                     session.query(Job).delete()
+                    session.query(Timesheet).delete()
                     session.commit()
                 else:
                     main_menu(project_name, status, start_time, p_uuid)
@@ -671,7 +685,7 @@ def export_timesheet(project_name, status, start_time, p_uuid):
 
     outfile = open('PyperTimesheet.csv', 'wt')
     outcsv = csv.writer(outfile)
-    time_worked = session.query(Job).all()
+    time_worked = session.query(Timesheet).all()
     header = ('Id', 'Job Name', 'Hours Worked', 'Date', 'Week Ending')
     outcsv.writerow(header)
     for i in time_worked:
@@ -723,7 +737,7 @@ def db_editor():
     session.commit()
 
     # Sort Job and clocktime tables by date.
-    sel_job = session.query(Job).order_by(Job.date.desc()).all()
+    sel_job = session.query(Timesheet).order_by(Timesheet.date.desc()).all()
     sel_clk = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
 
     # TODO: Create menu.
@@ -767,7 +781,7 @@ def clean_data():
         file_time = datetime.fromtimestamp(s)
         # Delete file if over 2 weeks old
         if os.path.isfile(file_path):
-            if file_time < (datetime.now() - timedelta(days=14)):
+            if file_time < (datetime.now() - timedelta(days=2)):
                 os.remove(file_path)
                 print("Deleting {}...".format(file_path))
 
