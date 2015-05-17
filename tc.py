@@ -87,9 +87,12 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
         logging.debug("project_name is {}".format(project_name))
 
     # Set up the table row and commit.
-    new_task_job = Timesheet(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
+    new_task_time = Timesheet(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
                        week=current_week)
-    session.add(new_task_job)
+    new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
+
+    session.add(new_task_time)
+    session.add(new_job)
     session.commit()
 
     clockin(p_uuid, project_name)
@@ -104,11 +107,15 @@ def project_start(project_name, status, start_time, p_uuid):
     functions.
     """
     abbr = []
+    joblist = []
     sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+    job_sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append(i.abbr)
+    for i in job_sel:
+        joblist.append(i.abbr)
 
     if status == 1:
         input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -120,24 +127,26 @@ def project_start(project_name, status, start_time, p_uuid):
 
         # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
         if abbrev in abbr:
-            job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
-            print("Are you working on {0}? (Y/n)".format(job.name))
-            answer = query()
+            if abbrev in joblist:
+                job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
+                print("Are you working on {0}? (Y/n)".format(job.name))
+                answer = query()
 
-            if answer:
-                # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
-                project_name = job.name
-                if job.date.strftime('%Y-%m-%d') == today:
-                    p_uuid = job.p_uuid
-                    clockin(p_uuid, project_name)
+                if answer:
+                    # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
+                    project_name = job.name
+                    if job.date.strftime('%Y-%m-%d') == today:
+                        p_uuid = job.p_uuid
+                        clockin(p_uuid, project_name)
 
-                else:
-                    p_uuid = uuid.uuid4()
-                    job_newline(abbrev, status, start_time, p_uuid, project_name, False)
-
+                    else:
+                        p_uuid = uuid.uuid4()
+                        job_newline(abbrev, status, start_time, p_uuid, project_name, False)
             else:
-                input("Press enter to return to main menu.")
+                input("\n *** WARNING: Table discrepancy. Use config tool to check/edit as needed. Press enter"
+                      "to return to main menu. \n")
                 main_menu(project_name, status, start_time, p_uuid)
+
         else:
             p_uuid = uuid.uuid4()
             job_newline(abbrev, status, start_time, p_uuid, None, True)
@@ -655,6 +664,7 @@ def config(project_name, status, start_time, p_uuid):
                 if answer:
                     session.query(Clocktime).delete()
                     session.query(Job).delete()
+                    session.query(Timesheet).delete()
                     session.commit()
                 else:
                     main_menu(project_name, status, start_time, p_uuid)
