@@ -84,7 +84,8 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     """
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
-    sqlite3_backup('job_newline')
+    bk_reason = 'pre-start_{0}'.format(project_name)
+    sqlite3_backup(bk_reason)
     if new is True:
         project_name = input("What is the name of this project?: ").upper()
         try:
@@ -247,6 +248,10 @@ def clockin(p_uuid, project_name):
 
     :return: None
     """
+    """Backup db"""
+    bk_reason = 'clockin_{0}'.format(project_name)
+    sqlite3_backup(bk_reason)
+
     new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
     session.add(new_task_clock)
     session.commit()
@@ -775,7 +780,7 @@ def sqlite3_backup(action):
     if not os.path.isdir('.backup'):
         os.makedirs('.backup')
 
-    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) + action +
+    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) + '_' + action +
                                datetime.now().strftime("-%Y%m%d-%H%M%S"))
 
     # Make new backup file
