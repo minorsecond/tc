@@ -29,6 +29,7 @@ try:
     encryption = True
 except:
     encryption = False
+    pass
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
