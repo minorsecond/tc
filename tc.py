@@ -26,7 +26,7 @@ import csv
 from decimal import *
 import shutil
 try:
-    from pysqlcipher3 import dbapi2 as sqlite
+    from pysqlcipher import dbapi2 as sqlite
     encryption = True
 except ImportError:
     encryption = False
