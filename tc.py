@@ -37,6 +37,8 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
+# TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
+# security clearance reasons.
 engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
@@ -250,7 +252,7 @@ def clockout(project_name, status, p_uuid):
     context = Context(prec=3, rounding=ROUND_DOWN)
     setcontext(context)
     _sum_time = Decimal(0.0)
-    sqlite3_backup()
+    sqlite3_backup('clockout')
 
 
     if status == 0:
@@ -723,7 +725,7 @@ def db_editor():
     Should flag row so that it's known that it was manually edited.
     :return:
     """
-    sqlite3_backup()
+    sqlite3_backup('db_edit')
     # Set current week, and lists
     current_week = get_week_days(day_start.year, week_num)
     job_list = []
@@ -755,13 +757,13 @@ def db_editor():
             clk_list.append(i.id)
 
 
-def sqlite3_backup():
+def sqlite3_backup(action):
     """Create timestamped database copy, preferably use a backup directory."""
     path = os.path.dirname(os.path.realpath('tc.py'))
     if not os.path.isdir('.backup'):
         os.makedirs('.backup')
 
-    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) +
+    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) + action +
                                datetime.now().strftime("-%Y%m%d-%H%M%S"))
 
     # Make new backup file
@@ -795,7 +797,7 @@ def db_recover(status):
     """
 
     # if status is 0:
-    sqlite3_backup()
+    sqlite3_backup('db_recover')
 
 
 def main_menu(project_name, status, start_time, p_uuid):
@@ -846,7 +848,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=LOGFILE,
                         format=FORMATTER_STRING,
                         level=LOGLEVEL)
-    sqlite3_backup()
+    sqlite3_backup('startup')
     clean_data()
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
