@@ -26,12 +26,14 @@ import shutil
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
+from pysqlcipher3 import dbapi as sqlite
+
 from models import Job, Employee, Clocktime, Timesheet
 
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-DB_NAME = ".timesheet.db"
+DB_NAME = ".timesheet.db?cipher=aes-256-cfb&kdf_iter=64000"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
@@ -39,7 +41,7 @@ day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
 # TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
 # security clearance reasons.
-engine = create_engine('sqlite:///{}'.format(DB_NAME))
+engine = create_engine('sqlite:///{}'.format(DB_NAME), module=sqlite)
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
@@ -850,5 +852,6 @@ if __name__ == "__main__":
                         level=LOGLEVEL)
     sqlite3_backup('startup')
     clean_data()
+    key = input("Enter DB Encryption key: ")
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
