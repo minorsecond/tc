@@ -83,7 +83,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     """
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
-    sqlite3_backup()
+    sqlite3_backup('job_newline')
     if new is True:
         project_name = input("What is the name of this project?: ").upper()
         try:
@@ -864,6 +864,7 @@ if __name__ == "__main__":
     if encryption is True:
         key = input("Enter DB Encryption key: ")
     else:
-        input("WARNING: Unencrypted session. Press enter to continue.\n")
+        input("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption"
+              "Press enter to continue.\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
