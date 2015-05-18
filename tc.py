@@ -13,8 +13,11 @@ of an hour, and to generate reports.
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
-from datetime import datetime, timedelta, date
+from __future__ import print_function
 import sys
+
+if sys.version_info.major == 2: input = raw_input
+from datetime import datetime, timedelta, date
 import os
 import os.path
 import logging
@@ -22,10 +25,8 @@ import uuid
 import csv
 from decimal import *
 import shutil
-
 try:
     from pysqlcipher3 import dbapi2 as sqlite
-
     encryption = True
 except ImportError:
     encryption = False
@@ -39,7 +40,7 @@ from models import Job, Employee, Clocktime, Timesheet
 LOGFILE = "timeclock.log"
 FORMATTER_STRING = r"%(levelname)s :: %(asctime)s :: in " \
                    r"%(module)s | %(message)s"
-DB_NAME = ".timesheet.db?cipher=aes-256-cfb&kdf_iter=64000"
+DB_NAME = ".timesheet.db"
 LOGLEVEL = logging.INFO
 logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
@@ -864,7 +865,8 @@ if __name__ == "__main__":
     if encryption is True:
         key = input("Enter DB Encryption key: ")
     else:
-        input("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption"
-              "Press enter to continue.\n")
+        print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
+
+        input("Press enter to continue.\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
