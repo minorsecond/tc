@@ -48,10 +48,17 @@ day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
 # TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
 # security clearance reasons.
+
 if encryption is True:
+    print("***PYPER TIMESHEET UTILITY***")
+    print("\nEnter encryption password below:")
+    key = getpass.getpass()
+    DB_NAME = ".timesheet.db?cipher=aes-256-cfb&kdf_iter=64000"
     engine = create_engine('sqlite:///{}'.format(DB_NAME), module=sqlite)
 else:
+    print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
+
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
@@ -866,13 +873,5 @@ if __name__ == "__main__":
                         level=LOGLEVEL)
     sqlite3_backup('startup')
     clean_data()
-    if encryption is True:
-        print("***PYPER TIMESHEET UTILITY***")
-        print("\nEnter encryption password below:")
-        key = getpass.getpass()
-    else:
-        print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
-
-        input("Press enter to continue.\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
