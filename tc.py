@@ -22,7 +22,13 @@ import uuid
 import csv
 from decimal import *
 import shutil
-from pysqlcipher3 import dbapi2 as sqlite
+
+try:
+    from pysqlcipher3 import dbapi2 as sqlite
+
+    encryption = True
+except:
+    encryption = False
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -40,7 +46,10 @@ day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
 # TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
 # security clearance reasons.
-engine = create_engine('sqlite:///{}'.format(DB_NAME), module=sqlite)
+if encryption is True:
+    engine = create_engine('sqlite:///{}'.format(DB_NAME), module=sqlite)
+else:
+    engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
