@@ -860,6 +860,9 @@ if __name__ == "__main__":
                         level=LOGLEVEL)
     sqlite3_backup('startup')
     clean_data()
-    key = input("Enter DB Encryption key: ")
+    if encryption is True:
+        key = input("Enter DB Encryption key: ")
+    else:
+        input("WARNING: Unencrypted session. Press enter to continue.\n")
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
