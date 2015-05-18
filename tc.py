@@ -27,7 +27,7 @@ try:
     from pysqlcipher3 import dbapi2 as sqlite
 
     encryption = True
-except:
+except ImportError:
     encryption = False
     pass
 
