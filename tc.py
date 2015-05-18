@@ -15,7 +15,7 @@ of an hour, and to generate reports.
 
 from __future__ import print_function
 import sys
-
+import getpass as getpass
 if sys.version_info.major == 2: input = raw_input
 from datetime import datetime, timedelta, date
 import os
@@ -791,7 +791,6 @@ def clean_data():
     """Delete files older than NO_OF_DAYS days"""
 
     print("\n------------------------------")
-    print("Cleaning up old backups")
 
     path = os.path.join(os.path.dirname(os.path.realpath('tc.py')), '.backup')
     for filename in os.listdir(path):
@@ -868,7 +867,9 @@ if __name__ == "__main__":
     sqlite3_backup('startup')
     clean_data()
     if encryption is True:
-        key = input("Enter DB Encryption key: ")
+        print("***PYPER TIMESHEET UTILITY***")
+        print("\nEnter encryption password below:")
+        key = getpass.getpass()
     else:
         print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
 
