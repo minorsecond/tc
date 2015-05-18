@@ -22,11 +22,10 @@ import uuid
 import csv
 from decimal import *
 import shutil
+from pysqlcipher3 import dbapi2 as sqlite
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-
-from pysqlcipher3 import dbapi as sqlite
 
 from models import Job, Employee, Clocktime, Timesheet
 
