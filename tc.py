@@ -15,7 +15,6 @@ of an hour, and to generate reports.
 
 from __future__ import print_function
 import sys
-
 if sys.version_info.major == 2: input = raw_input
 from datetime import datetime, timedelta, date
 import os
@@ -49,21 +48,16 @@ week_num = datetime.date(day_start).isocalendar()[1]
 # TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
 # security clearance reasons.
 
-"""
 if encryption is True:
-    print("***PYPER TIMESHEET UTILITY***")
-    print("\nEnter encryption password below:")
-    key = getpass.getpass()
+    print("\n***PYPER TIMESHEET UTILITY***")
     DB_NAME = ".timesheet.db"
-    engine = create_engine('sqlite+pysqlcipher:///.timesheet.db')
+    engine = create_engine('sqlite:///.timesheet.db')
+
 else:
     print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
     DB_NAME = ".timesheet.db"
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
-"""
 
-DB_NAME = ".timesheet.db"
-engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
@@ -98,6 +92,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     today = datetime.today()
     bk_reason = 'pre-start_{0}'.format(project_name)
     sqlite3_backup(bk_reason)
+    p_rate = 'NULL'
     if new is True:
         project_name = input("What is the name of this project?: ").upper()
         try:
@@ -133,10 +128,17 @@ def project_start(project_name, status, start_time, p_uuid):
     project name, project abbrev and id for use in other
     functions.
     """
+
     abbr = []
     joblist = []
-    sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
-    job_sel = session.query(Job).order_by(Job.id.desc()).all()
+    if encryption is True:
+        # Might have to go raw sql here.
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
+
+    else:
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
@@ -193,7 +195,35 @@ def get_job_by_abbr(abbr):
         job = jobs[0]
     else:
         return None
+        # TODO: no jobs found with that info -- what do we do?
     return job
+
+
+"""
+def clock_in():
+    now = datetime.datetime.now()
+    me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
+    job = get_job_by_abbr(input("Job abbreviation? "))  # set up jobs somewhere else?
+    c = Clocktime(time_in=now, employee=me, job=job)
+    session.add(c)
+    session.commit()
+
+
+def get_open_clktime(job, employee):
+    cq = session.query(Clocktime)
+    clktime = cq.filter_by(time_out=None, job=job, employee=employee).one()
+    # the `one` method will throw an error if there are more than one open
+    # clock times with that job and employee!
+    return clktime
+
+
+def clock_out():
+    job = get_job_by_abbr(input("Job abbr ?"))
+    now = datetime.now()
+    clktime = get_open_clktime(job, me)
+    clktime.time_out = now
+    session.commit()
+"""
 
 
 def round_to_nearest(num, b):
