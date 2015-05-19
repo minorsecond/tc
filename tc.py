@@ -560,6 +560,33 @@ def config(project_name, status, start_time, p_uuid):
 
     global session
 
+    # TODO: Write the db_editor script.
+    def clocktime_editor():
+        """
+        Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
+        Should flag row so that it's known that it was manually edited.
+        :return:
+        """
+        # Set current week, and lists
+        current_week = datetime.now().isocalendar()[1]
+        clk_list = []
+
+        # Create backup of DB, entitled 'backup_data'.
+        sqlite3_backup('clocktime_edit')
+
+        # Sort Job and clocktime tables by date.
+        sel_clk = session.query(Clocktime).order_by(Clocktime.time_in.desc()).all()
+
+        # TODO: Create menu.
+        # Print clocktime and job rows.
+
+        for i in sel_clk:
+            day = i.time_in.strftime('%Y-%m-%d')
+            week = i.time_in.isocalendar()[1]
+            if week == current_week:
+                print('ID: {:<1}, Time in: {:<1}, Time out: {:<2}, Day: {:<3}'.format(i.id, i.time_in, i.time_out, day))
+                clk_list.append(i.id)
+
     # TODO: refactor these out into module-level so they're unit-testable
     def add_job(**kwargs):
         """Helper function to create Jobs
@@ -645,10 +672,11 @@ def config(project_name, status, start_time, p_uuid):
     while True:
         print("What do you want to configure?\n"
               "1. Jobs\n"
-              "2. Employees\n"
-              "3. Delete Tables\n"
-              "4. Back Up Tables\n"
-              "5. Back\n")
+              "2. Clocktimes\n"
+              "3. Employees\n"
+              "4. Delete Tables\n"
+              "5. Back Up Tables\n"
+              "6. Back\n")
         answer = input(">>> ")
 
         if answer.startswith('1'):
@@ -686,9 +714,11 @@ def config(project_name, status, start_time, p_uuid):
                 else:
                     print("Invalid selection")
         elif answer.startswith('2'):
+            clocktime_editor()
+        elif answer.startswith('3'):
             # TODO: Configure employees
             raise NotImplementedError()
-        elif answer.startswith('3'):
+        elif answer.startswith('4'):
             print('Do you wish to delete the tables? (Y/n)\n')
             answer = query()
             if answer:
@@ -703,10 +733,10 @@ def config(project_name, status, start_time, p_uuid):
                     main_menu(project_name, status, start_time, p_uuid)
             else:
                 main_menu(project_name, status, start_time, p_uuid)
-        elif answer.startswith('4'):
+        elif answer.startswith('5'):
             raise NotImplementedError
 
-        elif answer.startswith('5'):
+        elif answer.startswith('6'):
             break  # kick out of config function
 
 
@@ -747,45 +777,6 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
             export_timesheet(project_name, status, start_time, p_uuid)
         else:
             main_menu(project_name, status, start_time, p_uuid)
-
-
-# TODO: Write the db_editor script.
-def db_editor():
-    """
-    Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
-    Should flag row so that it's known that it was manually edited.
-    :return:
-    """
-    sqlite3_backup('db_edit')
-    # Set current week, and lists
-    current_week = get_week_days(day_start.year, week_num)
-    job_list = []
-    clk_list = []
-
-    # Create backup of DB, entitled 'backup_data'.
-    session.add(DB_NAME)
-    db_backup = DB_NAME
-    db_backup.tbl_name = 'backup_data'
-    session.add(db_backup)
-    session.commit()
-
-    # Sort Job and clocktime tables by date.
-    sel_job = session.query(Timesheet).order_by(Timesheet.date.desc()).all()
-    sel_clk = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
-
-    # TODO: Create menu.
-    # Print clocktime and job rows.
-    for i in sel_job:
-        day = i.date.strftime('%Y-%m-%d')
-        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-            print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
-            job_list.append(i.id)
-
-    for i in sel_clk:
-        day = i.date.strftime('%Y-%m-%d')
-        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-            print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
-            clk_list.append(i.id)
 
 
 def sqlite3_backup(action):
