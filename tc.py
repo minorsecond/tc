@@ -140,6 +140,10 @@ def project_start(project_name, status, start_time, p_uuid):
     abbr = []
     joblist = []
     if encryption is True:
+        # Might have to go raw sql here.
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
+    else:
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
         job_sel = session.query(Job).order_by(Job.id.desc()).all()
 
