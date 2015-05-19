@@ -15,7 +15,9 @@ of an hour, and to generate reports.
 
 from __future__ import print_function
 import sys
-if sys.version_info.major == 2: input = raw_input
+
+if sys.version_info.major == 2:
+    input = raw_input
 from datetime import datetime, timedelta, date
 import os
 import os.path
@@ -113,9 +115,9 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
                        week=current_week)
     if new is True:
         new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
+        session.add(new_job)
 
     session.add(new_task_time)
-    session.add(new_job)
     session.commit()
 
     clockin(p_uuid, project_name)
@@ -285,7 +287,6 @@ def clockout(project_name, status, p_uuid):
     setcontext(context)
     _sum_time = Decimal(0.0)
     sqlite3_backup('clockout')
-
 
     if status == 0:
         input("You're not currently in a job. Press enter to return to main menu")
