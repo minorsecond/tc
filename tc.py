@@ -111,7 +111,8 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     # Set up the table row and commit.
     new_task_time = Timesheet(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
                        week=current_week)
-    new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
+    if new is True:
+        new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
 
     session.add(new_task_time)
     session.add(new_job)
