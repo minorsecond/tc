@@ -15,7 +15,7 @@ of an hour, and to generate reports.
 
 from __future__ import print_function
 import sys
-import getpass as getpass
+
 if sys.version_info.major == 2: input = raw_input
 from datetime import datetime, timedelta, date
 import os
@@ -49,6 +49,7 @@ week_num = datetime.date(day_start).isocalendar()[1]
 # TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
 # security clearance reasons.
 
+"""
 if encryption is True:
     print("***PYPER TIMESHEET UTILITY***")
     print("\nEnter encryption password below:")
@@ -59,7 +60,10 @@ else:
     print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
     DB_NAME = ".timesheet.db"
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
+"""
 
+DB_NAME = ".timesheet.db"
+engine = create_engine('sqlite:///{}'.format(DB_NAME))
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
