@@ -593,12 +593,23 @@ def config(project_name, status, start_time, p_uuid):
 
         prompt for fields if none are provided
         """
+
+        # Create list of current jobs for duplicate checking.
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
+        joblist = []
+        for i in job_sel:
+            joblist.append(i.abbr)
+
         if not kwargs:
             fields = ['name', 'abbr', 'rate']
             kwargs = {field: input("{}: ".format(field)) for
                       field in fields}
-            # store rate as int of cents/hour
-            kwargs['rate'] = int(kwargs['rate']) * 100
+            if kwargs['name'] not in joblist:
+                # store rate as int of cents/hour
+                kwargs['rate'] = int(kwargs['rate']) * 100
+            else:
+                input('Job already exists. Press enter to return to main menu.')
+                main_menu(project_name, status, start_time, p_uuid)
         new_job = Job(**kwargs)
         session.add(new_job)
         return kwargs
@@ -689,7 +700,6 @@ def config(project_name, status, start_time, p_uuid):
                       "3. Back\n")
                 answer = input(">>> ")
                 if answer.startswith('1'):
-                    # TODO: do something with new_job? What?
                     new_job = add_job()
                     name = new_job['name']
                     print("\nWould you like to begin working on {0}? (Y/n)".format(name))
