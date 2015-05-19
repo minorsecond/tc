@@ -53,10 +53,11 @@ if encryption is True:
     print("***PYPER TIMESHEET UTILITY***")
     print("\nEnter encryption password below:")
     key = getpass.getpass()
-    DB_NAME = ".timesheet.db?cipher=aes-256-cfb&kdf_iter=64000"
-    engine = create_engine('sqlite:///{}'.format(DB_NAME), module=sqlite)
+    DB_NAME = ".timesheet.db"
+    engine = create_engine('sqlite+pysqlcipher:///.timesheet.db')
 else:
     print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
+    DB_NAME = ".timesheet.db"
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
 
 DBSession = sessionmaker(bind=engine)
