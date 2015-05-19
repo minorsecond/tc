@@ -32,7 +32,8 @@ except ImportError:
     encryption = False
     pass
 
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
+from sqlalchemy.interfaces import PoolListener
 from sqlalchemy.orm import sessionmaker
 
 from models import Job, Employee, Clocktime, Timesheet
@@ -49,15 +50,17 @@ week_num = datetime.date(day_start).isocalendar()[1]
 # TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
 # security clearance reasons.
 
-def _fk_pragma_on_connect(dbapi_con, con_record):
-    sqlkey = getpass.getpass
-    dbapi_con.execute('PRAGMA key={}'.format(sqlkey))
+
+class MyListener(PoolListener):
+    def connect(self, dbapi_con, con_record):
+        sqlkey = getpass.getpass()
+        dbapi_con.execute(('PRAGMA key={}'.format(sqlkey)))
+
 
 if encryption is True:
-    print("\n***PYPER TIMESHEET UTILITY***")()
+    print("\n***PYPER TIMESHEET UTILITY***")
     DB_NAME = ".timesheet.db"
-    engine = create_engine('sqlite+pysqlcipher:///.timesheet.db')
-    event.listen(engine, 'connect', _fk_pragma_on_connect)
+    engine = create_engine('sqlite:///.timesheet.db', listeners=[MyListener()])
 
 else:
     print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
@@ -137,7 +140,6 @@ def project_start(project_name, status, start_time, p_uuid):
     abbr = []
     joblist = []
     if encryption is True:
-        session.execute('PRAGMA key = {}'.format(sqlkey))
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
         job_sel = session.query(Job).order_by(Job.id.desc()).all()
 
