@@ -193,35 +193,7 @@ def get_job_by_abbr(abbr):
         job = jobs[0]
     else:
         return None
-        # TODO: no jobs found with that info -- what do we do?
     return job
-
-
-"""
-def clock_in():
-    now = datetime.datetime.now()
-    me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
-    job = get_job_by_abbr(input("Job abbreviation? "))  # set up jobs somewhere else?
-    c = Clocktime(time_in=now, employee=me, job=job)
-    session.add(c)
-    session.commit()
-
-
-def get_open_clktime(job, employee):
-    cq = session.query(Clocktime)
-    clktime = cq.filter_by(time_out=None, job=job, employee=employee).one()
-    # the `one` method will throw an error if there are more than one open
-    # clock times with that job and employee!
-    return clktime
-
-
-def clock_out():
-    job = get_job_by_abbr(input("Job abbr ?"))
-    now = datetime.now()
-    clktime = get_open_clktime(job, me)
-    clktime.time_out = now
-    session.commit()
-"""
 
 
 def round_to_nearest(num, b):
