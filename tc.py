@@ -60,7 +60,7 @@ class MyListener(PoolListener):
 if encryption is True:
     print("\n***PYPER TIMESHEET UTILITY***")
     DB_NAME = ".timesheet.db"
-    engine = create_engine('sqlite:///.timesheet.db', listeners=[MyListener()])
+    engine = create_engine('sqlite+pysqlcipher:///.timesheet.db', listeners=[MyListener()])
 
 else:
     print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
