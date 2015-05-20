@@ -4,12 +4,11 @@ from sqlalchemy import Column, Integer, String, Float, ForeignKey, \
 from sqlalchemy.types import DateTime
 from sqlalchemy.orm import relationship
 
-from sqa_uuid import UUID
-
 engine = create_engine('sqlite:///.timesheet.db')
 Base = declarative_base()
 
 __all__ = ['Clocktime', 'Employee', 'Job']
+
 
 class Clocktime(Base):
     """Table for clockin/clockout values
@@ -21,14 +20,15 @@ class Clocktime(Base):
 
     __tablename__ = "clocktimes"
     id = Column(Integer, primary_key=True)
-    p_uuid = Column(UUID)
+    p_uuid = Column(String)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
+    sub_task = Column(String(20))
     employee_id = Column(Integer, ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
     tworked = Column(Float)
     # employee = many to one relationship with Employee
-    # job = many to one relationship with Jobsu
+    # job = many to one relationship with Jobs
 
     # Should be able to query this, run it through the time_formatter function and output the results.
     # May have to perform some math on it first (add all timeworked per job, per day) and output to a table.
