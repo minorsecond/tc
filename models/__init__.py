@@ -9,6 +9,7 @@ Base = declarative_base()
 
 __all__ = ['Clocktime', 'Employee', 'Job']
 
+
 class Clocktime(Base):
     """Table for clockin/clockout values
 
@@ -21,6 +22,7 @@ class Clocktime(Base):
     id = Column(Integer, primary_key=True)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
+    sub_task = Column(String(20))
     employee_id = Column(Integer, ForeignKey('employees.id'))
     job_id = Column(Integer, ForeignKey('jobs.id'))
     tworked = Column(Float)

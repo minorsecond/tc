@@ -134,6 +134,8 @@ def project_start(project_name, status, start_time, p_uuid):
 
     abbr = []
     joblist = []
+    subtask = []
+
     if encryption is True:
         # Might have to go raw sql here.
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
@@ -146,6 +148,7 @@ def project_start(project_name, status, start_time, p_uuid):
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append(i.abbr)
+        subtask.append(i.sub_task)
     for i in job_sel:
         joblist.append(i.abbr)
 
@@ -161,19 +164,31 @@ def project_start(project_name, status, start_time, p_uuid):
         if abbrev in abbr:
             if abbrev in joblist:
                 job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
+                clktime = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(
+                    Timesheet.id.desc()).first()
                 print("Are you working on {0}? (Y/n)".format(job.name))
                 answer = query()
-
                 if answer:
-                    # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
-                    project_name = job.name
-                    if job.date.strftime('%Y-%m-%d') == today:
-                        p_uuid = job.p_uuid
-                        clockin(p_uuid, project_name)
+                    print("Are you working on sub-task {0}? (Y/n)".format(clktime.sub_task))
+                    answer = query()
+                    if answer:
+                        # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
+                        project_name = job.name
+                        if job.date.strftime('%Y-%m-%d') == today:
+                            p_uuid = job.p_uuid
+                            clockin(p_uuid, project_name, new_subtask)
 
+                        else:
+                            p_uuid = uuid.uuid4()
+                            job_newline(abbrev, status, start_time, p_uuid, project_name, False)
                     else:
-                        p_uuid = uuid.uuid4()
+                        new_subtask = input("\nEnter current sub-task: ")
                         job_newline(abbrev, status, start_time, p_uuid, project_name, False)
+
+                else:
+                    input("Problem with job id codes. Check config and change as necessary. Press enter to return"
+                          "to main menu")
+                    main_menu(project_name, status, start_time, p_uuid)
             else:
                 input("\n *** WARNING: Table discrepancy. Use config tool to check/edit as needed. Press enter"
                       "to return to main menu. \n")
