@@ -172,11 +172,12 @@ def project_start(project_name, status, start_time, p_uuid):
         if abbrev in abbr:
             if abbrev in joblist:
                 job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
-                clktime = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(
-                    Timesheet.id.desc()).first()
                 print("Are you working on {0}? (Y/n)".format(job.name))
                 answer = query()
                 if answer:
+                    p_uuid = job.p_uuid
+                    clktime = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(
+                        Clocktime.id.desc()).first()
                     print("Are you working on sub-task {0}? (Y/n)".format(clktime.sub_task))
                     answer = query()
                     if answer:
