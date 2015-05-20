@@ -79,8 +79,10 @@ def query():
     choice = input().lower()
     if choice in yes:
         return True
+
     elif choice in no:
         return False
+
     else:
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
@@ -100,6 +102,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task)
         try:
             p_rate = float(input("At what rate does this job pay? (Cents): "))
         except ValueError as e:
+
             try:
                 logging.debug(e)
                 print("Check input and try again\n")
@@ -107,6 +110,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task)
             except ValueError:
                 input("Press enter to return to main menu.")
                 main_menu(project_name, status, start_time, p_uuid)
+
         logging.debug("job id is {}".format(abbrev))
         logging.debug("project_name is {}".format(project_name))
 
@@ -119,6 +123,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task)
 
     if new_task is True:
         sub_task = input("Current sub-task: ")
+
     elif new_task is False:
         sub_task = new_task
 
@@ -155,8 +160,10 @@ def project_start(project_name, status, start_time, p_uuid):
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append(i.abbr)
+
     for i in job_sel:
         joblist.append(i.abbr)
+
     for i in clk_sel:
         subtask.append(i.sub_task)
 
@@ -164,25 +171,30 @@ def project_start(project_name, status, start_time, p_uuid):
         input("\nYou're already in a task. Press enter to return to main menu.\n\n")
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu(project_name, status, start_time, p_uuid)
+
     else:
         logging.debug("project_start called")
         abbrev = input('\nWhat are you working on? (Job ID): ')
 
         # Check if user has previously worked under this abbrev, and prompt to reuse information if so.
         if abbrev in abbr:
+
             if abbrev in joblist:
                 job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
                 print("Are you working on {0}? (Y/n)".format(job.name))
                 answer = query()
+
                 if answer:
                     p_uuid = job.p_uuid
                     clktime = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(
                         Clocktime.id.desc()).first()
                     print("Are you working on sub-task {0}? (Y/n)".format(clktime.sub_task))
                     answer = query()
+
                     if answer:
                         # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
                         project_name = job.name
+
                         if job.date.strftime('%Y-%m-%d') == today:
                             p_uuid = job.p_uuid
                             clockin(p_uuid, project_name, clktime.sub_task)
@@ -218,45 +230,22 @@ def project_start(project_name, status, start_time, p_uuid):
 
 def get_job_by_abbr(abbr):
     jobs = session.query(Job).filter_by(abbr=abbr).all()
+
     if len(jobs) > 1:
+
         # two jobs with the same abbr in here -- should this be unique? If not:
         for idx, job in enumerate(jobs, start=1):
             print("{idx}. {job.name}".format(idx=idx, job=job))
         selection = input("Which job? ")
         job = jobs[int(selection) - 1]
+
     elif len(jobs) == 1:
         job = jobs[0]
+
     else:
         return None
         # TODO: no jobs found with that info -- what do we do?
     return job
-
-
-"""
-def clock_in():
-    now = datetime.datetime.now()
-    me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
-    job = get_job_by_abbr(input("Job abbreviation? "))  # set up jobs somewhere else?
-    c = Clocktime(time_in=now, employee=me, job=job)
-    session.add(c)
-    session.commit()
-
-
-def get_open_clktime(job, employee):
-    cq = session.query(Clocktime)
-    clktime = cq.filter_by(time_out=None, job=job, employee=employee).one()
-    # the `one` method will throw an error if there are more than one open
-    # clock times with that job and employee!
-    return clktime
-
-
-def clock_out():
-    job = get_job_by_abbr(input("Job abbr ?"))
-    now = datetime.now()
-    clktime = get_open_clktime(job, me)
-    clktime.time_out = now
-    session.commit()
-"""
 
 
 def round_to_nearest(num, b):
@@ -280,6 +269,7 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     time_worked = session.query(Timesheet).all()
     print('Previous Jobs\n')
     print("\n{:<8} {:<15} {:<3}\n".format('Id', 'Job Name'))
+
     for i in time_worked:
         # jobs = {'abbr': i.abbr, 'name': i.name}
         print("{:<8} {:<15} {:<10}".format(i.abbr, i.name))
@@ -321,6 +311,7 @@ def clockout(project_name, status, p_uuid):
     if status == 0:
         input("You're not currently in a job. Press enter to return to main menu")
         main_menu(project_name, status, None, p_uuid)
+
     else:
         sel_job = session.query(Timesheet).filter(Timesheet.p_uuid == str(p_uuid)).first()
         job_name = sel_job.name
@@ -372,9 +363,11 @@ def clockout(project_name, status, p_uuid):
         tworked = session.query(Clocktime).filter(Clocktime.p_uuid == str(p_uuid)).order_by(Clocktime.id.desc()).all()
 
         for i in tworked:
+
             if i.tworked is not None:
                 worked = Decimal(i.tworked)
                 _sum_time += worked
+
             if debug == 1:
                 print("Debugging: sum of time for {0} is {1}".format(i.job_id, _sum_time))
                 input('Press enter to continue')
@@ -399,11 +392,14 @@ def get_week_days(year, week):
     :return: Timedelta, looks like: "2004-01-04" to be used in tables to differentiate weeks
     """
     d = date(year, 1, 1)
+
     if d.weekday() > 3:
         d = d + timedelta(7 - d.weekday())
+
     else:
         d = d - timedelta(d.weekday())
     dlt = timedelta(days=(week - 1) * 7)
+
     return d + dlt + timedelta(days=5)
 
 
@@ -420,35 +416,43 @@ def breaktime(status, p_uuid, project_name, start_time):
         input("\nYou're not currently in job. Press enter to return to main menu.")
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu(project_name, status, start_time, p_uuid)
+
     else:
         # Pull most recent (top) row from jobs table.
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).first()
         job_name = sel.name
+
         if debug == 1:
             print("DEBUGGING: JOB Database, most recent row:\n")
             print(sel)
+
             try:
                 print("\nUUID: {0}".format(p_uuid))
                 input("\nPress enter to continue.\n")
+
             except NameError:
                 print("p_uuid has not been created")
         # If not currently in job, prompt user for confirmation.
         print("Are you sure you want to stop working on {0} and take a break? (y/n)\n".format(job_name))
         answer = query()
+
         if answer:
             clockout(project_name, status, p_uuid)
             input("Press Enter to begin working again")
             print("Are you still working on '{}' ? (y/n)".format(job_name))
             answer = query()
+
             if answer:
                 # If user is returning to same job, start it back up again with same p_uuid.
                 now = datetime.now().strftime('%I:%M %p')
                 print("Resuming '{0}' at: '{1}\n' ".format(job_name, now))
                 clockin(p_uuid, project_name)
+
             else:
                 # If user is not restarting job, set status to 0 and return to menu.
                 status = 0
                 main_menu(project_name, status, start_time, p_uuid)
+
         else:
             main_menu(project_name, status, start_time, p_uuid)
             logging.info("Stopping task at {}".format(datetime.now()))
@@ -462,10 +466,12 @@ def time_formatter(time_input):
     """
     FAIL_MSG = "Please check input format and try again. (00:00)"
     split = time_input.split(":")
+
     if len(split) != 2:
         raise ValueError(FAIL_MSG)
     try:
         hours, minutes = map(int, split)
+
     except ValueError as e:
         raise ValueError(FAIL_MSG)
     minutes = round_to_nearest(minutes, 6)
@@ -488,6 +494,7 @@ def get_time(time):
         if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6',
                                   '7', '8', '9', '10', '11', '12'}:
             time = time.split(' ')[0] + ':' + '00' + ' ' + time.split(' ')[1]
+
         try:
             split_hour = time.split(':')[0]
             split_minute = time.split(':')[1]
@@ -495,7 +502,9 @@ def get_time(time):
             split_ap = time.split(' ')[1]
         except IndexError:
             print("\nInvalid Input.\n")
+
         try:
+
             if split_ap in {'a', 'A', 'p', 'P'}:
                 while split_ap in {'a', 'A'}:
                     split_ap = 'AM'
@@ -503,10 +512,13 @@ def get_time(time):
                     split_ap = 'PM'
                 _time_conc = split_hour + ':' + split_minute2 + ' ' + split_ap
                 time_conc = datetime.strptime(str(_time_conc), '%I:%M %p')
+
             else:
                 time_conc = datetime.strptime(time, '%I:%M %p')
+
         except NameError:
             print("Check format and try again.")
+
     else:
         print("\nYou didn't enter anything.\n")
         raise ValueError
@@ -541,6 +553,7 @@ def report(project_name, status, start_time, p_uuid):
     :return:
     """
     today = datetime.today().strftime('%Y-%m-%d')
+
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
         print("Timesheet Viewer\n"
@@ -549,6 +562,7 @@ def report(project_name, status, start_time, p_uuid):
               "3. Main Menu\n")
 
         answer = input('>>> ')
+
         if answer.startswith('1'):
             os.system('cls' if os.name == 'nt' else 'clear')
             current_week = get_week_days(day_start.year, week_num)
@@ -565,34 +579,42 @@ def report(project_name, status, start_time, p_uuid):
             # Print jobs for current week.
             for i in time_worked:
                 day = i.date.strftime('%Y-%m-%d')
+
                 if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
                     worked = str(i.worked)
+
                     if i.p_uuid == task['p_uuid']:
                         task = task['task']
                     print("{:<12} {:<18} {:<15} {:<10} {:<1}".format(i.abbr, i.name, task, worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
+
         elif answer.startswith('2'):
             os.system('cls' if os.name == 'nt' else 'clear')
             # Queries job table, pulling all rows.
             time_worked = session.query(Timesheet).all()
             tasks = session.query(Clocktime).all()
+
             for i in tasks:
                 task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
             print("\n  Daily Timesheet Report\n")
             print("\n{:<12} {:<18} {:15} {:<10}".format('Id', 'Job Name', 'Task', 'Hours'))
             print(
                 "{:<12} {:<18} {:<15} {:<10}".format('========', '==============', '==========', '=====', '=========='))
+
             # Print jobs for current day.
             for i in time_worked:
                 worked = str(i.worked)
+
                 if i.p_uuid == task['p_uuid']:
                     task = task['task']
                 print("{:<12} {:<18} {:<15} {:<10}".format(i.abbr, i.name, task, worked))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
+
         elif answer.startswith('3'):
             main_menu(project_name, status, start_time, p_uuid)
+
         else:
             report(project_name, status, start_time, p_uuid)
 
@@ -625,6 +647,7 @@ def config(project_name, status, start_time, p_uuid):
         for i in sel_clk:
             day = i.time_in.strftime('%Y-%m-%d')
             week = i.time_in.isocalendar()[1]
+
             if week == current_week:
                 print('ID: {:<1}, Time in: {:<1}, Time out: {:<2}, Day: {:<3}'.format(i.id, i.time_in, i.time_out, day))
                 clk_list.append(i.id)
@@ -639,6 +662,7 @@ def config(project_name, status, start_time, p_uuid):
         # Create list of current jobs for duplicate checking.
         job_sel = session.query(Job).order_by(Job.id.desc()).all()
         joblist = []
+
         for i in job_sel:
             joblist.append(i.abbr)
 
@@ -646,6 +670,7 @@ def config(project_name, status, start_time, p_uuid):
             fields = ['name', 'abbr', 'rate']
             kwargs = {field: input("{}: ".format(field)) for
                       field in fields}
+
             if kwargs['name'] not in joblist:
                 # store rate as int of cents/hour
                 kwargs['rate'] = int(kwargs['rate']) * 100
@@ -686,21 +711,27 @@ def config(project_name, status, start_time, p_uuid):
               "2. ID\n"
               "3. Rate")
         answer = input("What do you want to change? ")
+
         if answer.startswith('1'):  # Change name
             val_to_change = 'name'
+
         elif answer.startswith('2'):  # Change abbr
             val_to_change = 'abbr'
+
         elif answer.startswith('3'):  # Change rate
             val_to_change = 'rate'
         old_val = getattr(job_to_edit, val_to_change)
         new_val = input("What do you want to change it to? ")
+
         if val_to_change == 'rate':
             new_val = int(float(new_val) * 100)
         print(job_to_edit)
         print("Changing {} to {}".format(old_val, new_val))
         confirm = input("Are you sure? (y/n): ")
+
         if confirm == 'y':
             change_table_value(job_to_edit, val_to_change, new_val)
+
         else:
             print("Cancelled")
 
@@ -741,19 +772,24 @@ def config(project_name, status, start_time, p_uuid):
                       "2. Edit Job\n"
                       "3. Back\n")
                 answer = input(">>> ")
+
                 if answer.startswith('1'):
                     new_job = add_job()
                     name = new_job['name']
                     print("\nWould you like to begin working on {0}? (Y/n)".format(name))
                     answer = query()
+
                     if answer:
                         abbrev = str(new_job['abbr'])
                         job_newline(abbrev, status, start_time, p_uuid, None, False)
                     else:
                         main_menu(project_name, status, start_time, p_uuid)
+
                 elif answer.startswith('2'):
                     edit_job(jobs)
+
                 elif answer.startswith('4'):
+
                     try:
                         session.commit()
                     except Exception as e:
@@ -763,28 +799,37 @@ def config(project_name, status, start_time, p_uuid):
                               "Rolling back database to last good state.")
                         session.rollback()
                     break  # break the loop and go up a level
+
                 else:
                     print("Invalid selection")
+
         elif answer.startswith('2'):
             clocktime_editor()
+
         elif answer.startswith('3'):
             # TODO: Configure employees
             raise NotImplementedError()
+
         elif answer.startswith('4'):
             print('Do you wish to delete the tables? (Y/n)\n')
             answer = query()
+
             if answer:
                 print('WARNING - THIS WILL DELETE ALL DATA. PROCEED? (Y/n)\n')
                 answer = query()
+
                 if answer:
                     session.query(Clocktime).delete()
                     session.query(Job).delete()
                     session.query(Timesheet).delete()
                     session.commit()
+
                 else:
                     main_menu(project_name, status, start_time, p_uuid)
+
             else:
                 main_menu(project_name, status, start_time, p_uuid)
+
         elif answer.startswith('5'):
             raise NotImplementedError
 
@@ -803,6 +848,7 @@ def export_timesheet(project_name, status, start_time, p_uuid):
     time_worked = session.query(Timesheet).all()
     header = ('Id', 'Job Name', 'Hours Worked', 'Date', 'Week Ending')
     outcsv.writerow(header)
+
     for i in time_worked:
         outcsv.writerow([i.abbr, i.name, i.worked, datetime.date(i.date), i.week])
     outfile.close()
@@ -822,11 +868,14 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
               "2. Export CSV Timesheet\n")
 
         answer = input('>>> ')
+
         if answer.startswith('1'):
             # TODO: CSV Parsing
             raise NotImplementedError
+
         elif answer.startswith('2'):
             export_timesheet(project_name, status, start_time, p_uuid)
+
         else:
             main_menu(project_name, status, start_time, p_uuid)
 
@@ -834,6 +883,7 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
 def sqlite3_backup(action):
     """Create timestamped database copy, preferably use a backup directory."""
     path = os.path.dirname(os.path.realpath('tc.py'))
+
     if not os.path.isdir('.backup'):
         os.makedirs('.backup')
 
@@ -850,12 +900,15 @@ def clean_data():
     print("\n------------------------------")
 
     path = os.path.join(os.path.dirname(os.path.realpath('tc.py')), '.backup')
+
     for filename in os.listdir(path):
         file_path = os.path.join(path, filename)
         s = os.stat(file_path).st_ctime
         file_time = datetime.fromtimestamp(s)
+
         # Delete file if over 2 weeks old
         if os.path.isfile(file_path):
+
             if file_time < (datetime.now() - timedelta(days=2)):
                 os.remove(file_path)
                 print("Deleting {}...".format(file_path))
@@ -887,25 +940,35 @@ def main_menu(project_name, status, start_time, p_uuid):
               "6. View Timesheets\n"
               "7. Import/Export Timesheet\n"
               "8. Quit\n")
+
         if status == 1:
             print("*** Current job {0} started at {1}. ***\n".format(project_name, start_time.strftime('%I:%M %p')))
+
         else:
             print("*** Not currently in a job. ***\n")
         answer = input(">>> ")
+
         if answer.startswith('1'):
             project_start(project_name, status, start_time, p_uuid)
+
         if answer.startswith('2'):
             breaktime(status, p_uuid, project_name, start_time)
+
         if answer.startswith('3'):
             clockout(project_name, status, p_uuid)
+
         if answer.startswith('4'):
             config(project_name, status, start_time, p_uuid)
+
         if answer.startswith('5'):
             total_time(project_name, status, start_time, p_uuid)
+
         if answer.startswith('6'):
             report(project_name, status, start_time, p_uuid)
+
         if answer.startswith('7'):
             imp_exp_sub(project_name, status, start_time, p_uuid)
+
         if answer.startswith('8'):
             sys.exit()
 
