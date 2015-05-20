@@ -176,7 +176,7 @@ def project_start(project_name, status, start_time, p_uuid):
                         project_name = job.name
                         if job.date.strftime('%Y-%m-%d') == today:
                             p_uuid = job.p_uuid
-                            clockin(p_uuid, project_name, new_subtask)
+                            clockin(p_uuid, project_name, clktime.sub_task)
 
                         else:
                             p_uuid = uuid.uuid4()
@@ -274,7 +274,7 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     main_menu(project_name, status, start_time, p_uuid)
 
 
-def clockin(p_uuid, project_name):
+def clockin(p_uuid, project_name, sub_task):
     """
     Adds time, job, date, uuid data to tables for time tracking.
 
@@ -284,7 +284,7 @@ def clockin(p_uuid, project_name):
     bk_reason = 'clockin_{0}'.format(project_name)
     sqlite3_backup(bk_reason)
 
-    new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
+    new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now(), sub_task=sub_task)
     session.add(new_task_clock)
     session.commit()
     main_menu(project_name, 1, datetime.now(), p_uuid)
