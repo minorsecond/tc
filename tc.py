@@ -188,22 +188,29 @@ def project_start(project_name, status, start_time, p_uuid):
                             clockin(p_uuid, project_name, clktime.sub_task)
 
                         else:
+                            # Job is same task, on the same day. Simply restart it.
                             p_uuid = uuid.uuid4()
                             job_newline(abbrev, status, start_time, p_uuid, project_name, False, clktime.sub_task)
                     else:
+                        # Job is same task, on a different day. Start a new line in job table.
                         new_subtask = input("\nEnter current sub-task: ")
                         job_newline(abbrev, status, start_time, p_uuid, project_name, False, True)
 
                 else:
+                    # The abbrev in job table doesn't match reality. User needs to figure out why and edit job table
+                    # using config function.
                     input("Problem with job id codes. Check config and change as necessary. Press enter to return"
                           "to main menu")
                     main_menu(project_name, status, start_time, p_uuid)
             else:
+                # Abbrev is in timesheet but not job table. Something went wrong. User needs to figure out why and
+                # edit tables to fix.
                 input("\n *** WARNING: Table discrepancy. Use config tool to check/edit as needed. Press enter"
                       "to return to main menu. \n")
                 main_menu(project_name, status, start_time, p_uuid)
 
         else:
+            # Start new task
             p_uuid = uuid.uuid4()
             job_newline(abbrev, status, start_time, p_uuid, project_name, True, True)
 
