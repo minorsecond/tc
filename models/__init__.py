@@ -20,6 +20,7 @@ class Clocktime(Base):
 
     __tablename__ = "clocktimes"
     id = Column(Integer, primary_key=True)
+    p_uuid = Column(String)
     time_in = Column(DateTime)
     time_out = Column(DateTime)
     sub_task = Column(String(20))

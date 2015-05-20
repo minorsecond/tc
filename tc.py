@@ -85,7 +85,7 @@ def query():
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
+def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task):
     """
     Write new db row to job table, for starting new project or new week.
     :return:
@@ -117,10 +117,15 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
         new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
         session.add(new_job)
 
+    if new_task is True:
+        sub_task = input("Current sub-task: ")
+    elif new_task is False:
+        sub_task = new_task
+
     session.add(new_task_time)
     session.commit()
 
-    clockin(p_uuid, project_name)
+    clockin(p_uuid, project_name, sub_task)
 
 
 def project_start(project_name, status, start_time, p_uuid):
@@ -140,17 +145,20 @@ def project_start(project_name, status, start_time, p_uuid):
         # Might have to go raw sql here.
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
         job_sel = session.query(Job).order_by(Job.id.desc()).all()
+        clk_sel = session.query(Clocktime).order_by(Clocktime.id.desc()).all()
 
     else:
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
         job_sel = session.query(Job).order_by(Job.id.desc()).all()
+        clk_sel = session.query(Clocktime).order_by(Clocktime.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append(i.abbr)
-        subtask.append(i.sub_task)
     for i in job_sel:
         joblist.append(i.abbr)
+    for i in clk_sel:
+        subtask.append(i.sub_task)
 
     if status == 1:
         input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -180,10 +188,10 @@ def project_start(project_name, status, start_time, p_uuid):
 
                         else:
                             p_uuid = uuid.uuid4()
-                            job_newline(abbrev, status, start_time, p_uuid, project_name, False)
+                            job_newline(abbrev, status, start_time, p_uuid, project_name, False, clktime.sub_task)
                     else:
                         new_subtask = input("\nEnter current sub-task: ")
-                        job_newline(abbrev, status, start_time, p_uuid, project_name, False)
+                        job_newline(abbrev, status, start_time, p_uuid, project_name, False, True)
 
                 else:
                     input("Problem with job id codes. Check config and change as necessary. Press enter to return"
@@ -196,8 +204,7 @@ def project_start(project_name, status, start_time, p_uuid):
 
         else:
             p_uuid = uuid.uuid4()
-            job_newline(abbrev, status, start_time, p_uuid, None, True)
-
+            job_newline(abbrev, status, start_time, p_uuid, project_name, True, True)
 
 # TODO: Implement these functions
 
@@ -284,7 +291,7 @@ def clockin(p_uuid, project_name, sub_task):
     bk_reason = 'clockin_{0}'.format(project_name)
     sqlite3_backup(bk_reason)
 
-    new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now(), sub_task=sub_task)
+    new_task_clock = Clocktime(p_uuid=str(p_uuid), time_in=datetime.now(), sub_task=sub_task)
     session.add(new_task_clock)
     session.commit()
     main_menu(project_name, 1, datetime.now(), p_uuid)
@@ -354,7 +361,7 @@ def clockout(project_name, status, p_uuid):
         session.commit()
 
         # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
-        tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
+        tworked = session.query(Clocktime).filter(Clocktime.p_uuid == str(p_uuid)).order_by(Clocktime.id.desc()).all()
 
         for i in tworked:
             if i.tworked is not None:
