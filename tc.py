@@ -170,33 +170,6 @@ def get_job_by_abbr(abbr):
     return job
 
 
-"""
-def clock_in():
-    now = datetime.datetime.now()
-    me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
-    job = get_job_by_abbr(input("Job abbreviation? "))  # set up jobs somewhere else?
-    c = Clocktime(time_in=now, employee=me, job=job)
-    session.add(c)
-    session.commit()
-
-
-def get_open_clktime(job, employee):
-    cq = session.query(Clocktime)
-    clktime = cq.filter_by(time_out=None, job=job, employee=employee).one()
-    # the `one` method will throw an error if there are more than one open
-    # clock times with that job and employee!
-    return clktime
-
-
-def clock_out():
-    job = get_job_by_abbr(input("Job abbr ?"))
-    now = datetime.now()
-    clktime = get_open_clktime(job, me)
-    clktime.time_out = now
-    session.commit()
-"""
-
-
 def round_to_nearest(num, b):
     """Rounds num to the nearest base
 
@@ -609,14 +582,48 @@ def config(project_name, status, start_time, p_uuid):
         """Simply changes table.attr = new_val"""
         setattr(table, attr, new_val)
 
+    def db_editor():
+        """
+        Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
+        Should flag row so that it's known that it was manually edited.
+        :return:
+        """
+        sqlite3_backup()
+        # Set current week, and lists
+        current_week = get_week_days(day_start.year, week_num)
+        job_list = []
+        clk_list = []
+
+        # Sort timesheet and clocktime tables by date.
+        sel_job = session.query(Timesheet).order_by(Timesheet.date.desc()).all()
+        sel_clk = session.query(Clocktime).order_by(Clocktime.time_in.desc()).all()
+
+        # TODO: Create menu.
+        # Print clocktime and job rows.
+        for i in sel_job:
+            day = i.date.strftime('%Y-%m-%d')
+            if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+                print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+                job_list.append(i.id)
+
+        for i in sel_clk:
+            day = i.time_in.strftime('%Y-%m-%d')
+            wee = i.time_in
+            if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+                print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+                clk_list.append(i.id)
+        print(job_list)
+        print(clk_list)
+
     while True:
         print("What do you want to configure?\n"
               "1. Jobs\n"
               "2. Employees\n"
-              "3. Delete Tables\n"
-              "4. Back Up Tables\n"
-              "5. Back\n")
-        answer = input(">>> ")
+              "3. Edit Tables\n"
+              "4. Delete Tables\n"
+              "5. Back Up Tables\n"
+              "6. Back\n")
+        answer = str(input(">>> "))
 
         if answer.startswith('1'):
             while True:
@@ -656,6 +663,9 @@ def config(project_name, status, start_time, p_uuid):
             # TODO: Configure employees
             raise NotImplementedError()
         elif answer.startswith('3'):
+            # TODO: Configure employees
+            db_editor()
+        elif answer.startswith('4'):
             print('Do you wish to delete the tables? (Y/n)\n')
             answer = query()
             if answer:
@@ -670,10 +680,10 @@ def config(project_name, status, start_time, p_uuid):
                     main_menu(project_name, status, start_time, p_uuid)
             else:
                 main_menu(project_name, status, start_time, p_uuid)
-        elif answer.startswith('4'):
+        elif answer.startswith('5'):
             raise NotImplementedError
 
-        elif answer.startswith('5'):
+        elif answer.startswith('6'):
             break  # kick out of config function
 
 
@@ -717,42 +727,6 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
 
 
 # TODO: Write the db_editor script.
-def db_editor():
-    """
-    Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
-    Should flag row so that it's known that it was manually edited.
-    :return:
-    """
-    sqlite3_backup()
-    # Set current week, and lists
-    current_week = get_week_days(day_start.year, week_num)
-    job_list = []
-    clk_list = []
-
-    # Create backup of DB, entitled 'backup_data'.
-    session.add(DB_NAME)
-    db_backup = DB_NAME
-    db_backup.tbl_name = 'backup_data'
-    session.add(db_backup)
-    session.commit()
-
-    # Sort Job and clocktime tables by date.
-    sel_job = session.query(Timesheet).order_by(Timesheet.date.desc()).all()
-    sel_clk = session.query(Clocktime).order_by(Clocktime.date.desc()).all()
-
-    # TODO: Create menu.
-    # Print clocktime and job rows.
-    for i in sel_job:
-        day = i.date.strftime('%Y-%m-%d')
-        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-            print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
-            job_list.append(i.id)
-
-    for i in sel_clk:
-        day = i.date.strftime('%Y-%m-%d')
-        if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-            print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
-            clk_list.append(i.id)
 
 
 def sqlite3_backup():
@@ -816,7 +790,7 @@ def main_menu(project_name, status, start_time, p_uuid):
             print("*** Current job {0} started at {1}. ***\n".format(project_name, start_time.strftime('%I:%M %p')))
         else:
             print("*** Not currently in a job. ***\n")
-        answer = input(">>> ")
+        answer = str(input(">>> "))
         if answer.startswith('1'):
             project_start(project_name, status, start_time, p_uuid)
         if answer.startswith('2'):
