@@ -13,8 +13,12 @@ of an hour, and to generate reports.
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
-from datetime import datetime, timedelta, date
+from __future__ import print_function
 import sys
+
+if sys.version_info.major == 2:
+    input = raw_input
+from datetime import datetime, timedelta, date
 import os
 import os.path
 import logging
@@ -22,6 +26,12 @@ import uuid
 import csv
 from decimal import *
 import shutil
+try:
+    from pysqlcipher import dbapi2 as sqlite
+    encryption = True
+except ImportError:
+    encryption = False
+    pass
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -37,7 +47,19 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
-engine = create_engine('sqlite:///{}'.format(DB_NAME))
+# TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
+# security clearance reasons.
+
+if encryption is True:
+    print("\n***PYPER TIMESHEET UTILITY***")
+    DB_NAME = ".timesheet.db"
+    engine = create_engine('sqlite:///.timesheet.db')
+
+else:
+    print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
+    DB_NAME = ".timesheet.db"
+    engine = create_engine('sqlite:///{}'.format(DB_NAME))
+
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
@@ -63,14 +85,16 @@ def query():
         sys.stdout.write("Please respond with 'yes' or 'no'")
 
 
-def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
+def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task):
     """
     Write new db row to job table, for starting new project or new week.
     :return:
     """
     current_week = get_week_days(day_start.year, week_num)
     today = datetime.today()
-    sqlite3_backup()
+    bk_reason = 'pre-start_{0}'.format(project_name)
+    sqlite3_backup(bk_reason)
+    p_rate = 'NULL'
     if new is True:
         project_name = input("What is the name of this project?: ").upper()
         try:
@@ -89,13 +113,19 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
     # Set up the table row and commit.
     new_task_time = Timesheet(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, date=today,
                        week=current_week)
-    new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
+    if new is True:
+        new_job = Job(p_uuid=str(p_uuid), abbr=abbrev, name=project_name, rate=p_rate)
+        session.add(new_job)
+
+    if new_task is True:
+        sub_task = input("Current sub-task: ")
+    elif new_task is False:
+        sub_task = new_task
 
     session.add(new_task_time)
-    session.add(new_job)
     session.commit()
 
-    clockin(p_uuid, project_name)
+    clockin(p_uuid, project_name, sub_task)
 
 
 def project_start(project_name, status, start_time, p_uuid):
@@ -106,16 +136,29 @@ def project_start(project_name, status, start_time, p_uuid):
     project name, project abbrev and id for use in other
     functions.
     """
+
     abbr = []
     joblist = []
-    sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
-    job_sel = session.query(Job).order_by(Job.id.desc()).all()
+    subtask = []
+
+    if encryption is True:
+        # Might have to go raw sql here.
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
+        clk_sel = session.query(Clocktime).order_by(Clocktime.id.desc()).all()
+
+    else:
+        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
+        clk_sel = session.query(Clocktime).order_by(Clocktime.id.desc()).all()
 
     # Create a list of job ids, to check if new job has already been entered.
     for i in sel:
         abbr.append(i.abbr)
     for i in job_sel:
         joblist.append(i.abbr)
+    for i in clk_sel:
+        subtask.append(i.sub_task)
 
     if status == 1:
         input("\nYou're already in a task. Press enter to return to main menu.\n\n")
@@ -131,26 +174,45 @@ def project_start(project_name, status, start_time, p_uuid):
                 job = session.query(Timesheet).filter(Timesheet.abbr == abbrev).order_by(Timesheet.id.desc()).first()
                 print("Are you working on {0}? (Y/n)".format(job.name))
                 answer = query()
-
                 if answer:
-                    # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
-                    project_name = job.name
-                    if job.date.strftime('%Y-%m-%d') == today:
-                        p_uuid = job.p_uuid
-                        clockin(p_uuid, project_name)
+                    p_uuid = job.p_uuid
+                    clktime = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(
+                        Clocktime.id.desc()).first()
+                    print("Are you working on sub-task {0}? (Y/n)".format(clktime.sub_task))
+                    answer = query()
+                    if answer:
+                        # Check if the job entry is for current day. If not, write to new line to enable reporting by day.
+                        project_name = job.name
+                        if job.date.strftime('%Y-%m-%d') == today:
+                            p_uuid = job.p_uuid
+                            clockin(p_uuid, project_name, clktime.sub_task)
 
+                        else:
+                            # Job is same task, on the same day. Simply restart it.
+                            p_uuid = uuid.uuid4()
+                            job_newline(abbrev, status, start_time, p_uuid, project_name, False, clktime.sub_task)
                     else:
-                        p_uuid = uuid.uuid4()
-                        job_newline(abbrev, status, start_time, p_uuid, project_name, False)
+                        # Job is same task, on a different day. Start a new line in job table.
+                        new_subtask = input("\nEnter current sub-task: ")
+                        job_newline(abbrev, status, start_time, p_uuid, project_name, False, True)
+
+                else:
+                    # The abbrev in job table doesn't match reality. User needs to figure out why and edit job table
+                    # using config function.
+                    input("Problem with job id codes. Check config and change as necessary. Press enter to return"
+                          "to main menu")
+                    main_menu(project_name, status, start_time, p_uuid)
             else:
+                # Abbrev is in timesheet but not job table. Something went wrong. User needs to figure out why and
+                # edit tables to fix.
                 input("\n *** WARNING: Table discrepancy. Use config tool to check/edit as needed. Press enter"
                       "to return to main menu. \n")
                 main_menu(project_name, status, start_time, p_uuid)
 
         else:
+            # Start new task
             p_uuid = uuid.uuid4()
-            job_newline(abbrev, status, start_time, p_uuid, None, True)
-
+            job_newline(abbrev, status, start_time, p_uuid, project_name, True, True)
 
 # TODO: Implement these functions
 
@@ -168,6 +230,33 @@ def get_job_by_abbr(abbr):
         return None
         # TODO: no jobs found with that info -- what do we do?
     return job
+
+
+"""
+def clock_in():
+    now = datetime.datetime.now()
+    me = models.Employee(firstname="My", lastname="Name")  # or load from config or etc
+    job = get_job_by_abbr(input("Job abbreviation? "))  # set up jobs somewhere else?
+    c = Clocktime(time_in=now, employee=me, job=job)
+    session.add(c)
+    session.commit()
+
+
+def get_open_clktime(job, employee):
+    cq = session.query(Clocktime)
+    clktime = cq.filter_by(time_out=None, job=job, employee=employee).one()
+    # the `one` method will throw an error if there are more than one open
+    # clock times with that job and employee!
+    return clktime
+
+
+def clock_out():
+    job = get_job_by_abbr(input("Job abbr ?"))
+    now = datetime.now()
+    clktime = get_open_clktime(job, me)
+    clktime.time_out = now
+    session.commit()
+"""
 
 
 def round_to_nearest(num, b):
@@ -200,13 +289,17 @@ def prev_jobs(project_name, status, start_time, p_uuid):
     main_menu(project_name, status, start_time, p_uuid)
 
 
-def clockin(p_uuid, project_name):
+def clockin(p_uuid, project_name, sub_task):
     """
     Adds time, job, date, uuid data to tables for time tracking.
 
     :return: None
     """
-    new_task_clock = Clocktime(p_uuid=p_uuid, time_in=datetime.now())
+    """Backup db"""
+    bk_reason = 'clockin_{0}'.format(project_name)
+    sqlite3_backup(bk_reason)
+
+    new_task_clock = Clocktime(p_uuid=str(p_uuid), time_in=datetime.now(), sub_task=sub_task)
     session.add(new_task_clock)
     session.commit()
     main_menu(project_name, 1, datetime.now(), p_uuid)
@@ -223,8 +316,7 @@ def clockout(project_name, status, p_uuid):
     context = Context(prec=3, rounding=ROUND_DOWN)
     setcontext(context)
     _sum_time = Decimal(0.0)
-    sqlite3_backup()
-
+    sqlite3_backup('clockout')
 
     if status == 0:
         input("You're not currently in a job. Press enter to return to main menu")
@@ -277,7 +369,7 @@ def clockout(project_name, status, p_uuid):
         session.commit()
 
         # Get all rows in clocktime for current job, by p_uuid and then sum these tenths of an hour.
-        tworked = session.query(Clocktime).filter(Clocktime.p_uuid == p_uuid).order_by(Clocktime.id.desc()).all()
+        tworked = session.query(Clocktime).filter(Clocktime.p_uuid == str(p_uuid)).order_by(Clocktime.id.desc()).all()
 
         for i in tworked:
             if i.tworked is not None:
@@ -462,31 +554,41 @@ def report(project_name, status, start_time, p_uuid):
             current_week = get_week_days(day_start.year, week_num)
             # Queries job table, pulling all rows.
             time_worked = session.query(Timesheet).all()
+            tasks = session.query(Clocktime).all()
+            for i in tasks:
+                task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
             print("\n  Weekly Timesheet Report\n")
-            print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
-            print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
+            print("\n{:<12} {:<18} {:15} {:<10} {:<1}".format('Id', 'Job Name', 'Task', 'Hours', 'Date'))
+            print("{:<12} {:<18} {:<15} {:<10} {:<1}".format('========', '==============', '==========', '=====',
+                                                             '=========='))
 
             # Print jobs for current week.
             for i in time_worked:
                 day = i.date.strftime('%Y-%m-%d')
                 if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
                     worked = str(i.worked)
-                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, worked, day))
+                    if i.p_uuid == task['p_uuid']:
+                        task = task['task']
+                    print("{:<12} {:<18} {:<15} {:<10} {:<1}".format(i.abbr, i.name, task, worked, day))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('2'):
             os.system('cls' if os.name == 'nt' else 'clear')
             # Queries job table, pulling all rows.
             time_worked = session.query(Timesheet).all()
+            tasks = session.query(Clocktime).all()
+            for i in tasks:
+                task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
             print("\n  Daily Timesheet Report\n")
-            print("\n{:<12} {:<18} {:<10} {:<1}".format('Id', 'Job Name', 'Hours', 'Date'))
-            print("{:<12} {:<18} {:<10} {:<1}".format('========', '==============', '=====', '=========='))
+            print("\n{:<12} {:<18} {:15} {:<10}".format('Id', 'Job Name', 'Task', 'Hours'))
+            print(
+                "{:<12} {:<18} {:<15} {:<10}".format('========', '==============', '==========', '=====', '=========='))
             # Print jobs for current day.
             for i in time_worked:
                 worked = str(i.worked)
-                if i.date.strftime('%Y-%m-%d') == today:
-                    day = i.date.strftime('%Y-%m-%d')
-                    print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
+                if i.p_uuid == task['p_uuid']:
+                    task = task['task']
+                print("{:<12} {:<18} {:<15} {:<10}".format(i.abbr, i.name, task, worked))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
         elif answer.startswith('3'):
@@ -500,18 +602,56 @@ def config(project_name, status, start_time, p_uuid):
 
     global session
 
+    # TODO: Write the db_editor script.
+    def clocktime_editor():
+        """
+        Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
+        Should flag row so that it's known that it was manually edited.
+        :return:
+        """
+        # Set current week, and lists
+        current_week = datetime.now().isocalendar()[1]
+        clk_list = []
+
+        # Create backup of DB, entitled 'backup_data'.
+        sqlite3_backup('clocktime_edit')
+
+        # Sort Job and clocktime tables by date.
+        sel_clk = session.query(Clocktime).order_by(Clocktime.time_in.desc()).all()
+
+        # TODO: Create menu.
+        # Print clocktime and job rows.
+
+        for i in sel_clk:
+            day = i.time_in.strftime('%Y-%m-%d')
+            week = i.time_in.isocalendar()[1]
+            if week == current_week:
+                print('ID: {:<1}, Time in: {:<1}, Time out: {:<2}, Day: {:<3}'.format(i.id, i.time_in, i.time_out, day))
+                clk_list.append(i.id)
+
     # TODO: refactor these out into module-level so they're unit-testable
     def add_job(**kwargs):
         """Helper function to create Jobs
 
         prompt for fields if none are provided
         """
+
+        # Create list of current jobs for duplicate checking.
+        job_sel = session.query(Job).order_by(Job.id.desc()).all()
+        joblist = []
+        for i in job_sel:
+            joblist.append(i.abbr)
+
         if not kwargs:
             fields = ['name', 'abbr', 'rate']
             kwargs = {field: input("{}: ".format(field)) for
                       field in fields}
-            # store rate as int of cents/hour
-            kwargs['rate'] = int(kwargs['rate']) * 100
+            if kwargs['name'] not in joblist:
+                # store rate as int of cents/hour
+                kwargs['rate'] = int(kwargs['rate']) * 100
+            else:
+                input('Job already exists. Press enter to return to main menu.')
+                main_menu(project_name, status, start_time, p_uuid)
         new_job = Job(**kwargs)
         session.add(new_job)
         return kwargs
@@ -582,48 +722,15 @@ def config(project_name, status, start_time, p_uuid):
         """Simply changes table.attr = new_val"""
         setattr(table, attr, new_val)
 
-    def db_editor():
-        """
-        Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
-        Should flag row so that it's known that it was manually edited.
-        :return:
-        """
-        sqlite3_backup()
-        # Set current week, and lists
-        current_week = get_week_days(day_start.year, week_num)
-        job_list = []
-        clk_list = []
-
-        # Sort timesheet and clocktime tables by date.
-        sel_job = session.query(Timesheet).order_by(Timesheet.date.desc()).all()
-        sel_clk = session.query(Clocktime).order_by(Clocktime.time_in.desc()).all()
-
-        # TODO: Create menu.
-        # Print clocktime and job rows.
-        for i in sel_job:
-            day = i.date.strftime('%Y-%m-%d')
-            if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-                print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
-                job_list.append(i.id)
-
-        for i in sel_clk:
-            day = i.time_in.strftime('%Y-%m-%d')
-            wee = i.time_in
-            if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
-                print("{:<12} {:<18} {:<10} {:<1}".format(i.abbr, i.name, i.worked, day))
-                clk_list.append(i.id)
-        print(job_list)
-        print(clk_list)
-
     while True:
         print("What do you want to configure?\n"
               "1. Jobs\n"
-              "2. Employees\n"
-              "3. Edit Tables\n"
+              "2. Clocktimes\n"
+              "3. Employees\n"
               "4. Delete Tables\n"
               "5. Back Up Tables\n"
               "6. Back\n")
-        answer = str(input(">>> "))
+        answer = input(">>> ")
 
         if answer.startswith('1'):
             while True:
@@ -635,7 +742,6 @@ def config(project_name, status, start_time, p_uuid):
                       "3. Back\n")
                 answer = input(">>> ")
                 if answer.startswith('1'):
-                    # TODO: do something with new_job? What?
                     new_job = add_job()
                     name = new_job['name']
                     print("\nWould you like to begin working on {0}? (Y/n)".format(name))
@@ -660,11 +766,10 @@ def config(project_name, status, start_time, p_uuid):
                 else:
                     print("Invalid selection")
         elif answer.startswith('2'):
-            # TODO: Configure employees
-            raise NotImplementedError()
+            clocktime_editor()
         elif answer.startswith('3'):
             # TODO: Configure employees
-            db_editor()
+            raise NotImplementedError()
         elif answer.startswith('4'):
             print('Do you wish to delete the tables? (Y/n)\n')
             answer = query()
@@ -726,16 +831,13 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
             main_menu(project_name, status, start_time, p_uuid)
 
 
-# TODO: Write the db_editor script.
-
-
-def sqlite3_backup():
+def sqlite3_backup(action):
     """Create timestamped database copy, preferably use a backup directory."""
     path = os.path.dirname(os.path.realpath('tc.py'))
     if not os.path.isdir('.backup'):
         os.makedirs('.backup')
 
-    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) +
+    backup_file = os.path.join('.backup', os.path.basename(DB_NAME) + '_' + action +
                                datetime.now().strftime("-%Y%m%d-%H%M%S"))
 
     # Make new backup file
@@ -746,7 +848,6 @@ def clean_data():
     """Delete files older than NO_OF_DAYS days"""
 
     print("\n------------------------------")
-    print("Cleaning up old backups")
 
     path = os.path.join(os.path.dirname(os.path.realpath('tc.py')), '.backup')
     for filename in os.listdir(path):
@@ -769,7 +870,7 @@ def db_recover(status):
     """
 
     # if status is 0:
-    sqlite3_backup()
+    sqlite3_backup('db_recover')
 
 
 def main_menu(project_name, status, start_time, p_uuid):
@@ -790,7 +891,7 @@ def main_menu(project_name, status, start_time, p_uuid):
             print("*** Current job {0} started at {1}. ***\n".format(project_name, start_time.strftime('%I:%M %p')))
         else:
             print("*** Not currently in a job. ***\n")
-        answer = str(input(">>> "))
+        answer = input(">>> ")
         if answer.startswith('1'):
             project_start(project_name, status, start_time, p_uuid)
         if answer.startswith('2'):
@@ -820,7 +921,7 @@ if __name__ == "__main__":
     logging.basicConfig(filename=LOGFILE,
                         format=FORMATTER_STRING,
                         level=LOGLEVEL)
-    sqlite3_backup()
+    sqlite3_backup('startup')
     clean_data()
     os.system('cls' if os.name == 'nt' else 'clear')
     main_menu('None', 0, 0, 0)
