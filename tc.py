@@ -15,6 +15,8 @@ of an hour, and to generate reports.
 
 from __future__ import print_function
 import sys
+
+sys.settrace
 import getpass as getpass
 if sys.version_info.major == 2: input = raw_input
 from datetime import datetime, timedelta, date
@@ -51,21 +53,21 @@ week_num = datetime.date(day_start).isocalendar()[1]
 # security clearance reasons.
 
 
-class MyListener(PoolListener):
-    def connect(self, dbapi_con, con_record):
-        sqlkey = getpass.getpass()
-        dbapi_con.execute(('PRAGMA key={}'.format(sqlkey)))
-
-
 if encryption is True:
-    print("\n***PYPER TIMESHEET UTILITY***")
+    print("***PYPER TIMESHEET UTILITY***")
+    print("\nEnter encryption password below:")
+    key = getpass.getpass()
     DB_NAME = ".timesheet.db"
-    engine = create_engine('sqlite+pysqlcipher:///.timesheet.db', listeners=[MyListener()])
+    engine = create_engine(
+        'sqlite+pysqlcipher://:{0}@/{1}?cipher=aes-256-cfb&kdf_iter=64000'.format(key, DB_NAME))
 
 else:
+
     print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
     DB_NAME = ".timesheet.db"
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
 
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
