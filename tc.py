@@ -56,10 +56,11 @@ week_num = datetime.date(day_start).isocalendar()[1]
 if encryption is True:
     print("***PYPER TIMESHEET UTILITY***")
     print("\nEnter encryption password below:")
-    key = getpass.getpass()
     DB_NAME = ".timesheet.db"
     engine = create_engine(
-        'sqlite+pysqlcipher://:{0}@/{1}?cipher=aes-256-cfb&kdf_iter=64000'.format(key, DB_NAME))
+        'sqlite+pysqlcipher://:{0}@/{1}?cipher=aes-256-cfb&kdf_iter=64000'.format(getpass.getpass(), DB_NAME))
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
 
 else:
 
@@ -68,9 +69,6 @@ else:
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
     DBSession = sessionmaker(bind=engine)
     session = DBSession()
-
-DBSession = sessionmaker(bind=engine)
-session = DBSession()
 
 
 def query():
@@ -142,7 +140,6 @@ def project_start(project_name, status, start_time, p_uuid):
     abbr = []
     joblist = []
     if encryption is True:
-        # Might have to go raw sql here.
         sel = session.query(Timesheet).order_by(Timesheet.id.desc()).all()
         job_sel = session.query(Job).order_by(Job.id.desc()).all()
     else:
