@@ -906,7 +906,7 @@ def clean_data():
         s = os.stat(file_path).st_ctime
         file_time = datetime.fromtimestamp(s)
 
-        # Delete file if over 2 weeks old
+        # Delete file if over 2 days old
         if os.path.isfile(file_path):
 
             if file_time < (datetime.now() - timedelta(days=2)):
@@ -914,7 +914,7 @@ def clean_data():
                 print("Deleting {}...".format(file_path))
 
 
-def db_recover(status):
+def db_recover(project_name, status, start_time, p_uuid):
     """
     Function to check last db entry and give option to recover, or delete. This will be useful because if the program
     crashes, the time_out fields will not be written to, causing an error on next run. This function should check if
@@ -924,6 +924,25 @@ def db_recover(status):
 
     # if status is 0:
     sqlite3_backup('db_recover')
+
+    # Create list of backup files
+    path = os.path.join(os.path.dirname(os.path.realpath('tc.py')), '.backup')
+    files = []
+
+    for filename in os.listdir(path):
+        file_path = os.path.join(path, filename)
+        s = os.stat(file_path).st_ctime
+        file_time = datetime.fromtimestamp(s)
+
+        if os.path.isfile(file_path):
+            files = sorted([f for f in os.listdir(path) if f.startswith('.timesheet.db')])
+
+    print('Most recent file = {0}. Restore this?'.format(files[-1], ))
+    answer = query()
+    if answer:
+        shutil.move(os.path.realpath('tc.py'), os.path.join(path, 'files[-1]'))
+    else:
+        main_menu(project_name, status, start_time, p_uuid)
 
 
 def main_menu(project_name, status, start_time, p_uuid):
