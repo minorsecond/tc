@@ -403,61 +403,6 @@ def get_week_days(year, week):
     return d + dlt + timedelta(days=5)
 
 
-def breaktime(status, p_uuid, project_name, start_time):
-    """Prompts user to specify reason for break.
-
-    No real reason for this other than just general bookkeeping.
-    Not a requirement. Would be nice to be able to pause the timer for breaks,
-    rather than having to start the script all over again.
-    """
-
-    # Check if currently in a job.
-    if status == 0:
-        input("\nYou're not currently in job. Press enter to return to main menu.")
-        os.system('cls' if os.name == 'nt' else 'clear')
-        main_menu(project_name, status, start_time, p_uuid)
-
-    else:
-        # Pull most recent (top) row from jobs table.
-        sel = session.query(Timesheet).order_by(Timesheet.id.desc()).first()
-        job_name = sel.name
-
-        if debug == 1:
-            print("DEBUGGING: JOB Database, most recent row:\n")
-            print(sel)
-
-            try:
-                print("\nUUID: {0}".format(p_uuid))
-                input("\nPress enter to continue.\n")
-
-            except NameError:
-                print("p_uuid has not been created")
-        # If not currently in job, prompt user for confirmation.
-        print("Are you sure you want to stop working on {0} and take a break? (y/n)\n".format(job_name))
-        answer = query()
-
-        if answer:
-            clockout(project_name, status, p_uuid)
-            input("Press Enter to begin working again")
-            print("Are you still working on '{}' ? (y/n)".format(job_name))
-            answer = query()
-
-            if answer:
-                # If user is returning to same job, start it back up again with same p_uuid.
-                now = datetime.now().strftime('%I:%M %p')
-                print("Resuming '{0}' at: '{1}\n' ".format(job_name, now))
-                clockin(p_uuid, project_name)
-
-            else:
-                # If user is not restarting job, set status to 0 and return to menu.
-                status = 0
-                main_menu(project_name, status, start_time, p_uuid)
-
-        else:
-            main_menu(project_name, status, start_time, p_uuid)
-            logging.info("Stopping task at {}".format(datetime.now()))
-
-
 def time_formatter(time_input):
     """Prompts the user for hh:mm and returns a timedelta
 
@@ -953,13 +898,12 @@ def main_menu(project_name, status, start_time, p_uuid):
         print("PYPER Timesheet Utility\n\n"
               "What would you like to do?\n"
               "1. Clock In\n"
-              "2. Break Time\n"
-              "3. Clock Out\n"
-              "4. Configure\n"
-              "5. Calculate Total Time Worked\n"
-              "6. View Timesheets\n"
-              "7. Import/Export Timesheet\n"
-              "8. Quit\n")
+              "2. Clock Out\n"
+              "3. Configure\n"
+              "4. Calculate Total Time Worked\n"
+              "5. View Timesheets\n"
+              "6. Import/Export Timesheet\n"
+              "7. Quit\n")
 
         if status == 1:
             print("*** Current job {0} started at {1}. ***\n".format(project_name, start_time.strftime('%I:%M %p')))
@@ -972,24 +916,21 @@ def main_menu(project_name, status, start_time, p_uuid):
             project_start(project_name, status, start_time, p_uuid)
 
         if answer.startswith('2'):
-            breaktime(status, p_uuid, project_name, start_time)
-
-        if answer.startswith('3'):
             clockout(project_name, status, p_uuid)
 
-        if answer.startswith('4'):
+        if answer.startswith('3'):
             config(project_name, status, start_time, p_uuid)
 
-        if answer.startswith('5'):
+        if answer.startswith('4'):
             total_time(project_name, status, start_time, p_uuid)
 
-        if answer.startswith('6'):
+        if answer.startswith('5'):
             report(project_name, status, start_time, p_uuid)
 
-        if answer.startswith('7'):
+        if answer.startswith('6'):
             imp_exp_sub(project_name, status, start_time, p_uuid)
 
-        if answer.startswith('8'):
+        if answer.startswith('7'):
             sys.exit()
 
 
