@@ -597,6 +597,7 @@ def report(project_name, status, start_time, p_uuid):
 
             for i in tasks:
                 task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
+
             print("\n  Daily Timesheet Report\n")
             print("\n{:<12} {:<18} {:15} {:<10}".format('Id', 'Job Name', 'Task', 'Hours'))
             print(
@@ -605,10 +606,10 @@ def report(project_name, status, start_time, p_uuid):
             # Print jobs for current day.
             for i in time_worked:
                 worked = str(i.worked)
-
-                if i.p_uuid == task['p_uuid']:
-                    task = task['task']
-                print("{:<12} {:<18} {:<15} {:<10}".format(i.abbr, i.name, task, worked))
+                if i.date == today:
+                    if i.p_uuid == task['p_uuid']:
+                        task = task['task']
+                    print("{:<12} {:<18} {:<15} {:<10}".format(i.abbr, i.name, task, worked))
             input("\nPress enter to return to main menu.")
             main_menu(project_name, status, start_time, p_uuid)
 
