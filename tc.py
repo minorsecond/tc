@@ -130,7 +130,7 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task)
     session.add(new_task_time)
     session.commit()
 
-    clockin(p_uuid, project_name, sub_task)
+    clockin(p_uuid, project_name, new_task)
 
 
 def project_start(project_name, status, start_time, p_uuid):
@@ -202,7 +202,8 @@ def project_start(project_name, status, start_time, p_uuid):
                         else:
                             # Job is same task, on the same day. Simply restart it.
                             p_uuid = uuid.uuid4()
-                            job_newline(abbrev, status, start_time, p_uuid, project_name, False, clktime.sub_task)
+                            subtask = clktime.sub_task
+                            job_newline(abbrev, status, start_time, p_uuid, project_name, False, subtask)
                     else:
                         # Job is same task, on a different day. Start a new line in job table.
                         new_subtask = input("\nEnter current sub-task: ")
