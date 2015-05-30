@@ -53,24 +53,6 @@ week_num = datetime.date(day_start).isocalendar()[1]
 # security clearance reasons.
 
 
-if encryption is True:
-    print("***PYPER TIMESHEET UTILITY***")
-    print("\nEnter encryption password below:")
-    DB_NAME = ".timesheet.db"
-    engine = create_engine(
-        'sqlite+pysqlcipher://:{0}@/{1}?cipher=aes-256-cfb&kdf_iter=64000'.format(getpass.getpass(), DB_NAME))
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-else:
-
-    print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
-    DB_NAME = ".timesheet.db"
-    engine = create_engine('sqlite:///{}'.format(DB_NAME))
-    DBSession = sessionmaker(bind=engine)
-    session = DBSession()
-
-
 def query():
     """Prompts user for a yes/no answer
 
@@ -90,6 +72,34 @@ def query():
         return False
     else:
         sys.stdout.write("Please respond with 'yes' or 'no'")
+
+
+def standard_db():
+    print("WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
+    DB_NAME = ".timesheet.db"
+    engine = create_engine('sqlite:///{}'.format(DB_NAME))
+    DBSession = sessionmaker(bind=engine)
+    session = DBSession()
+    return session
+
+
+if encryption is True:
+    print("***PYPER TIMESHEET UTILITY***")
+    print("\nEncryption library present. Do you wish to run encrypted session? (Y/n): ")
+    answer = query()
+    if answer:
+        print("\nEnter encryption password below:")
+        DB_NAME = ".timesheet.db"
+        engine = create_engine(
+            'sqlite+pysqlcipher://:{0}@/{1}?cipher=aes-256-cfb&kdf_iter=64000'.format(getpass.getpass(), DB_NAME))
+        DBSession = sessionmaker(bind=engine)
+        session = DBSession()
+    else:
+        session = standard_db()
+
+
+else:
+    session = standard_db()
 
 
 def job_newline(abbrev, status, start_time, p_uuid, project_name, new):
