@@ -122,10 +122,10 @@ def job_newline(abbrev, status, start_time, p_uuid, project_name, new, new_task)
         session.add(new_job)
 
     if new_task is True:
-        sub_task = input("Current sub-task: ")
+        new_task = input("Current sub-task: ")
 
     elif new_task is False:
-        sub_task = new_task
+        new_task = new_task
 
     session.add(new_task_time)
     session.commit()
