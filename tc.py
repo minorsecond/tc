@@ -18,14 +18,18 @@ import sys
 
 if sys.version_info.major == 2:
     input = raw_input
+
 from datetime import datetime, timedelta, date
 import os
 import os.path
 import logging
 import uuid
 import csv
+
+# Be more specific here..
 from decimal import *
 import shutil
+
 try:
     from pysqlcipher import dbapi2 as sqlite
     encryption = True
@@ -47,8 +51,7 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
-# TODO: Move to a SQLCipher format for security clearance reasons.# TODO: Move to a SQLCipher format for
-# security clearance reasons.
+# TODO: Move to a SQLCipher format for security clearance reasons.
 
 if encryption is True:
     print("\n***PYPER TIMESHEET UTILITY***")
@@ -57,7 +60,8 @@ if encryption is True:
 
 else:
     print(
-        "WARNING: Unencrypted session. Install pysqlcipher3 to enable encryption\n")
+        "WARNING: Unencrypted session. Install pysqlcipher3 to enable"
+        "encryption\n")
     DB_NAME = ".timesheet.db"
     engine = create_engine('sqlite:///{}'.format(DB_NAME))
 
@@ -151,6 +155,8 @@ def job_newline(
 
 
 def project_start(project_name, status, start_time, p_uuid):
+    # TODO: Split up this function as it is too complex.
+
     today = datetime.today().strftime('%Y-%m-%d')
     """
     Prompts the user for project information, creates an id for
@@ -186,7 +192,8 @@ def project_start(project_name, status, start_time, p_uuid):
 
     if status == 1:
         input(
-            "\nYou're already in a task. Press enter to return to main menu.\n\n")
+            "\nYou're already in a task."
+            "Press enter to return to main menu.\n\n")
         os.system('cls' if os.name == 'nt' else 'clear')
         main_menu(project_name, status, start_time, p_uuid)
 
@@ -211,7 +218,8 @@ def project_start(project_name, status, start_time, p_uuid):
                         Clocktime.p_uuid == p_uuid).order_by(
                         Clocktime.id.desc()).first()
                     print(
-                        "Are you working on sub-task {0}? (Y/n)".format(clktime.sub_task))
+                        "Are you working on sub-task {0}? (Y/n)"
+                        .format(clktime.sub_task))
                     answer = query()
 
                     if answer:
@@ -239,7 +247,6 @@ def project_start(project_name, status, start_time, p_uuid):
                     else:
                         # Job is same task, on a different day. Start a new line
                         # in job table.
-                        new_subtask = input("\nEnter current sub-task: ")
                         job_newline(
                             abbrev,
                             status,
@@ -250,17 +257,26 @@ def project_start(project_name, status, start_time, p_uuid):
                             True)
 
                 else:
-                    # The abbrev in job table doesn't match reality. User needs to figure out why and edit job table
-                    # using config function.
+
+                    """
+                    The abbrev in job table doesn't match reality.
+                    User needs to figure out why and edit job table
+                    using config function.
+                    """
                     input(
-                        "Problem with job id codes. Check config and change as necessary. Press enter to return"
+                        "Problem with job id codes. Check config and"
+                        "change as necessary. Press enter to return"
                         "to main menu")
                     main_menu(project_name, status, start_time, p_uuid)
             else:
-                # Abbrev is in timesheet but not job table. Something went wrong. User needs to figure out why and
-                # edit tables to fix.
+                """
+                Abbrev is in timesheet but not job table. Something went wrong.
+                User needs to figure out why and edit tables to fix.
+                """
+
                 input(
-                    "\n *** WARNING: Table discrepancy. Use config tool to check/edit as needed. Press enter"
+                    "\n *** WARNING: Table discrepancy. Use config tool "
+                    "to check/edit as needed. Press enter"
                     "to return to main menu. \n")
                 main_menu(project_name, status, start_time, p_uuid)
 
@@ -351,8 +367,9 @@ def clockin(p_uuid, project_name, sub_task):
 
 def clockout(project_name, status, p_uuid):
     """
-    Clocks user out of project. Prints time_out (now) to clocktimes table for whichever row contains the same
-    p_uuid created in project_start().
+    Clocks user out of project. Prints time_out (now) to clocktimes
+    table for whichever row contains the samep_uuid created
+    in project_start().
 
     :rtype : object
     :return:
@@ -403,8 +420,10 @@ def clockout(project_name, status, p_uuid):
 
         if debug == 1:
             print(
-                "Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. Time: {3}".
-                format(start_time, datetime.now(), diff, time_worked))
+                "Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. "
+                "Time: {3}".format(start_time, datetime.now()
+                                   , diff, time_worked))
+
             print('diff.seconds = {0}'.format(diff.seconds))
             print('time = {0}'.format(time))
             input("Press enter to continue.")
@@ -416,9 +435,11 @@ def clockout(project_name, status, p_uuid):
                 job_name))
         input("\nPress enter to return to main menu.")
         status = 0
-
-        # Update Clocktime table with time out and time worked. Need to match with current pid so that not all
-        # clock activities for the job are written to.
+        """
+        Update Clocktime table with time out and time worked.
+        Need to match with current pid so that not all
+        clock activities for the job are written to.
+        """
         session.query(Clocktime). \
             filter(Clocktime.id == clk_id). \
             update({"time_out": now}, synchronize_session='fetch')
@@ -451,7 +472,8 @@ def clockout(project_name, status, p_uuid):
         # Round the sum of tenths of an hour worked to the nearest tenth and
         # then update to job table.
         sum_time = Decimal(round_to_nearest(_sum_time, Decimal('0.1')))
-        # Round number down to nearest tenth of an hour (there are some weird issues otherwise)
+        # Round number down to nearest tenth of an hour.
+
         # sum_time = Decimal(math.floor(sum_time * 10) / 10)
         session.query(Timesheet). \
             filter(Timesheet.p_uuid == str(p_uuid)). \
@@ -466,7 +488,7 @@ def get_week_days(year, week):
     Calculates week end date for given year and week number.
     :param year:
     :param week:
-    :return: Timedelta, looks like: "2004-01-04" to be used in tables to differentiate weeks
+    :return: Timedelta, looks like: "2004-01-04" to differentiate weeks
     """
     d = date(year, 1, 1)
 
@@ -495,7 +517,7 @@ def time_formatter(time_input):
         hours, minutes = map(int, split)
 
     except ValueError as e:
-        raise ValueError(FAIL_MSG)
+        raise ValueError(e)
     minutes = round_to_nearest(minutes, 6)
     d = datetime.timedelta(hours=hours, minutes=minutes)
     return d
@@ -510,8 +532,8 @@ def get_time(time):
     split_hour = 0
     split_minute2 = 0
 
-    # If user doesn't enter in 00:00 format, this will reformat their input into 00:00 AM so that DateTime
-    # can parse it.
+    # If user doesn't enter in 00:00 format, this will reformat
+    # their input into 00:00 AM so that DateTime can parse it.
     if time:
         if time.split(' ')[0] in {'1', '2', '3', '4', '5', '6',
                                   '7', '8', '9', '10', '11', '12'}:
@@ -550,7 +572,7 @@ def get_time(time):
 
 def total_time(project_name, status, start_time, p_uuid):
     """
-    Prompts user to enter start and end time, and prints time worked in 1/10 of an hour to screen
+    Prompts user to enter start and end time,prints 1/10 of an hour to screen
 
     :rtype : str
     :return: None
@@ -570,6 +592,8 @@ def total_time(project_name, status, start_time, p_uuid):
 
 
 def report(project_name, status, start_time, p_uuid):
+    # TODO: Refactor to be less complex..
+
     """
     Prints a report table to screen.
     :return:
@@ -613,7 +637,8 @@ def report(project_name, status, start_time, p_uuid):
             for i in time_worked:
                 day = i.date.strftime('%Y-%m-%d')
 
-                if datetime.date(datetime.strptime(i.week, '%Y-%m-%d')) == current_week:
+                if datetime.date(datetime.strptime
+                                 (i.week, '%Y-%m-%d')) == current_week:
                     worked = str(i.worked)
 
                     if i.p_uuid == task['p_uuid']:
@@ -682,6 +707,8 @@ def report(project_name, status, start_time, p_uuid):
 
 
 def config(project_name, status, start_time, p_uuid):
+    # TODO: Refactor to be less complex..
+
     """Configure jobs and employees"""
 
     global session
@@ -689,8 +716,10 @@ def config(project_name, status, start_time, p_uuid):
     # TODO: Write the db_editor script.
     def clocktime_editor():
         """
-        Allows editing of tables, so that users can fix instances where they forgot to clock in/out.
-        Should flag row so that it's known that it was manually edited.
+        Allows editing of tables, so that users can fix
+        instances where they forgot to clock in/out.
+        Should flag row so that it's known that it was
+        manually edited.
         :return:
         """
         # Set current week, and lists
@@ -713,7 +742,8 @@ def config(project_name, status, start_time, p_uuid):
 
             if week == current_week:
                 print(
-                    'ID: {:<1}, Time in: {:<1}, Time out: {:<2}, Day: {:<3}'.format(
+                    'ID: {:<1}, Time in: {:<1}',
+                    'Time out: {:<2}, Day: {:<3}'.format(
                         i.id,
                         i.time_in,
                         i.time_out,
@@ -934,7 +964,8 @@ def export_timesheet(project_name, status, start_time, p_uuid):
 
 def imp_exp_sub(project_name, status, start_time, p_uuid):
     """
-    Sub-menu for main-menu import/export option. This will lead to functions that read/write from CSV.
+    Sub-menu for main-menu import/export option.
+    This will lead to functions that read/write from CSV.
     :return:
     """
 
@@ -997,9 +1028,13 @@ def clean_data():
 
 def db_recover(project_name, status, start_time, p_uuid):
     """
-    Function to check last db entry and give option to recover, or delete. This will be useful because if the program
-    crashes, the time_out fields will not be written to, causing an error on next run. This function should check if
-    the time_out field of the last row is empty and, if so, give said options.
+    Function to check last db entry and give option to recover,
+    or delete. This will be useful because if the program
+    crashes, the time_out fields will not be written to, causing an
+    error on next run. This function should check if
+    the time_out field of the last row is empty and,
+    if so, give said options.
+
     :return: None
     """
 
@@ -1013,7 +1048,7 @@ def db_recover(project_name, status, start_time, p_uuid):
     for filename in os.listdir(path):
         file_path = os.path.join(path, filename)
         s = os.stat(file_path).st_ctime
-        file_time = datetime.fromtimestamp(s)
+        # file_time = datetime.fromtimestamp(s)
 
         if os.path.isfile(file_path):
             files = sorted(
@@ -1043,8 +1078,9 @@ def main_menu(project_name, status, start_time, p_uuid):
 
         if status == 1:
             print(
-                "*** Current job {0} started at {1}. ***\n".format(project_name,
-                                                                   start_time.strftime('%I:%M %p')))
+                "*** Current job {0} started at {1}. ***\n"
+                .format(project_name,
+                        start_time.strftime('%I:%M %p')))
 
         else:
             print("*** Not currently in a job. ***\n")
