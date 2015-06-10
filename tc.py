@@ -516,8 +516,8 @@ def time_formatter(time_input):
     try:
         hours, minutes = map(int, split)
 
-    except ValueError as e:
-        raise ValueError(e)
+    except ValueError:
+        raise ValueError(FAIL_MSG)
     minutes = round_to_nearest(minutes, 6)
     d = datetime.timedelta(hours=hours, minutes=minutes)
     return d
