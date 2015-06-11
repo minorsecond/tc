@@ -75,7 +75,8 @@ def query():
     if user responds with 'yes', 'ye', or 'y', return True
     if user responds with 'no' or 'n', return False.
     else: return None
-    """
+
+"""
 
     # raw_input returns the empty string for "enter"
     yes = {'yes', 'y', 'ye', ''}
@@ -292,9 +293,8 @@ def project_start(project_name, status, start_time, p_uuid):
                 True,
                 True)
 
+
 # TODO: Implement these functions
-
-
 def get_job_by_abbr(abbr):
     jobs = session.query(Job).filter_by(abbr=abbr).all()
 
@@ -374,6 +374,7 @@ def clockout(project_name, status, p_uuid):
     :rtype : object
     :return:
     """
+
     context = Context(prec=3, rounding=ROUND_DOWN)
     setcontext(context)
     _sum_time = Decimal(0.0)
@@ -507,6 +508,7 @@ def time_formatter(time_input):
 
     Takes user input as 00:00, splits those using : as seperator, and returns
     the resulting timedelta object.
+
     """
     FAIL_MSG = "Please check input format and try again. (00:00)"
     split = time_input.split(":")
@@ -576,7 +578,8 @@ def total_time(project_name, status, start_time, p_uuid):
 
     :rtype : str
     :return: None
-    """
+
+"""
 
     t_in = get_time(
         input(
@@ -638,7 +641,6 @@ def week_report(project_name, status, start_time, p_uuid):
     print(
         "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
             '========',
-            '==============',
             '==========',
             '=====',
             '=========='))
@@ -648,7 +650,7 @@ def week_report(project_name, status, start_time, p_uuid):
         day = i.date.strftime('%Y-%m-%d')
 
         if datetime.date(datetime.strptime
-                             (i.week, '%Y-%m-%d')) == current_week:
+                         (i.week, '%Y-%m-%d')) == current_week:
             worked = str(i.worked)
 
             if i.p_uuid == task['p_uuid']:
@@ -722,6 +724,7 @@ def daily_report(project_name, status, start_time, p_uuid):
 
 
 def config(project_name, status, start_time, p_uuid):
+
     # TODO: Refactor to be less complex..
 
     """Configure jobs and employees"""
@@ -765,7 +768,7 @@ def config(project_name, status, start_time, p_uuid):
                         day))
                 clk_list.append(i.id)
 
-    # TODO: refactor these out into module-level so they're unit-testable
+# TODO: refactor these out into module-level so they're unit-testable
     def add_job(**kwargs):
         """Helper function to create Jobs
 
@@ -795,7 +798,8 @@ def config(project_name, status, start_time, p_uuid):
         return kwargs
 
     def add_employee(**kwargs):
-        """Helper function to create Employees
+        """Helper fu
+        nction to create Employees
 
         prompt for fields if none are provided
         """
@@ -1005,7 +1009,7 @@ def imp_exp_sub(project_name, status, start_time, p_uuid):
 
 def sqlite3_backup(action):
     """Create timestamped database copy, preferably use a backup directory."""
-    path = os.path.dirname(os.path.realpath('tc.py'))
+    # path = os.path.dirname(os.path.realpath('tc.py'))
 
     if not os.path.isdir('.backup'):
         os.makedirs('.backup')
@@ -1062,7 +1066,7 @@ def db_recover(project_name, status, start_time, p_uuid):
 
     for filename in os.listdir(path):
         file_path = os.path.join(path, filename)
-        s = os.stat(file_path).st_ctime
+        # s = os.stat(file_path).st_ctime
         # file_time = datetime.fromtimestamp(s)
 
         if os.path.isfile(file_path):
