@@ -595,10 +595,9 @@ def report(project_name, status, start_time, p_uuid):
     # TODO: Refactor to be less complex..
 
     """
-    Prints a report table to screen.
+    Menu to run reports
     :return:
     """
-    today = datetime.today().strftime('%Y-%m-%d')
 
     while True:
         os.system('cls' if os.name == 'nt' else 'clear')
@@ -610,100 +609,116 @@ def report(project_name, status, start_time, p_uuid):
         answer = input('>>> ')
 
         if answer.startswith('1'):
-            os.system('cls' if os.name == 'nt' else 'clear')
-            current_week = get_week_days(day_start.year, week_num)
-            # Queries job table, pulling all rows.
-            time_worked = session.query(Timesheet).all()
-            tasks = session.query(Clocktime).all()
-            for i in tasks:
-                task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
-            print("\n  Weekly Timesheet Report\n")
-            print(
-                "\n{:<12} {:<18} {:15} {:<10} {:<1}".format(
-                    'Id',
-                    'Job Name',
-                    'Task',
-                    'Hours',
-                    'Date'))
-            print(
-                "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
-                    '========',
-                    '==============',
-                    '==========',
-                    '=====',
-                    '=========='))
-
-            # Print jobs for current week.
-            for i in time_worked:
-                day = i.date.strftime('%Y-%m-%d')
-
-                if datetime.date(datetime.strptime
-                                 (i.week, '%Y-%m-%d')) == current_week:
-                    worked = str(i.worked)
-
-                    if i.p_uuid == task['p_uuid']:
-                        task = task['task']
-                    print(
-                        "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
-                            i.abbr,
-                            i.name,
-                            task,
-                            worked,
-                            day))
-            input("\nPress enter to return to main menu.")
-            main_menu(project_name, status, start_time, p_uuid)
+            week_report(project_name, status, start_time, p_uuid)
 
         elif answer.startswith('2'):
-            os.system('cls' if os.name == 'nt' else 'clear')
-            # Queries job table, pulling all rows.
-            time_worked = session.query(Timesheet).all()
-            tasks = session.query(Clocktime).all()
+            daily_report(project_name, status, start_time, p_uuid)
 
-            print("\n  Daily Timesheet Report\n")
+
+def week_report(project_name, status, start_time, p_uuid):
+    """
+    Function to generate report for current week.
+    :return: Print report for current week.
+    """
+    os.system('cls' if os.name == 'nt' else 'clear')
+    current_week = get_week_days(day_start.year, week_num)
+    # Queries job table, pulling all rows.
+    time_worked = session.query(Timesheet).all()
+    tasks = session.query(Clocktime).all()
+    for i in tasks:
+        task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
+    print("\n  Weekly Timesheet Report\n")
+    print(
+        "\n{:<12} {:<18} {:15} {:<10} {:<1}".format(
+            'Id',
+            'Job Name',
+            'Task',
+            'Hours',
+            'Date'))
+    print(
+        "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
+            '========',
+            '==============',
+            '==========',
+            '=====',
+            '=========='))
+
+    # Print jobs for current week.
+    for i in time_worked:
+        day = i.date.strftime('%Y-%m-%d')
+
+        if datetime.date(datetime.strptime
+                             (i.week, '%Y-%m-%d')) == current_week:
+            worked = str(i.worked)
+
+            if i.p_uuid == task['p_uuid']:
+                task = task['task']
             print(
-                "\n{:<12} {:<18} {:15} {:<10}".format(
-                    'Id',
-                    'Job Name',
-                    'Task',
-                    'Hours'))
+                "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
+                    i.abbr,
+                    i.name,
+                    task,
+                    worked,
+                    day))
+    input("\nPress enter to return to main menu.")
+    main_menu(project_name, status, start_time, p_uuid)
+
+
+def daily_report(project_name, status, start_time, p_uuid):
+    """
+    Function to generate report for current day.
+    :param project_name: passthru for main menu
+    :param status: passthru for main menu
+    :param start_time: passthru for main menu
+    :param p_uuid: passthru for main menu
+    :return: Print report
+    """
+
+    today = datetime.today().strftime('%Y-%m-%d')
+    os.system('cls' if os.name == 'nt' else 'clear')
+    # Queries job table, pulling all rows.
+    time_worked = session.query(Timesheet).all()
+    tasks = session.query(Clocktime).all()
+
+    print("\n  Daily Timesheet Report\n")
+    print(
+        "\n{:<12} {:<18} {:15} {:<10}".format(
+            'Id',
+            'Job Name',
+            'Task',
+            'Hours'))
+    print(
+        "{:<12} {:<18} {:<15} {:<10}".format(
+            '========',
+            '==============',
+            '==========',
+            '=====',
+            '=========='))
+
+    # Print jobs for current day.
+    for i in tasks:
+        task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
+
+    for i in time_worked:
+
+        worked = str(i.worked)
+        date = i.date.strftime('%Y-%m-%d')
+
+        if date == today:
+
+            if i.p_uuid == task['p_uuid']:
+                task = task['task']
+
             print(
                 "{:<12} {:<18} {:<15} {:<10}".format(
-                    '========',
-                    '==============',
-                    '==========',
-                    '=====',
-                    '=========='))
+                    i.abbr,
+                    i.name,
+                    task,
+                    worked))
 
-            # Print jobs for current day.
-            for i in tasks:
-                task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
+    input("\nPress enter to return to main menu.")
 
-            for i in time_worked:
-
-                worked = str(i.worked)
-                date = i.date.strftime('%Y-%m-%d')
-
-                if date == today:
-
-                    if i.p_uuid == task['p_uuid']:
-                        task = task['task']
-
-                    print(
-                        "{:<12} {:<18} {:<15} {:<10}".format(
-                            i.abbr,
-                            i.name,
-                            task,
-                            worked))
-
-            input("\nPress enter to return to main menu.")
-
-            main_menu(project_name, status, start_time, p_uuid)
-
-        elif answer.startswith('3'):
-            main_menu(project_name, status, start_time, p_uuid)
-
-        else:
-            report(project_name, status, start_time, p_uuid)
+    main_menu(project_name, status, start_time, p_uuid)
 
 
 def config(project_name, status, start_time, p_uuid):
