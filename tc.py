@@ -643,6 +643,7 @@ def week_report(project_name, status, start_time, p_uuid):
             '========',
             '==========',
             '=====',
+            '==========',
             '=========='))
 
     # Print jobs for current week.
@@ -654,12 +655,12 @@ def week_report(project_name, status, start_time, p_uuid):
             worked = str(i.worked)
 
             if i.p_uuid == task['p_uuid']:
-                task = task['task']
+                _task = task['task']
             print(
                 "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
                     i.abbr,
                     i.name,
-                    task,
+                    _task,
                     worked,
                     day))
     input("\nPress enter to return to main menu.")
