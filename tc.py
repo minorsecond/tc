@@ -625,21 +625,24 @@ def week_report(project_name, status, start_time, p_uuid):
     """
     os.system('cls' if os.name == 'nt' else 'clear')
     current_week = get_week_days(day_start.year, week_num)
+
     # Queries job table, pulling all rows.
     time_worked = session.query(Timesheet).all()
     tasks = session.query(Clocktime).all()
+
     for i in tasks:
         task = {'p_uuid': i.p_uuid, 'task': i.sub_task}
+
     print("\n  Weekly Timesheet Report\n")
     print(
-        "\n{:<12} {:<18} {:15} {:<10} {:<1}".format(
+        "\n{:<18} {:<18} {:18} {:<18} {:<1}".format(
             'Id',
             'Job Name',
             'Task',
             'Hours',
-            'Date'))
+            'End of Week'))
     print(
-        "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
+        "{:<18} {:<18} {:<18} {:<18} {:<1}".format(
             '========',
             '==========',
             '=====',
@@ -657,7 +660,7 @@ def week_report(project_name, status, start_time, p_uuid):
             if i.p_uuid == task['p_uuid']:
                 _task = task['task']
             print(
-                "{:<12} {:<18} {:<15} {:<10} {:<1}".format(
+                "{:<18} {:<18} {:<18} {:<18} {:<1}".format(
                     i.abbr,
                     i.name,
                     _task,
@@ -685,15 +688,15 @@ def daily_report(project_name, status, start_time, p_uuid):
 
     print("\n  Daily Timesheet Report\n")
     print(
-        "\n{:<12} {:<18} {:15} {:<10}".format(
+        "\n{:<18} {:<18} {:18} {:<18}".format(
             'Id',
             'Job Name',
             'Task',
             'Hours'))
     print(
-        "{:<12} {:<18} {:<15} {:<10}".format(
+        "{:<18} {:<18} {:<18} {:<18}".format(
             '========',
-            '==============',
+            '==========',
             '==========',
             '=====',
             '=========='))
@@ -713,7 +716,7 @@ def daily_report(project_name, status, start_time, p_uuid):
                 task = task['task']
 
             print(
-                "{:<12} {:<18} {:<15} {:<10}".format(
+                "{:<18} {:<18} {:<18} {:<18}".format(
                     i.abbr,
                     i.name,
                     task,
