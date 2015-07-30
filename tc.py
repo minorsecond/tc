@@ -763,20 +763,22 @@ def config(project_name, status, start_time, p_uuid):
 
         # TODO: Create menu.
         # Print clocktime and job rows.
-
+        print("Clocktime List\n")
         for i in sel_clk:
+            id = i.id
+            time_in = i.time_in.strftime('%Y-%m-%d @ %I:%M %p')
+            time_out = i.time_out.strftime('%Y-%m-%d @ %I:%M %p')
             day = i.time_in.strftime('%Y-%m-%d')
             week = i.time_in.isocalendar()[1]
 
             if week == current_week:
-                print(
-                    'ID: {:<1}, Time in: {:<1}',
-                    'Time out: {:<2}, Day: {:<3}'.format(
-                        i.id,
-                        i.time_in,
-                        i.time_out,
-                        day))
+                print('ID: {0}, Time in: {1}, Time out: {2}'.format(id, time_in, time_out))
+
                 clk_list.append(i.id)
+
+        edit_id = input("\nEnter the ID for the line you would like to edit: ")
+
+        return edit_id
 
 # TODO: refactor these out into module-level so they're unit-testable
     def add_job(**kwargs):
