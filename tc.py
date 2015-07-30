@@ -742,7 +742,7 @@ def config(project_name, status, start_time, p_uuid):
     global session
 
     # TODO: Write the db_editor script.
-    def clocktime_editor():
+    def clktime_row_chooser():
         """
         Allows editing of tables, so that users can fix
         instances where they forgot to clock in/out.
@@ -763,7 +763,7 @@ def config(project_name, status, start_time, p_uuid):
 
         # TODO: Create menu.
         # Print clocktime and job rows.
-        print("Clocktime List\n")
+        print("Clocktimes for this week\n")
         for i in sel_clk:
             id = i.id
             time_in = i.time_in.strftime('%Y-%m-%d @ %I:%M %p')
@@ -779,6 +779,16 @@ def config(project_name, status, start_time, p_uuid):
         edit_id = input("\nEnter the ID for the line you would like to edit: ")
 
         return edit_id
+
+    def clocktime_editor(id_to_edit):
+        """
+        Placeholder for code to edit clocktimes in place.
+        :param: id_to_edit: number of row from clocktimes table to edit.
+        :return: updated clocktime and timesheet databases.
+        """
+
+        # TODO: Write clocktime_editor function. Don't forget to also update the timeclock when user submits.
+
 
 # TODO: refactor these out into module-level so they're unit-testable
     def add_job(**kwargs):
