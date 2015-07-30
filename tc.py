@@ -79,8 +79,8 @@ def query():
 """
 
     # raw_input returns the empty string for "enter"
-    yes = {'yes', 'y', 'ye', ''}
-    no = {'no', 'n'}
+    yes = {'yes', 'y', 'ye'}
+    no = {'no', 'n', ''}
 
     choice = input().lower()
     if choice in yes:
@@ -210,7 +210,7 @@ def project_start(project_name, status, start_time, p_uuid):
                 job = session.query(Timesheet).filter(
                     Timesheet.abbr == abbrev).order_by(
                     Timesheet.id.desc()).first()
-                print("Are you working on {0}? (Y/n)".format(job.name))
+                print("Are you working on {0}? (y/N)".format(job.name))
                 answer = query()
 
                 if answer:
@@ -219,7 +219,7 @@ def project_start(project_name, status, start_time, p_uuid):
                         Clocktime.p_uuid == p_uuid).order_by(
                         Clocktime.id.desc()).first()
                     print(
-                        "Are you working on sub-task {0}? (Y/n)"
+                        "Are you working on sub-task {0}? (y/N)"
                         .format(clktime.sub_task))
                     answer = query()
 
@@ -394,94 +394,100 @@ def clockout(project_name, status, p_uuid):
         clk_id = sel_clk.id
         start_time = sel_clk.time_in
 
-        now = datetime.now()
-        print(
-            '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(
-                job_name,
-                job_abbrev,
-                now.hour,
-                now.minute,
-                now.day,
-                now.month,
-                now.year))
+        print("Are you sure you want to clock out of {0}? (y/N)".format(job_name))
+        if query():
 
-        # Get difference between start time and now, and then convert to tenths
-        # of an hour.
-        diff = datetime.now() - start_time
-        time = Decimal(diff.seconds / 3600)
-
-        # Short tasks (6 minutes or less) still count as .1 of an hour per my
-        # company's policy.
-        if time < .1:
-            time = Decimal(0.1)
-
-        time_worked = Decimal(round_to_nearest(diff.seconds, 360)) / 3600
-        if time_worked < .1:
-            time_worked = Decimal(0.1)
-
-        if debug == 1:
+            now = datetime.now()
             print(
-                "Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. "
-                "Time: {3}".format(start_time, datetime.now()
-                                   , diff, time_worked))
+                '\nStopping {0}, project ID {1} at {2}:{3} on {4}/{5}/{6}'.format(
+                    job_name,
+                    job_abbrev,
+                    now.hour,
+                    now.minute,
+                    now.day,
+                    now.month,
+                    now.year))
 
-            print('diff.seconds = {0}'.format(diff.seconds))
-            print('time = {0}'.format(time))
-            input("Press enter to continue.")
-        print(
-            "Enjoy! You worked {0} hours on {1}.".format(
-                round(
-                    time_worked,
-                    1),
-                job_name))
-        input("\nPress enter to return to main menu.")
-        status = 0
-        """
-        Update Clocktime table with time out and time worked.
-        Need to match with current pid so that not all
-        clock activities for the job are written to.
-        """
-        session.query(Clocktime). \
-            filter(Clocktime.id == clk_id). \
-            update({"time_out": now}, synchronize_session='fetch')
+            # Get difference between start time and now, and then convert to tenths
+            # of an hour.
+            diff = datetime.now() - start_time
+            time = Decimal(diff.seconds / 3600)
 
-        session.query(Clocktime).filter(
-            Clocktime.id == clk_id).update(
-            {'tworked': Decimal(time_worked)}, synchronize_session='fetch')
+            # Short tasks (6 minutes or less) still count as .1 of an hour per my
+            # company's policy.
+            if time < .1:
+                time = Decimal(0.1)
 
-        session.commit()
-
-        # Get all rows in clocktime for current job, by p_uuid and then sum
-        # these tenths of an hour.
-        tworked = session.query(Clocktime).filter(
-            Clocktime.p_uuid == str(p_uuid)).order_by(
-            Clocktime.id.desc()).all()
-
-        for i in tworked:
-
-            if i.tworked is not None:
-                worked = Decimal(i.tworked)
-                _sum_time += worked
+            time_worked = Decimal(round_to_nearest(diff.seconds, 360)) / 3600
+            if time_worked < .1:
+                time_worked = Decimal(0.1)
 
             if debug == 1:
                 print(
-                    "Debugging: sum of time for {0} is {1}".format(
-                        i.job_id,
-                        _sum_time))
-                input('Press enter to continue')
+                    "Variables -- Start Time {0}. Current Time: {1}. Diff: {2}. "
+                    "Time: {3}".format(start_time, datetime.now()
+                                       , diff, time_worked))
 
-        # Round the sum of tenths of an hour worked to the nearest tenth and
-        # then update to job table.
-        sum_time = Decimal(round_to_nearest(_sum_time, Decimal('0.1')))
-        # Round number down to nearest tenth of an hour.
+                print('diff.seconds = {0}'.format(diff.seconds))
+                print('time = {0}'.format(time))
+                input("Press enter to continue.")
+            print(
+                "Enjoy! You worked {0} hours on {1}.".format(
+                    round(
+                        time_worked,
+                        1),
+                    job_name))
+            input("\nPress enter to return to main menu.")
+            status = 0
+            """
+            Update Clocktime table with time out and time worked.
+            Need to match with current pid so that not all
+            clock activities for the job are written to.
+            """
+            session.query(Clocktime). \
+                filter(Clocktime.id == clk_id). \
+                update({"time_out": now}, synchronize_session='fetch')
 
-        # sum_time = Decimal(math.floor(sum_time * 10) / 10)
-        session.query(Timesheet). \
-            filter(Timesheet.p_uuid == str(p_uuid)). \
-            update({"worked": sum_time}, synchronize_session='fetch')
+            session.query(Clocktime).filter(
+                Clocktime.id == clk_id).update(
+                {'tworked': Decimal(time_worked)}, synchronize_session='fetch')
 
-        session.commit()
-        main_menu(project_name, status, start_time, None)
+            session.commit()
+
+            # Get all rows in clocktime for current job, by p_uuid and then sum
+            # these tenths of an hour.
+            tworked = session.query(Clocktime).filter(
+                Clocktime.p_uuid == str(p_uuid)).order_by(
+                Clocktime.id.desc()).all()
+
+            for i in tworked:
+
+                if i.tworked is not None:
+                    worked = Decimal(i.tworked)
+                    _sum_time += worked
+
+                if debug == 1:
+                    print(
+                        "Debugging: sum of time for {0} is {1}".format(
+                            i.job_id,
+                            _sum_time))
+                    input('Press enter to continue')
+
+            # Round the sum of tenths of an hour worked to the nearest tenth and
+            # then update to job table.
+            sum_time = Decimal(round_to_nearest(_sum_time, Decimal('0.1')))
+            # Round number down to nearest tenth of an hour.
+
+            # sum_time = Decimal(math.floor(sum_time * 10) / 10)
+            session.query(Timesheet). \
+                filter(Timesheet.p_uuid == str(p_uuid)). \
+                update({"worked": sum_time}, synchronize_session='fetch')
+
+            session.commit()
+            main_menu(project_name, status, start_time, None)
+
+        else:
+            main_menu(project_name, status, start_time, p_uuid)
 
 
 def get_week_days(year, week):
@@ -848,7 +854,7 @@ def config(project_name, status, start_time, p_uuid):
             new_val = int(float(new_val) * 100)
         print(job_to_edit)
         print("Changing {} to {}".format(old_val, new_val))
-        confirm = input("Are you sure? (y/n): ")
+        confirm = input("Are you sure? (y/N): ")
 
         if confirm == 'y':
             change_table_value(job_to_edit, val_to_change, new_val)
@@ -898,7 +904,7 @@ def config(project_name, status, start_time, p_uuid):
                     new_job = add_job()
                     name = new_job['name']
                     print(
-                        "\nWould you like to begin working on {0}? (Y/n)".
+                        "\nWould you like to begin working on {0}? (y/N)".
                         format(name))
                     answer = query()
 
@@ -940,11 +946,11 @@ def config(project_name, status, start_time, p_uuid):
             raise NotImplementedError()
 
         elif answer.startswith('4'):
-            print('Do you wish to delete the tables? (Y/n)\n')
+            print('Do you wish to delete the tables? (y/N)\n')
             answer = query()
 
             if answer:
-                print('WARNING - THIS WILL DELETE ALL DATA. PROCEED? (Y/n)\n')
+                print('WARNING - THIS WILL DELETE ALL DATA. PROCEED? (y/N)\n')
                 answer = query()
 
                 if answer:
