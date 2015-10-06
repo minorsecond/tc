@@ -51,7 +51,7 @@ logging.basicConfig(filename=LOGFILE, format=FORMATTER_STRING, level=LOGLEVEL)
 
 day_start = datetime.now()
 week_num = datetime.date(day_start).isocalendar()[1]
-# TODO: Move to a SQLCipher format for security clearance reasons.
+# TODO: Move to a SQLCipher format for security.
 
 if encryption is True:
     print("\n***PYPER TIMESHEET UTILITY***")
@@ -60,7 +60,7 @@ if encryption is True:
 
 else:
     print(
-        "WARNING: Unencrypted session. Install pysqlcipher3 to enable"
+        "WARNING: Unencrypted session. Install pysqlcipher3 to enable\n"
         "encryption\n")
     DB_NAME = ".timesheet.db"
     engine = create_engine('sqlite:///{}'.format(DB_NAME))

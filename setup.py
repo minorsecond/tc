@@ -1,16 +1,17 @@
-from distutils.core import setup
+from cx_Freeze import setup, Executable
 
-import py2exe
+# Dependencies are automatically detected, but it might need
+# fine tuning.
+buildOptions = dict(packages = [], excludes = [])
 
+base = 'Console'
 
-setup(
-    name='Pyper Timeclock Utility',
-    version='v0.1',
-    packages=['tests', 'tests.db', 'models', 'sqa_uuid', 'get_weekks'],
-    url='',
-    license='GPLv2.0',
-    author='Robert Ross Wardrup',
-    author_email='minorsecond@gmail.com',
-    description='',
-    console=['tc.py']
-)
+executables = [
+    Executable('tc.py', base=base, targetName = 'Pyper')
+]
+
+setup(name='Pyper Timesheet Utility',
+      version = '0.2',
+      description = 'Pyper Timesheet Tracking Utility',
+      options = dict(build_exe = buildOptions),
+      executables = executables)
