@@ -13,7 +13,10 @@ of an hour, and to generate reports.
 # Robert Ross Wardrup, NotTheEconomist, dschetel
 # 08/31/2014
 
+# TODO: Find another way to encrypt.
+
 from __future__ import print_function
+
 import sys
 
 if sys.version_info.major == 2:
@@ -586,18 +589,26 @@ def total_time(project_name, status, start_time, p_uuid):
     :return: None
 
 """
+    while True:
+        try:
+            t_in = get_time(
+                    input(
+                            "Please enter your start time in 00:00 AM/PM format: "))
 
-    t_in = get_time(
-        input(
-            "Please enter your start time in 00:00 AM/PM format: "))
-    t_out = get_time(
-        input(
-            "Please enter your end time in 00:00 AM/PM format: "))
-    delta = t_out - t_in
-    delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
-    print("\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes))
-    input("\nPress enter to return to main menu.")
-    main_menu(project_name, status, start_time, p_uuid)
+            t_out = get_time(
+                    input(
+                            "Please enter your end time in 00:00 AM/PM format: "))
+        except ValueError:
+            print("Try again..")
+            continue
+        else:
+            break
+
+        delta = t_out - t_in
+        delta_minutes = float(round_to_nearest(delta.seconds, 360)) / 3600
+        print("\n*** Your time sheet entry is {0} hours. ***".format(delta_minutes))
+        input("\nPress enter to return to main menu.")
+        main_menu(project_name, status, start_time, p_uuid)
 
 
 def report(project_name, status, start_time, p_uuid):
